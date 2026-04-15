@@ -1,0 +1,39 @@
+<div class="h-screen bg-gray-900 flex flex-col overflow-hidden">
+  <nav class="bg-red-700 text-white p-4 shadow-md flex justify-between items-center">
+    <h1 class="text-xl font-bold">🔥 Pantalla de Cocina (KDS)</h1>
+    <a routerLink="/login" class="text-sm underline hover:text-red-200">Turno Finalizado</a>
+  </nav>
+
+  <!-- Kanban Board (HU-14) -->
+  <div class="flex-1 p-6 grid grid-cols-1 md:grid-cols-3 gap-6 overflow-hidden">
+    
+    <!-- Columna 1: En Cola -->
+    <div class="bg-gray-800 rounded-2xl flex flex-col border border-gray-700">
+      <div class="p-4 border-b border-gray-700 font-bold text-gray-300">📋 EN COLA (Pagados)</div>
+      <div class="flex-1 p-4 overflow-y-auto space-y-4">
+        <!-- Tarjeta Pedido -->
+        <div class="bg-white p-4 rounded-xl shadow-lg border-l-4 border-blue-500">
+          <div class="flex justify-between font-bold text-gray-800 mb-2"><span>#ORD-1234</span> <span class="text-sm text-gray-500">12:30 PM</span></div>
+          <ul class="text-sm text-gray-600 mb-4 font-mono">
+            <li>2x Hamburguesa</li>
+            <li class="text-red-500 font-bold">- SIN CEBOLLA</li>
+          </ul>
+          <button class="w-full bg-blue-100 text-blue-700 py-2 rounded-lg font-bold hover:bg-blue-600 hover:text-white">Preparar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Columna 2: En Preparación -->
+    <div class="bg-gray-800 rounded-2xl flex flex-col border border-gray-700">
+      <div class="p-4 border-b border-gray-700 font-bold text-yellow-500">🍳 EN PREPARACIÓN</div>
+      <div class="flex-1 p-4 overflow-y-auto space-y-4"></div>
+    </div>
+
+    <!-- Columna 3: Listos -->
+    <div class="bg-gray-800 rounded-2xl flex flex-col border border-gray-700">
+      <div class="p-4 border-b border-gray-700 font-bold text-green-500">✅ LISTOS PARA ENTREGA</div>
+      <div class="flex-1 p-4 overflow-y-auto space-y-4"></div>
+    </div>
+
+  </div>
+</div>

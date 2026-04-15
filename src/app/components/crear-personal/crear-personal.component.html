@@ -1,0 +1,62 @@
+<div class="min-h-screen bg-slate-100 p-6 flex justify-center items-center">
+  <div class="max-w-3xl w-full bg-white shadow-2xl rounded-3xl p-8 animate-in fade-in duration-300">
+    <h2 class="text-3xl font-black text-gray-800 mb-6 border-b pb-4">Crear Cuenta para Personal</h2>
+
+    <form (ngSubmit)="crearCuenta()" class="space-y-6">
+      
+      <!-- HU-20 Criterio 3: Botones de Rol -->
+      <div>
+        <label class="block text-sm font-bold text-gray-500 uppercase mb-3">1. Selecciona el Rol</label>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button type="button" (click)="seleccionarRol('CAJERO')" 
+                  [ngClass]="empleado.role === 'CAJERO' ? 'bg-indigo-600 text-white ring-4 ring-indigo-200 shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'" 
+                  class="p-4 rounded-2xl font-bold transition-all">CAJERO</button>
+          <button type="button" (click)="seleccionarRol('COCINERO')" 
+                  [ngClass]="empleado.role === 'COCINERO' ? 'bg-orange-500 text-white ring-4 ring-orange-200 shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'" 
+                  class="p-4 rounded-2xl font-bold transition-all">COCINERO</button>
+          <button type="button" (click)="seleccionarRol('REPARTIDOR')" 
+                  [ngClass]="empleado.role === 'REPARTIDOR' ? 'bg-emerald-600 text-white ring-4 ring-emerald-200 shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'" 
+                  class="p-4 rounded-2xl font-bold transition-all">REPARTIDOR</button>
+        </div>
+      </div>
+
+      <!-- HU-20 Criterio 4: Campos -->
+      <div class="pt-6 border-t">
+        <label class="block text-sm font-bold text-gray-500 uppercase mb-4">2. Datos Personales</label>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input type="text" [(ngModel)]="empleado.nombres" name="n" placeholder="Nombres" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-400">
+          <input type="text" [(ngModel)]="empleado.apellidos" name="a" placeholder="Apellidos" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-400">
+          <input type="text" (input)="empleado.dni = soloNumeros($event, 8)" [value]="empleado.dni" name="dni" placeholder="DNI (8 dígitos)" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-400">
+          <input type="text" (input)="empleado.phone = soloNumeros($event, 9)" [value]="empleado.phone" name="tel" placeholder="Teléfono (9 dígitos)" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-400">
+          <input type="email" [(ngModel)]="empleado.email" name="em" placeholder="Correo electrónico del empleado" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 md:col-span-2">
+          <input type="text" [(ngModel)]="empleado.address" name="dir" placeholder="Dirección de residencia" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 md:col-span-2">
+        </div>
+      </div>
+
+      <button type="submit" [disabled]="cargando" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold shadow-xl hover:bg-black active:scale-95 transition-all flex justify-center items-center gap-3 mt-4 disabled:opacity-70">
+        <span *ngIf="cargando" class="animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
+        {{ cargando ? 'Registrando empleado...' : 'Crear Empleado' }}
+      </button>
+      
+      <div class="text-center mt-6">
+        <a routerLink="/gestion-administrador" class="text-sm font-semibold text-indigo-600 hover:underline">← Volver al panel de control</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- MODAL UNIVERSAL -->
+  <div *ngIf="modal.visible" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center animate-in zoom-in duration-200">
+      <div [ngClass]="modal.tipo === 'error' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'" class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6 text-3xl font-bold">
+        {{ modal.tipo === 'error' ? '!' : '✓' }}
+      </div>
+      <h3 class="text-xl font-black text-gray-900 mb-2">{{ modal.titulo }}</h3>
+      <p class="text-gray-500 mb-8 text-sm">{{ modal.mensaje }}</p>
+      
+      <button (click)="cerrarModal()" class="w-full py-4 rounded-2xl font-bold text-white transition-all shadow-lg active:scale-95" 
+              [ngClass]="modal.tipo === 'error' ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'">
+        Entendido
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,30 @@
+<div class="min-h-screen bg-slate-50 flex justify-center">
+  <!-- Simulación de pantalla de celular -->
+  <div class="w-full max-w-md bg-white shadow-2xl min-h-screen flex flex-col relative">
+    
+    <div class="bg-emerald-600 p-6 text-white text-center rounded-b-3xl shadow-md">
+      <h1 class="text-2xl font-black">🛵 Delivery</h1>
+      <p class="text-emerald-200 text-sm">Órdenes listas para recoger</p>
+    </div>
+
+    <div class="flex-1 p-4 overflow-y-auto bg-slate-50">
+      <!-- Lista de pedidos (HU-15) -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
+        <div class="flex justify-between items-center mb-2">
+          <span class="font-bold text-gray-800">#ORD-1234</span>
+          <span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-full font-bold">Listo en cocina</span>
+        </div>
+        <p class="text-sm text-gray-500 mb-4">📍 Av. Principal 123, Ciudad</p>
+        <button class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-md hover:bg-emerald-700 transition">Asumir Orden</button>
+      </div>
+    </div>
+
+    <!-- Pestañas Inferiores (Bottom Nav) -->
+    <div class="bg-white border-t border-gray-200 p-4 flex justify-between text-xs font-bold text-gray-400">
+      <button class="flex flex-col items-center text-emerald-600"><span>📦</span>Órdenes</button>
+      <button class="flex flex-col items-center hover:text-emerald-600 transition"><span>✋</span>Asumidos</button>
+      <button class="flex flex-col items-center hover:text-emerald-600 transition"><span>🛵</span>En Camino</button>
+      <a routerLink="/login" class="flex flex-col items-center hover:text-red-500 transition"><span>🚪</span>Salir</a>
+    </div>
+  </div>
+</div>

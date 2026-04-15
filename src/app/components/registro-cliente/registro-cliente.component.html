@@ -1,0 +1,180 @@
+<div class="min-h-screen bg-orange-50 flex items-center justify-center p-4">
+  <div
+    class="max-w-md w-full bg-white shadow-2xl rounded-3xl overflow-hidden border border-orange-100 animate-in fade-in duration-500"
+  >
+    <!-- Banner de Bienvenida -->
+    <div class="bg-orange-500 p-8 text-white text-center">
+      <h2 class="text-3xl font-black italic tracking-tighter">Restaiuranteboard</h2>
+      <p class="text-sm opacity-90 mt-1 font-medium">Únete y disfruta del mejor sabor</p>
+    </div>
+
+    <!-- PASO 1: FORMULARIO DE DATOS -->
+    <form class="p-8 space-y-4" (ngSubmit)="enviarCodigo()" *ngIf="paso === 1">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">Crear mi cuenta</h3>
+
+      <input
+        type="text"
+        [(ngModel)]="usuario.fullName"
+        name="fn"
+        placeholder="Nombre completo"
+        class="w-full p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 transition-all shadow-sm"
+      />
+
+      <div class="grid grid-cols-2 gap-3">
+        <input
+          type="text"
+          (input)="usuario.dni = soloNumeros($event, 8)"
+          [value]="usuario.dni"
+          name="dni"
+          placeholder="DNI"
+          class="p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 shadow-sm"
+        />
+        <input
+          type="text"
+          (input)="usuario.phone = soloNumeros($event, 9)"
+          [value]="usuario.phone"
+          name="tel"
+          placeholder="Celular"
+          class="p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 shadow-sm"
+        />
+      </div>
+
+      <input
+        type="email"
+        [(ngModel)]="usuario.email"
+        name="em"
+        placeholder="Correo electrónico"
+        class="w-full p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 shadow-sm"
+      />
+      <input
+        type="text"
+        [(ngModel)]="usuario.address"
+        name="dir"
+        placeholder="Dirección de entrega"
+        class="w-full p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 shadow-sm"
+      />
+
+      <div class="relative">
+        <input
+          [type]="verPass ? 'text' : 'password'"
+          [(ngModel)]="usuario.password"
+          name="pw"
+          placeholder="Contraseña segura"
+          class="w-full p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 shadow-sm"
+        />
+        <button
+          type="button"
+          (click)="verPass = !verPass"
+          class="absolute right-4 top-3.5 opacity-30 hover:opacity-100 transition"
+        >
+          {{ verPass ? '👁️' : '🙈' }}
+        </button>
+      </div>
+
+      <input
+        type="password"
+        [(ngModel)]="confirmarPassword"
+        name="cpw"
+        placeholder="Confirmar contraseña"
+        class="w-full p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 shadow-sm"
+      />
+
+      <div class="flex items-center space-x-2 text-xs py-2">
+        <input
+          type="checkbox"
+          [(ngModel)]="aceptoTerminos"
+          name="t"
+          id="t"
+          class="accent-orange-500 h-4 w-4"
+        />
+        <label for="t" class="text-gray-500 cursor-pointer"
+          >Acepto los términos y condiciones de uso.</label
+        >
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="!aceptoTerminos || cargando"
+        [ngClass]="cargando ? 'bg-gray-300' : 'bg-orange-500 hover:bg-orange-600'"
+        class="w-full text-white py-4 rounded-2xl font-bold transition-all flex justify-center items-center gap-2 shadow-lg shadow-orange-100"
+      >
+        <span
+          *ngIf="cargando"
+          class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
+        ></span>
+        {{ cargando ? 'Procesando...' : 'Registrarme ahora' }}
+      </button>
+
+      <p class="text-center text-xs text-gray-400 mt-4">
+        ¿Ya eres parte?
+        <a routerLink="/login" class="text-orange-600 font-bold hover:underline">Inicia sesión</a>
+      </p>
+    </form>
+
+    <!-- PASO 2: VERIFICACIÓN OTP -->
+    <div class="p-10 text-center space-y-6" *ngIf="paso === 2">
+      <div
+        class="bg-orange-100 h-24 w-24 rounded-full flex items-center justify-center mx-auto animate-bounce"
+      >
+        <span class="text-4xl">📩</span>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-800">Casi listo...</h3>
+      <p class="text-sm text-gray-500 px-4">
+        Ingresa el código enviado a<br /><span class="font-bold text-gray-700">{{
+          usuario.email
+        }}</span>
+      </p>
+
+      <input
+        type="text"
+        (input)="codigoVerificacion = soloNumeros($event, 6)"
+        [value]="codigoVerificacion"
+        class="text-5xl text-center tracking-[0.4em] font-mono border-b-4 border-orange-500 w-full outline-none py-3 bg-transparent text-gray-800"
+        placeholder="000000"
+      />
+
+      <button
+        (click)="registrarFinal()"
+        [disabled]="cargando"
+        class="w-full bg-orange-600 text-white py-4 rounded-2xl font-bold hover:bg-orange-700 shadow-xl transition-all"
+      >
+        {{ cargando ? 'Validando...' : 'Finalizar Registro' }}
+      </button>
+      <button (click)="paso = 1" class="text-xs text-gray-400 underline hover:text-orange-600">
+        Volver a mis datos
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL DINÁMICO (TAILWIND) -->
+  <div
+    *ngIf="modal.visible"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+  >
+    <div
+      class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center animate-in zoom-in duration-200"
+    >
+      <div
+        [ngClass]="modal.esError ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'"
+        class="mx-auto flex items-center justify-center h-20 w-20 rounded-full mb-6 text-4xl font-bold"
+      >
+        {{ modal.esError ? '!' : '✓' }}
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900 mb-3">{{ modal.titulo }}</h3>
+      <p class="text-gray-500 mb-8 text-sm leading-relaxed">{{ modal.mensaje }}</p>
+      <button
+        (click)="cerrarModal()"
+        class="w-full py-4 rounded-2xl font-bold text-white transition-all shadow-lg"
+        [ngClass]="
+          modal.esExpirado
+            ? 'bg-amber-500 hover:bg-amber-600'
+            : modal.esError
+              ? 'bg-red-600 hover:bg-red-700'
+              : 'bg-indigo-600 hover:bg-indigo-700'
+        "
+      >
+        {{ modal.esExpirado ? 'Reenviar Código' : 'Entendido' }}
+      </button>
+    </div>
+  </div>
+</div>

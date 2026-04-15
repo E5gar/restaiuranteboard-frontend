@@ -1,0 +1,189 @@
+<div class="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+  <div
+    class="max-w-md w-full bg-white shadow-2xl rounded-3xl p-10 border border-gray-100 animate-in fade-in duration-300"
+  >
+    <div class="text-center mb-8">
+      <div
+        class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+      >
+        <span class="text-2xl">🔐</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-800">Activa tu cuenta</h1>
+      <p class="text-gray-500 text-sm mt-2">Configura tu contraseña segura.</p>
+    </div>
+
+    <!-- PASO 1: ENVIAR CÓDIGO AL CORREO -->
+    <form (ngSubmit)="enviarCodigo()" *ngIf="paso === 1" class="space-y-6">
+      <div class="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm font-medium text-center">
+        Verificaremos tu correo <strong>{{ email }}</strong> antes de continuar.
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="cargando"
+        class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 active:scale-95 flex justify-center gap-2"
+      >
+        <span
+          *ngIf="cargando"
+          class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
+        ></span>
+        {{ cargando ? 'Enviando...' : 'Enviar código de seguridad' }}
+      </button>
+    </form>
+
+    <!-- PASO 2: CÓDIGO + CLAVE -->
+    <form (ngSubmit)="confirmarYCrearClave()" *ngIf="paso === 2" class="space-y-4">
+      <div class="bg-indigo-50 p-4 rounded-2xl mb-4">
+        <p class="text-xs text-center text-indigo-800 font-bold mb-2">CÓDIGO DE 6 DÍGITOS</p>
+        <input
+          type="text"
+          (input)="codigoVerificacion = soloNumeros($event, 6)"
+          [value]="codigoVerificacion"
+          class="w-full p-3 text-center text-3xl tracking-[0.5em] font-mono bg-white border border-indigo-200 rounded-xl outline-none"
+          placeholder="000000"
+          required
+        />
+      </div>
+
+      <div class="relative">
+        <input
+          [type]="verPass ? 'text' : 'password'"
+          [(ngModel)]="nuevaPassword"
+          name="npw"
+          placeholder="Nueva Contraseña"
+          class="w-full p-4 bg-gray-50 rounded-xl outline-none"
+          required
+        />
+        <button
+          type="button"
+          (click)="verPass = !verPass"
+          class="absolute right-4 top-4 opacity-40"
+        >
+          {{ verPass ? '👁️' : '🙈' }}
+        </button>
+      </div>
+
+      <div class="relative">
+        <input
+          [type]="verConfirmarPass ? 'text' : 'password'"
+          [(ngModel)]="confirmarPassword"
+          name="cpw"
+          placeholder="Confirmar Contraseña"
+          class="w-full p-4 bg-gray-50 rounded-xl outline-none"
+          required
+        />
+        <button
+          type="button"
+          (click)="verConfirmarPass = !verConfirmarPass"
+          class="absolute right-4 top-4 opacity-40"
+        >
+          {{ verConfirmarPass ? '👁️' : '🙈' }}
+        </button>
+      </div>
+
+      <!-- Checklist de Seguridad -->
+      <div class="text-[10px] grid grid-cols-2 gap-1 text-gray-500 px-2">
+        <span [class.text-green-600]="nuevaPassword.length >= 8">● 8+ Caracteres</span>
+        <span [class.text-green-600]="/[A-Z]/.test(nuevaPassword)">● Mayúscula</span>
+        <span [class.text-green-600]="/[a-z]/.test(nuevaPassword)">● Minúscula</span>
+        <span [class.text-green-600]="/[@!¡¿?#$%/&]/.test(nuevaPassword)">● Especial</span>
+      </div>
+
+      <div class="flex items-center space-x-2 py-2">
+        <input
+          type="checkbox"
+          [checked]="aceptoTerminos"
+          (click)="mostrarTerminos(); $event.preventDefault()"
+          class="h-4 w-4"
+        />
+        <label class="text-xs text-gray-600 cursor-pointer" (click)="mostrarTerminos()"
+          >Acepto los
+          <span class="underline font-bold text-indigo-600">términos de uso</span>.</label
+        >
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="cargando || !aceptoTerminos"
+        class="w-full bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-green-700 disabled:bg-gray-400 flex justify-center gap-2"
+      >
+        <span
+          *ngIf="cargando"
+          class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
+        ></span>
+        {{ cargando ? 'Activando...' : 'Activar Cuenta' }}
+      </button>
+    </form>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL UNIVERSAL                            -->
+  <!-- ========================================== -->
+  <div
+    *ngIf="modal.visible"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+  >
+    <div
+      class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center animate-in zoom-in duration-200"
+    >
+      <!-- Íconos según el tipo -->
+      <div
+        *ngIf="modal.tipo === 'error'"
+        class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 text-3xl font-bold bg-red-100 text-red-600"
+      >
+        !
+      </div>
+      <div
+        *ngIf="modal.tipo === 'exito'"
+        class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 text-3xl font-bold bg-green-100 text-green-600"
+      >
+        ✓
+      </div>
+      <div
+        *ngIf="modal.tipo === 'terminos'"
+        class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 text-3xl bg-blue-100 text-blue-600"
+      >
+        📄
+      </div>
+
+      <h3 class="text-xl font-bold mb-2">{{ modal.titulo }}</h3>
+
+      <!-- Mensaje scrolleable para términos largos -->
+      <div class="text-gray-500 mb-6 text-sm max-h-40 overflow-y-auto px-2">
+        {{ modal.mensaje }}
+      </div>
+
+      <!-- Botones Condicionales -->
+      <div *ngIf="modal.tipo === 'terminos'" class="flex gap-4">
+        <button
+          (click)="rechazarTerminos()"
+          class="w-1/2 py-3 rounded-xl font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 transition"
+        >
+          No Acepto
+        </button>
+        <button
+          (click)="aceptarTerminos()"
+          class="w-1/2 py-3 rounded-xl font-bold text-white bg-green-600 hover:bg-green-700 shadow-md transition"
+        >
+          Acepto
+        </button>
+      </div>
+
+      <div *ngIf="modal.tipo !== 'terminos'">
+        <button
+          (click)="cerrarModal()"
+          class="w-full py-3 rounded-xl font-bold text-white transition-all shadow-md flex justify-center items-center gap-2"
+          [ngClass]="
+            modal.esExpirado
+              ? 'bg-amber-500 hover:bg-amber-600'
+              : modal.tipo === 'error'
+                ? 'bg-red-600 hover:bg-red-700'
+                : 'bg-indigo-600 hover:bg-indigo-700'
+          "
+        >
+          {{ modal.esExpirado ? 'Reenviar Código' : 'Entendido' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

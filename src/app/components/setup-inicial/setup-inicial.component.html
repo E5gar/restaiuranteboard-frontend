@@ -1,0 +1,206 @@
+<div class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+  <!-- Contenedor del Formulario (Igual al anterior) -->
+  <div
+    class="max-w-2xl w-full bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200"
+  >
+    <div class="bg-indigo-700 p-8 text-white">
+      <h2 class="text-3xl font-extrabold">Configuración del Sistema</h2>
+      <div class="flex mt-4 items-center space-x-2 text-sm opacity-80">
+        <span [class.font-bold]="paso === 1" [class.underline]="paso === 1">1. SMTP Google</span>
+        <span>→</span>
+        <span [class.font-bold]="paso === 2" [class.underline]="paso === 2"
+          >2. Datos del Negocio</span
+        >
+      </div>
+    </div>
+
+    <!-- FORM PASO 1 -->
+    <form class="p-8 space-y-6" (ngSubmit)="enviarCodigo()" *ngIf="paso === 1">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-gray-700">Email SMTP (Gmail)</label>
+          <input
+            type="email"
+            [(ngModel)]="config.emailSmtp"
+            name="email"
+            class="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+            required
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700"
+            >Contraseña de Aplicación (16 dígitos)</label
+          >
+          <input
+            type="password"
+            [(ngModel)]="config.passwordSmtp"
+            name="pass"
+            class="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+            required
+          />
+        </div>
+      </div>
+      <button
+        type="submit"
+        [disabled]="cargando"
+        [ngClass]="
+          cargando ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
+        "
+        class="w-full text-white py-3 rounded-xl font-bold transition flex justify-center items-center gap-2"
+      >
+        <span
+          *ngIf="cargando"
+          class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
+        ></span>
+        {{ cargando ? 'Enviando...' : 'Verificar y Enviar Código' }}
+      </button>
+    </form>
+
+    <!-- PASO 2: FORMULARIO -->
+    <form class="p-8 space-y-6" (ngSubmit)="finalizarConfiguracion()" *ngIf="paso === 2">
+      <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
+        <p class="text-amber-800 text-sm text-center">Código enviado. Expira en 1 minuto.</p>
+        <!-- Validación de números y longitud -->
+        <input
+          type="text"
+          (input)="codigoVerificacion = soloNumeros($event, 6)"
+          [value]="codigoVerificacion"
+          class="w-full mt-2 p-3 text-center text-3xl tracking-[0.5em] font-mono border-2 border-amber-300 rounded-lg outline-none"
+          placeholder="000000"
+        />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input
+          type="text"
+          [(ngModel)]="config.nombreNegocio"
+          name="n"
+          placeholder="Nombre Negocio"
+          class="p-3 border rounded-lg md:col-span-2 shadow-sm"
+        />
+
+        <!-- Teléfono solo números -->
+        <input
+          type="text"
+          (input)="config.telefonoNegocio = soloNumeros($event, 9)"
+          [value]="config.telefonoNegocio"
+          placeholder="Teléfono (9xx xxx xxx)"
+          class="p-3 border rounded-lg shadow-sm"
+        />
+
+        <!-- Input de archivo para Logo -->
+        <div class="flex flex-col">
+          <label class="text-[10px] text-gray-400 uppercase font-bold px-1"
+            >Logo del negocio (JPG/PNG)</label
+          >
+          <input
+            type="file"
+            (change)="onFileSelected($event)"
+            accept="image/jpeg,image/png"
+            class="text-xs p-2 border rounded-lg"
+          />
+        </div>
+      </div>
+
+      <textarea
+        [(ngModel)]="config.terminosCondiciones"
+        name="tc"
+        class="w-full p-3 border rounded-lg h-24 resize-none"
+        placeholder="Términos y condiciones..."
+      ></textarea>
+
+      <button
+        type="submit"
+        [disabled]="cargando"
+        [ngClass]="cargando ? 'bg-emerald-400' : 'bg-emerald-600'"
+        class="w-full text-white py-3 rounded-xl font-bold flex justify-center items-center gap-2 transition-all"
+      >
+        <span
+          *ngIf="cargando"
+          class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
+        ></span>
+        {{ cargando ? 'Guardando...' : 'Guardar Información' }}
+      </button>
+    </form>
+
+    <!-- MODAL DINÁMICO MEJORADO -->
+    <div
+      *ngIf="modal.visible"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center animate-in fade-in zoom-in duration-300"
+      >
+        <div
+          [ngClass]="modal.esError ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'"
+          class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4"
+        >
+          <span class="text-3xl font-bold">{{ modal.esError ? '!' : '✓' }}</span>
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-900 mb-2">{{ modal.titulo }}</h3>
+        <p class="text-gray-500 mb-6 text-sm">{{ modal.mensaje }}</p>
+
+        <button
+          (click)="cerrarModal()"
+          [disabled]="cargando"
+          [ngClass]="
+            modal.esExpirado
+              ? 'bg-orange-500 hover:bg-orange-600'
+              : modal.esError
+                ? 'bg-red-600'
+                : 'bg-indigo-600'
+          "
+          class="w-full text-white font-bold py-3 rounded-xl transition flex justify-center items-center gap-2"
+        >
+          <span
+            *ngIf="cargando"
+            class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
+          ></span>
+          {{ modal.esExpirado ? 'Reenviar Código' : 'Entendido' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL DINÁMICO (TAILWIND) -->
+    <!-- ========================================== -->
+    <div
+      *ngIf="modal.visible"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+    >
+      <div
+        class="bg-white rounded-2xl shadow-2xl max-w-sm w-full transform transition-all scale-110"
+      >
+        <div class="p-6 text-center">
+          <!-- Icono Condicional -->
+          <div
+            *ngIf="modal.esError"
+            class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4"
+          >
+            <span class="text-red-600 text-3xl font-bold">!</span>
+          </div>
+          <div
+            *ngIf="!modal.esError"
+            class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4"
+          >
+            <span class="text-green-600 text-3xl font-bold">✓</span>
+          </div>
+
+          <h3 class="text-xl font-bold text-gray-900 mb-2">{{ modal.titulo }}</h3>
+          <p class="text-gray-500 mb-6">{{ modal.mensaje }}</p>
+
+          <button
+            (click)="cerrarModal()"
+            [ngClass]="
+              modal.esError ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'
+            "
+            class="w-full text-white font-bold py-3 rounded-xl transition duration-200"
+          >
+            Entendido
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
