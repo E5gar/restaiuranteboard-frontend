@@ -33,6 +33,6 @@ export class LogoutButtonComponent {
 
   cerrarSesion(): void {
     this.auth.clearSession();
-    void this.router.navigate(['/login']);
+    void this.router.navigate(['/presentacion']);
   }
 }

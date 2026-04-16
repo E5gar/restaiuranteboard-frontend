@@ -349,7 +349,7 @@ export class SetupInicialComponent implements OnInit {
         this.codigoVerificacion = '';
         this.smtpPasswordConfigured = true;
         this.abrirModal('Éxito', 'Configuración guardada correctamente.', false);
-        setTimeout(() => void this.router.navigate(['/gestion-administrador']), 1800);
+        setTimeout(() => void this.router.navigate(['/presentacion']), 1800);
       },
       error: (err: { error?: { message?: string } }) => {
         this.cargando = false;
