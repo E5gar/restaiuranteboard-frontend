@@ -3,16 +3,27 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
+import { LogoutButtonComponent } from '../logout-button/logout-button';
+import {
+  bloquearTeclasNoNumericas,
+  errorCodigo6,
+  errorDni8,
+  errorEmailHistoriaUsuario,
+  errorPasswordHistoria,
+  errorTelefono9,
+  extraerNombreApellidoDeFullName,
+  filtrarSoloDigitos,
+} from '../../utils/form-validators';
 
 @Component({
   selector: 'app-registro-cliente',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './registro-cliente.component.html', // <-- OJO CON ESTA LÍNEA
+  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent],
+  templateUrl: './registro-cliente.component.html',
 })
 export class RegistroClienteComponent {
   paso = 1;
-  verPass = false;
+  mostrarPassword = false;
   aceptoTerminos = false;
   cargando = false;
   confirmarPassword = '';
@@ -34,32 +45,55 @@ export class RegistroClienteComponent {
     private router: Router,
   ) {}
 
-  soloNumeros(event: any, max: number) {
-    const val = event.target.value.replace(/[^0-9]/g, '');
-    return val.substring(0, max);
+  soloNumeros(event: Event, max: number) {
+    return filtrarSoloDigitos(event, max);
   }
 
-  validarPassword(): { valido: boolean; error?: string } {
-    const p = this.usuario.password;
-    const nombre = this.usuario.fullName.toLowerCase();
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@!¡¿?#$%/&])[A-Za-z\d@!¡¿?#$%/&]{8,}$/;
+  bloquearNoNumerico(event: KeyboardEvent) {
+    bloquearTeclasNoNumericas(event);
+  }
 
-    if (!regex.test(p))
-      return {
-        valido: false,
-        error: 'La clave requiere: 8+ caracteres, Mayúscula, Minúscula, Número y Símbolo.',
-      };
-    if (nombre && p.toLowerCase().includes(nombre.split(' ')[0]))
-      return { valido: false, error: 'La clave no puede contener tu nombre.' };
-    if (p !== this.confirmarPassword)
-      return { valido: false, error: 'Las contraseñas no coinciden.' };
-    return { valido: true };
+  validarFormulario(): string | null {
+    if (!this.usuario.fullName.trim()) {
+      return 'Los nombres y apellidos no pueden quedar en blanco.';
+    }
+    const partes = this.usuario.fullName.trim().split(/\s+/).filter(Boolean);
+    if (partes.length < 2) {
+      return 'Ingresa nombres y apellidos (al menos dos palabras).';
+    }
+    if (!this.usuario.address.trim()) {
+      return 'La dirección no puede quedar en blanco.';
+    }
+
+    const dniErr = errorDni8(this.usuario.dni);
+    if (dniErr) return dniErr;
+
+    const telErr = errorTelefono9(this.usuario.phone);
+    if (telErr) return telErr;
+
+    const emailErr = errorEmailHistoriaUsuario(this.usuario.email);
+    if (emailErr) return emailErr;
+
+    const { nombre, apellido } = extraerNombreApellidoDeFullName(this.usuario.fullName);
+    const pwdErr = errorPasswordHistoria(
+      this.usuario.password,
+      this.confirmarPassword,
+      nombre,
+      apellido,
+    );
+    if (pwdErr) return pwdErr;
+
+    if (!this.aceptoTerminos) {
+      return 'Debes aceptar los términos y condiciones de uso.';
+    }
+
+    return null;
   }
 
   enviarCodigo() {
-    const validacion = this.validarPassword();
-    if (!validacion.valido) {
-      this.abrirModal('Validación', validacion.error!, true);
+    const err = this.validarFormulario();
+    if (err) {
+      this.abrirModal('Validación', err, true);
       return;
     }
 
@@ -84,6 +118,12 @@ export class RegistroClienteComponent {
   }
 
   registrarFinal() {
+    const codErr = errorCodigo6(this.codigoVerificacion);
+    if (codErr) {
+      this.abrirModal('Error', codErr, true);
+      return;
+    }
+
     this.cargando = true;
     const payload = { ...this.usuario, codigo: this.codigoVerificacion };
 

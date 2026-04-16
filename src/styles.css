@@ -1,3 +1,139 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import 'tailwindcss';
+
+@theme {
+  --color-primary: #ff7a00;
+  --color-secondary: #1e3a8a;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-neutral-muted: #9ca3af;
+  --color-neutral-strong: #4b5563;
+}
+
+body {
+  color: #111827;
+}
+
+@layer components {
+  .rb-page {
+    @apply min-h-screen bg-white text-gray-900 antialiased;
+  }
+
+  .rb-page-center {
+    @apply min-h-screen bg-white flex items-center justify-center px-4 py-12 sm:py-16;
+  }
+
+  .rb-container {
+    @apply mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10;
+  }
+
+  .rb-container-tight {
+    @apply mx-auto w-full max-w-7xl px-4 py-6 sm:px-6;
+  }
+
+  .rb-shell-sm {
+    @apply w-full max-w-md;
+  }
+  .rb-shell-md {
+    @apply w-full max-w-2xl;
+  }
+  .rb-shell-lg {
+    @apply w-full max-w-4xl;
+  }
+
+  .rb-card {
+    @apply rounded-2xl border border-gray-200/90 bg-white shadow-sm;
+  }
+
+  .rb-card-pad {
+    @apply p-8 sm:p-9;
+  }
+
+  .rb-section {
+    @apply rounded-2xl border border-gray-200/90 bg-white p-6 shadow-sm sm:p-8;
+  }
+
+  .rb-section-muted {
+    @apply rounded-2xl border border-gray-200 bg-gray-50/80 p-6 sm:p-8;
+  }
+
+  .rb-heading {
+    @apply text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl;
+  }
+
+  .rb-heading-accent {
+    @apply text-lg font-semibold tracking-tight text-secondary sm:text-xl;
+  }
+
+  .rb-kicker {
+    @apply text-sm text-neutral-strong;
+  }
+
+  .rb-label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-neutral-strong;
+  }
+
+  .rb-input {
+    @apply w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition;
+  }
+
+  .rb-focus-primary {
+    @apply focus:border-primary/40 focus:ring-2 focus:ring-primary/10;
+  }
+
+  .rb-focus-secondary {
+    @apply focus:border-secondary/40 focus:ring-2 focus:ring-secondary/10;
+  }
+
+  .rb-btn-primary {
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-45;
+  }
+
+  .rb-btn-secondary {
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-45;
+  }
+
+  .rb-btn-success {
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl bg-success px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-45;
+  }
+
+  .rb-btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-danger px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-45;
+  }
+
+  .rb-btn-neutral {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm font-semibold text-neutral-strong shadow-sm transition hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-45;
+  }
+
+  .rb-btn-sm {
+    @apply rounded-lg px-3 py-2 text-xs font-semibold;
+  }
+
+  .rb-nav {
+    @apply flex items-center justify-between border-b border-black/5 px-4 py-3.5 sm:px-6;
+  }
+
+  .rb-nav-title {
+    @apply text-base font-semibold tracking-tight;
+  }
+
+  .rb-nav-link {
+    @apply text-sm text-white/90 underline-offset-4 transition hover:text-white hover:underline;
+  }
+
+  .rb-modal-backdrop {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px];
+  }
+
+  .rb-modal {
+    @apply w-full max-w-md rounded-2xl border border-gray-200/90 bg-white p-8 text-center shadow-sm sm:p-9;
+  }
+
+  .rb-modal-icon {
+    @apply mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full text-2xl font-semibold;
+  }
+
+  .rb-divider {
+    @apply border-t border-gray-200;
+  }
+}

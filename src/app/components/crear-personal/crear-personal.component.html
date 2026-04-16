@@ -1,60 +1,169 @@
-<div class="min-h-screen bg-slate-100 p-6 flex justify-center items-center">
-  <div class="max-w-3xl w-full bg-white shadow-2xl rounded-3xl p-8 animate-in fade-in duration-300">
-    <h2 class="text-3xl font-black text-gray-800 mb-6 border-b pb-4">Crear Cuenta para Personal</h2>
-
-    <form (ngSubmit)="crearCuenta()" class="space-y-6">
-      
-      <!-- HU-20 Criterio 3: Botones de Rol -->
-      <div>
-        <label class="block text-sm font-bold text-gray-500 uppercase mb-3">1. Selecciona el Rol</label>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button type="button" (click)="seleccionarRol('CAJERO')" 
-                  [ngClass]="empleado.role === 'CAJERO' ? 'bg-indigo-600 text-white ring-4 ring-indigo-200 shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'" 
-                  class="p-4 rounded-2xl font-bold transition-all">CAJERO</button>
-          <button type="button" (click)="seleccionarRol('COCINERO')" 
-                  [ngClass]="empleado.role === 'COCINERO' ? 'bg-orange-500 text-white ring-4 ring-orange-200 shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'" 
-                  class="p-4 rounded-2xl font-bold transition-all">COCINERO</button>
-          <button type="button" (click)="seleccionarRol('REPARTIDOR')" 
-                  [ngClass]="empleado.role === 'REPARTIDOR' ? 'bg-emerald-600 text-white ring-4 ring-emerald-200 shadow-lg' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'" 
-                  class="p-4 rounded-2xl font-bold transition-all">REPARTIDOR</button>
+<div class="rb-page">
+  <div class="rb-container-tight mx-auto max-w-7xl">
+    <div class="rb-card overflow-hidden">
+      <div class="border-b border-white/10 bg-secondary px-6 py-7 text-white sm:px-8">
+        <div class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <h2 class="text-xl font-semibold tracking-tight sm:text-2xl">
+              Crear Cuenta para Personal
+            </h2>
+            <p class="mt-2 max-w-2xl text-sm text-white/80">
+              Da de alta a nuevos cajeros, cocineros y repartidores en el sistema.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <a
+              routerLink="/gestion-administrador"
+              class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+              >Volver al Panel</a
+            >
+            <app-logout-button variant="on-dark" />
+          </div>
         </div>
       </div>
 
-      <!-- HU-20 Criterio 4: Campos -->
-      <div class="pt-6 border-t">
-        <label class="block text-sm font-bold text-gray-500 uppercase mb-4">2. Datos Personales</label>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input type="text" [(ngModel)]="empleado.nombres" name="n" placeholder="Nombres" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-400">
-          <input type="text" [(ngModel)]="empleado.apellidos" name="a" placeholder="Apellidos" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-400">
-          <input type="text" (input)="empleado.dni = soloNumeros($event, 8)" [value]="empleado.dni" name="dni" placeholder="DNI (8 dígitos)" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-400">
-          <input type="text" (input)="empleado.phone = soloNumeros($event, 9)" [value]="empleado.phone" name="tel" placeholder="Teléfono (9 dígitos)" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-400">
-          <input type="email" [(ngModel)]="empleado.email" name="em" placeholder="Correo electrónico del empleado" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 md:col-span-2">
-          <input type="text" [(ngModel)]="empleado.address" name="dir" placeholder="Dirección de residencia" class="w-full p-4 bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 md:col-span-2">
+      <form (ngSubmit)="crearCuenta()" class="space-y-8 p-6 sm:p-8">
+        <div>
+          <label class="rb-label !normal-case">1. Selecciona el Rol</label>
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <button
+              type="button"
+              (click)="seleccionarRol('CAJERO')"
+              [ngClass]="
+                empleado.role === 'CAJERO'
+                  ? 'border-secondary bg-secondary text-white ring-2 ring-secondary/20'
+                  : 'border-gray-200 bg-gray-50 text-neutral-strong hover:bg-gray-100'
+              "
+              class="rounded-xl border p-4 text-sm font-semibold transition"
+            >
+              CAJERO
+            </button>
+            <button
+              type="button"
+              (click)="seleccionarRol('COCINERO')"
+              [ngClass]="
+                empleado.role === 'COCINERO'
+                  ? 'border-primary bg-primary text-white ring-2 ring-primary/25'
+                  : 'border-gray-200 bg-gray-50 text-neutral-strong hover:bg-gray-100'
+              "
+              class="rounded-xl border p-4 text-sm font-semibold transition"
+            >
+              COCINERO
+            </button>
+            <button
+              type="button"
+              (click)="seleccionarRol('REPARTIDOR')"
+              [ngClass]="
+                empleado.role === 'REPARTIDOR'
+                  ? 'border-success bg-success text-white ring-2 ring-success/25'
+                  : 'border-gray-200 bg-gray-50 text-neutral-strong hover:bg-gray-100'
+              "
+              class="rounded-xl border p-4 text-sm font-semibold transition"
+            >
+              REPARTIDOR
+            </button>
+          </div>
         </div>
-      </div>
 
-      <button type="submit" [disabled]="cargando" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold shadow-xl hover:bg-black active:scale-95 transition-all flex justify-center items-center gap-3 mt-4 disabled:opacity-70">
-        <span *ngIf="cargando" class="animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
-        {{ cargando ? 'Registrando empleado...' : 'Crear Empleado' }}
-      </button>
-      
-      <div class="text-center mt-6">
-        <a routerLink="/gestion-administrador" class="text-sm font-semibold text-indigo-600 hover:underline">← Volver al panel de control</a>
-      </div>
-    </form>
+        <div class="rb-divider pt-2">
+          <label class="rb-label !normal-case">2. Datos Personales</label>
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label class="rb-label !normal-case">Nombres</label>
+              <input
+                type="text"
+                [(ngModel)]="empleado.nombres"
+                name="n"
+                class="rb-input rb-focus-secondary"
+              />
+            </div>
+            <div>
+              <label class="rb-label !normal-case">Apellidos</label>
+              <input
+                type="text"
+                [(ngModel)]="empleado.apellidos"
+                name="a"
+                class="rb-input rb-focus-secondary"
+              />
+            </div>
+            <div>
+              <label class="rb-label !normal-case">DNI</label>
+              <input
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                (keydown)="bloquearNoNumerico($event)"
+                (input)="empleado.dni = soloNumeros($event, 8)"
+                [value]="empleado.dni"
+                name="dni"
+                class="rb-input rb-focus-secondary"
+              />
+            </div>
+            <div>
+              <label class="rb-label !normal-case">Teléfono</label>
+              <input
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                (keydown)="bloquearNoNumerico($event)"
+                (input)="empleado.phone = soloNumeros($event, 9)"
+                [value]="empleado.phone"
+                name="tel"
+                class="rb-input rb-focus-secondary"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="rb-label !normal-case">Correo electrónico</label>
+              <input
+                type="email"
+                [(ngModel)]="empleado.email"
+                name="em"
+                class="rb-input rb-focus-secondary"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="rb-label !normal-case">Dirección</label>
+              <input
+                type="text"
+                [(ngModel)]="empleado.address"
+                name="dir"
+                class="rb-input rb-focus-secondary"
+              />
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" [disabled]="cargando" class="rb-btn-secondary disabled:opacity-70">
+          <span
+            *ngIf="cargando"
+            class="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"
+          ></span>
+          {{ cargando ? 'Registrando empleado...' : 'Crear Empleado' }}
+        </button>
+      </form>
+    </div>
   </div>
 
-  <!-- MODAL UNIVERSAL -->
-  <div *ngIf="modal.visible" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-    <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center animate-in zoom-in duration-200">
-      <div [ngClass]="modal.tipo === 'error' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'" class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6 text-3xl font-bold">
-        {{ modal.tipo === 'error' ? '!' : '✓' }}
+  <div *ngIf="modal.visible" class="rb-modal-backdrop">
+    <div class="rb-modal max-w-sm">
+      <div class="rb-modal-icon !mb-6">
+        <img
+          [src]="modal.tipo === 'error' ? '/iconos/error-rojo.png' : '/iconos/correcto-check-verde.png'"
+          [attr.alt]="modal.tipo === 'error' ? 'Error' : 'Éxito'"
+          width="48"
+          height="48"
+          class="h-12 w-12 object-contain"
+        />
       </div>
-      <h3 class="text-xl font-black text-gray-900 mb-2">{{ modal.titulo }}</h3>
-      <p class="text-gray-500 mb-8 text-sm">{{ modal.mensaje }}</p>
-      
-      <button (click)="cerrarModal()" class="w-full py-4 rounded-2xl font-bold text-white transition-all shadow-lg active:scale-95" 
-              [ngClass]="modal.tipo === 'error' ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'">
+      <h3 class="mb-2 text-lg font-semibold text-gray-900">{{ modal.titulo }}</h3>
+      <p class="mb-8 text-sm text-neutral-strong">{{ modal.mensaje }}</p>
+
+      <button
+        type="button"
+        (click)="cerrarModal()"
+        class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+        [ngClass]="modal.tipo === 'error' ? 'bg-danger' : 'bg-secondary'"
+      >
         Entendido
       </button>
     </div>

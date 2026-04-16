@@ -1,92 +1,114 @@
-<div class="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-  <div
-    class="max-w-md w-full bg-white shadow-2xl rounded-3xl p-10 border border-gray-100 animate-in fade-in duration-300"
-  >
-    <div class="text-center mb-8">
+<div class="rb-page-center relative">
+  <div class="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+    <app-logout-button />
+  </div>
+  <div class="rb-shell-sm rb-card rb-card-pad">
+    <div class="mb-8 text-center">
       <div
-        class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+        class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-secondary/10 ring-1 ring-secondary/20"
       >
-        <span class="text-2xl">🔐</span>
+        <img
+          src="/iconos/candado.png"
+          alt=""
+          width="40"
+          height="40"
+          class="h-10 w-10 object-contain"
+        />
       </div>
-      <h1 class="text-2xl font-bold text-gray-800">Activa tu cuenta</h1>
-      <p class="text-gray-500 text-sm mt-2">Configura tu contraseña segura.</p>
+      <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl">Activa tu cuenta</h1>
+      <p class="rb-kicker mt-2">Configura tu contraseña segura.</p>
     </div>
 
-    <!-- PASO 1: ENVIAR CÓDIGO AL CORREO -->
-    <form (ngSubmit)="enviarCodigo()" *ngIf="paso === 1" class="space-y-6">
-      <div class="bg-blue-50 text-blue-800 p-4 rounded-xl text-sm font-medium text-center">
+    <form (ngSubmit)="enviarCodigo()" *ngIf="paso === 1" class="space-y-5">
+      <div
+        class="rounded-xl border border-secondary/15 bg-secondary/5 p-4 text-center text-sm font-medium text-secondary"
+      >
         Verificaremos tu correo <strong>{{ email }}</strong> antes de continuar.
       </div>
 
-      <button
-        type="submit"
-        [disabled]="cargando"
-        class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 active:scale-95 flex justify-center gap-2"
-      >
+      <button type="submit" [disabled]="cargando" class="rb-btn-primary">
         <span
           *ngIf="cargando"
-          class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
+          class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
         ></span>
         {{ cargando ? 'Enviando...' : 'Enviar código de seguridad' }}
       </button>
     </form>
 
-    <!-- PASO 2: CÓDIGO + CLAVE -->
     <form (ngSubmit)="confirmarYCrearClave()" *ngIf="paso === 2" class="space-y-4">
-      <div class="bg-indigo-50 p-4 rounded-2xl mb-4">
-        <p class="text-xs text-center text-indigo-800 font-bold mb-2">CÓDIGO DE 6 DÍGITOS</p>
+      <div class="mb-2 rounded-2xl border border-secondary/15 bg-secondary/5 p-4">
+        <label class="rb-label !mb-1 !text-center !text-secondary">Código de 6 dígitos</label>
         <input
           type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          (keydown)="bloquearNoNumerico($event)"
           (input)="codigoVerificacion = soloNumeros($event, 6)"
           [value]="codigoVerificacion"
-          class="w-full p-3 text-center text-3xl tracking-[0.5em] font-mono bg-white border border-indigo-200 rounded-xl outline-none"
-          placeholder="000000"
+          class="rb-input rb-focus-secondary text-center font-mono text-2xl tracking-[0.45em] sm:text-3xl"
           required
         />
       </div>
 
-      <div class="relative">
+      <div>
+        <label class="rb-label ml-0.5">Nueva contraseña</label>
+        <div class="relative">
         <input
-          [type]="verPass ? 'text' : 'password'"
+          [type]="mostrarPassword ? 'text' : 'password'"
           [(ngModel)]="nuevaPassword"
           name="npw"
-          placeholder="Nueva Contraseña"
-          class="w-full p-4 bg-gray-50 rounded-xl outline-none"
+          class="rb-input border-gray-200 bg-gray-50/80 rb-focus-primary pr-14"
           required
         />
         <button
           type="button"
-          (click)="verPass = !verPass"
-          class="absolute right-4 top-4 opacity-40"
+          (click)="mostrarPassword = !mostrarPassword"
+          class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-muted transition hover:opacity-80"
+          [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
         >
-          {{ verPass ? '👁️' : '🙈' }}
+          <img
+            [src]="mostrarPassword ? '/iconos/ojo-abierto.png' : '/iconos/ojo-cerrado.png'"
+            alt=""
+            width="20"
+            height="20"
+            class="h-5 w-5 object-contain"
+          />
         </button>
+        </div>
       </div>
 
-      <div class="relative">
+      <div>
+        <label class="rb-label ml-0.5">Confirmar contraseña</label>
+        <div class="relative">
         <input
-          [type]="verConfirmarPass ? 'text' : 'password'"
+          [type]="mostrarPassword ? 'text' : 'password'"
           [(ngModel)]="confirmarPassword"
           name="cpw"
-          placeholder="Confirmar Contraseña"
-          class="w-full p-4 bg-gray-50 rounded-xl outline-none"
+          class="rb-input border-gray-200 bg-gray-50/80 rb-focus-primary pr-14"
           required
         />
         <button
           type="button"
-          (click)="verConfirmarPass = !verConfirmarPass"
-          class="absolute right-4 top-4 opacity-40"
+          (click)="mostrarPassword = !mostrarPassword"
+          class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-muted transition hover:opacity-80"
+          [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
         >
-          {{ verConfirmarPass ? '👁️' : '🙈' }}
+          <img
+            [src]="mostrarPassword ? '/iconos/ojo-abierto.png' : '/iconos/ojo-cerrado.png'"
+            alt=""
+            width="20"
+            height="20"
+            class="h-5 w-5 object-contain"
+          />
         </button>
+        </div>
       </div>
 
-      <!-- Checklist de Seguridad -->
-      <div class="text-[10px] grid grid-cols-2 gap-1 text-gray-500 px-2">
-        <span [class.text-green-600]="nuevaPassword.length >= 8">● 8+ Caracteres</span>
-        <span [class.text-green-600]="/[A-Z]/.test(nuevaPassword)">● Mayúscula</span>
-        <span [class.text-green-600]="/[a-z]/.test(nuevaPassword)">● Minúscula</span>
-        <span [class.text-green-600]="/[@!¡¿?#$%/&]/.test(nuevaPassword)">● Especial</span>
+      <div class="grid grid-cols-2 gap-1 px-0.5 text-[10px] text-neutral-muted">
+        <span [class.text-success]="nuevaPassword.length >= 8">● 8+ Caracteres</span>
+        <span [class.text-success]="/[A-Z]/.test(nuevaPassword)">● Mayúscula</span>
+        <span [class.text-success]="/[a-z]/.test(nuevaPassword)">● Minúscula</span>
+        <span [class.text-success]="/[@!¡¿?#$%/&]/.test(nuevaPassword)">● Especial</span>
       </div>
 
       <div class="flex items-center space-x-2 py-2">
@@ -94,91 +116,78 @@
           type="checkbox"
           [checked]="aceptoTerminos"
           (click)="mostrarTerminos(); $event.preventDefault()"
-          class="h-4 w-4"
+          class="h-4 w-4 accent-primary"
         />
-        <label class="text-xs text-gray-600 cursor-pointer" (click)="mostrarTerminos()"
+        <label class="cursor-pointer text-xs text-neutral-strong" (click)="mostrarTerminos()"
           >Acepto los
-          <span class="underline font-bold text-indigo-600">términos de uso</span>.</label
+          <span class="font-semibold text-secondary underline">términos de uso</span>.</label
         >
       </div>
 
       <button
         type="submit"
         [disabled]="cargando || !aceptoTerminos"
-        class="w-full bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-green-700 disabled:bg-gray-400 flex justify-center gap-2"
+        class="rb-btn-primary disabled:!bg-neutral-muted"
       >
         <span
           *ngIf="cargando"
-          class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
+          class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
         ></span>
         {{ cargando ? 'Activando...' : 'Activar Cuenta' }}
       </button>
     </form>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL UNIVERSAL                            -->
-  <!-- ========================================== -->
-  <div
-    *ngIf="modal.visible"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-  >
-    <div
-      class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center animate-in zoom-in duration-200"
-    >
-      <!-- Íconos según el tipo -->
-      <div
-        *ngIf="modal.tipo === 'error'"
-        class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 text-3xl font-bold bg-red-100 text-red-600"
-      >
-        !
-      </div>
-      <div
-        *ngIf="modal.tipo === 'exito'"
-        class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 text-3xl font-bold bg-green-100 text-green-600"
-      >
-        ✓
+  <div *ngIf="modal.visible" class="rb-modal-backdrop">
+    <div class="rb-modal max-w-md">
+      <div *ngIf="modal.tipo === 'error' || modal.tipo === 'exito'" class="rb-modal-icon">
+        <img
+          [src]="modal.esExpirado ? '/iconos/advertencia-amarillo.png' : modal.tipo === 'error' ? '/iconos/error-rojo.png' : '/iconos/correcto-check-verde.png'"
+          [attr.alt]="modal.esExpirado ? 'Advertencia' : modal.tipo === 'error' ? 'Error' : 'Éxito'"
+          width="52"
+          height="52"
+          class="h-12 w-12 object-contain"
+        />
       </div>
       <div
         *ngIf="modal.tipo === 'terminos'"
-        class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4 text-3xl bg-blue-100 text-blue-600"
+        class="rb-modal-icon flex items-center justify-center bg-secondary/10 !p-2"
       >
-        📄
+        <img
+          src="/iconos/documento.png"
+          alt=""
+          width="40"
+          height="40"
+          class="h-10 w-10 object-contain"
+        />
       </div>
 
-      <h3 class="text-xl font-bold mb-2">{{ modal.titulo }}</h3>
+      <h3 class="mb-2 text-lg font-semibold text-gray-900">{{ modal.titulo }}</h3>
 
-      <!-- Mensaje scrolleable para términos largos -->
-      <div class="text-gray-500 mb-6 text-sm max-h-40 overflow-y-auto px-2">
+      <div class="mb-6 max-h-40 overflow-y-auto px-1 text-sm text-neutral-strong">
         {{ modal.mensaje }}
       </div>
 
-      <!-- Botones Condicionales -->
-      <div *ngIf="modal.tipo === 'terminos'" class="flex gap-4">
+      <div *ngIf="modal.tipo === 'terminos'" class="flex gap-3">
         <button
+          type="button"
           (click)="rechazarTerminos()"
-          class="w-1/2 py-3 rounded-xl font-bold text-gray-600 bg-gray-200 hover:bg-gray-300 transition"
+          class="rb-btn-neutral w-1/2 !shadow-none"
         >
           No Acepto
         </button>
-        <button
-          (click)="aceptarTerminos()"
-          class="w-1/2 py-3 rounded-xl font-bold text-white bg-green-600 hover:bg-green-700 shadow-md transition"
-        >
+        <button type="button" (click)="aceptarTerminos()" class="rb-btn-success w-1/2">
           Acepto
         </button>
       </div>
 
       <div *ngIf="modal.tipo !== 'terminos'">
         <button
+          type="button"
           (click)="cerrarModal()"
-          class="w-full py-3 rounded-xl font-bold text-white transition-all shadow-md flex justify-center items-center gap-2"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
           [ngClass]="
-            modal.esExpirado
-              ? 'bg-amber-500 hover:bg-amber-600'
-              : modal.tipo === 'error'
-                ? 'bg-red-600 hover:bg-red-700'
-                : 'bg-indigo-600 hover:bg-indigo-700'
+            modal.esExpirado ? 'bg-warning' : modal.tipo === 'error' ? 'bg-danger' : 'bg-secondary'
           "
         >
           {{ modal.esExpirado ? 'Reenviar Código' : 'Entendido' }}

@@ -3,19 +3,27 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { ConfigService } from '../../services/config.service';
+import { LogoutButtonComponent } from '../logout-button/logout-button';
+import {
+  bloquearTeclasNoNumericas,
+  errorCodigo6,
+  errorPasswordHistoria,
+  filtrarSoloDigitos,
+} from '../../utils/form-validators';
 
 @Component({
   selector: 'app-confirmar-cuenta',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LogoutButtonComponent],
   templateUrl: './confirmar-cuenta.component.html'
 })
 export class ConfirmarCuentaComponent implements OnInit {
   paso = 1;
-  email = ''; // Recibido por URL
+  email = '';
   cargando = false;
-  verPass = false;
-  verConfirmarPass = false;
+  mostrarPassword = false;
   aceptoTerminos = false;
 
   codigoVerificacion = '';
@@ -24,27 +32,38 @@ export class ConfirmarCuentaComponent implements OnInit {
 
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '', esExpirado: false };
 
-  constructor(private http: HttpClient, private router: Router, private route: ActivatedRoute) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private route: ActivatedRoute,
+    private auth: AuthService,
+    private config: ConfigService,
+  ) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       this.email = params['email'] || '';
       if (!this.email) {
-        this.router.navigate(['/login']); // Si no hay email, regresa al login
+        const s = this.auth.getSession();
+        this.email = (s?.email as string) || '';
+      }
+      if (!this.email) {
+        void this.router.navigate(['/login']);
       }
     });
   }
 
-  soloNumeros(event: any, max: number) {
-    const val = event.target.value.replace(/[^0-9]/g, '');
-    return val.substring(0, max);
+  soloNumeros(event: Event, max: number) {
+    return filtrarSoloDigitos(event, max);
+  }
+
+  bloquearNoNumerico(event: KeyboardEvent) {
+    bloquearTeclasNoNumericas(event);
   }
 
   validarPassword(): { valido: boolean; error?: string } {
-    const p = this.nuevaPassword;
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@!¡¿?#$%/&])[A-Za-z\d@!¡¿?#$%/&]{8,}$/;
-    if (!regex.test(p)) return { valido: false, error: 'La clave requiere: 8+ caracteres, Mayúscula, Minúscula, Número y Símbolo especial.' };
-    if (p !== this.confirmarPassword) return { valido: false, error: 'Las contraseñas no coinciden.' };
+    const msg = errorPasswordHistoria(this.nuevaPassword, this.confirmarPassword, '', '');
+    if (msg) return { valido: false, error: msg };
     return { valido: true };
   }
 
@@ -64,8 +83,9 @@ export class ConfirmarCuentaComponent implements OnInit {
   }
 
   confirmarYCrearClave() {
-    if (this.codigoVerificacion.length !== 6) {
-      this.abrirModal('error', 'Código Inválido', 'El código debe tener 6 dígitos.');
+    const codErr = errorCodigo6(this.codigoVerificacion);
+    if (codErr) {
+      this.abrirModal('error', 'Código Inválido', codErr);
       return;
     }
 
@@ -82,7 +102,10 @@ export class ConfirmarCuentaComponent implements OnInit {
       next: () => {
         this.cargando = false;
         this.abrirModal('exito', '¡Cuenta Activada!', 'Tu contraseña ha sido configurada correctamente.');
-        setTimeout(() => this.router.navigate(['/login']), 2500);
+        setTimeout(() => {
+          this.auth.clearSession();
+          void this.router.navigate(['/login']);
+        }, 2500);
       },
       error: (err) => {
         this.cargando = false;
@@ -92,7 +115,13 @@ export class ConfirmarCuentaComponent implements OnInit {
   }
 
   mostrarTerminos() {
-    this.abrirModal('terminos', 'Términos y Condiciones', 'Como empleado, te comprometes a usar el sistema solo para fines laborales...');
+    this.config.obtenerConfiguracion().subscribe({
+      next: (cfg) => {
+        const t = cfg.terminosCondiciones?.trim();
+        this.abrirModal('terminos', 'Términos y Condiciones', t || 'No hay términos configurados.');
+      },
+      error: () => this.abrirModal('terminos', 'Términos y Condiciones', 'No se pudieron cargar los términos.'),
+    });
   }
 
   abrirModal(tipo: string, titulo: string, mensaje: string) {

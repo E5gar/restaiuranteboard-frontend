@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
+import { LogoutButtonComponent } from '../logout-button/logout-button';
 
 @Component({
   selector: 'app-admin-productos',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent],
   templateUrl: './admin-productos.component.html'
 })
 export class AdminProductosComponent implements OnInit {
@@ -15,16 +16,16 @@ export class AdminProductosComponent implements OnInit {
   cargando = false;
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '' };
 
-  // --- INGREDIENTES (PostgreSQL) ---
   nuevoIngrediente = { name: '', unit: 'UNIDADES', stockQuantity: 0, category: 'Carnes', price: 0, imageBase64: '' };
   ingredientes: any[] = [];
 
-  // --- PRODUCTOS (MongoDB + Receta en SQL) ---
   nuevoProducto: any = { name: '', price: 0, category: 'Platos', description: '', imagesBase64: [] };
   recetaActual: { ingredientId: number, name: string, quantity: number, unit: string }[] = [];
   ingredienteSeleccionadoId: number | string = '';
   cantidadParaReceta = 1;
   productos: any[] = [];
+  private readonly tiposImagenPermitidos = ['image/jpeg', 'image/jpg', 'image/png'];
+  private readonly maxBytesImagen = 5 * 1024 * 1024;
 
   constructor(private http: HttpClient) {}
 
@@ -37,33 +38,44 @@ export class AdminProductosComponent implements OnInit {
   }
 
   cargarDatos() {
-    // GET Insumos
     this.http.get<any[]>('http://localhost:8080/api/catalogo/ingredientes').subscribe({
       next: (data) => this.ingredientes = data,
       error: (err) => console.error('Error cargando ingredientes', err)
     });
 
-    // GET Productos
     this.http.get<any[]>('http://localhost:8080/api/catalogo/productos').subscribe({
       next: (data) => this.productos = data,
       error: (err) => console.error('Error cargando productos', err)
     });
   }
 
-  // --- MANEJO DE IMÁGENES A BASE64 ---
-  onSingleFileSelected(event: any) {
-    const file = event.target.files[0];
+  onSingleFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (file) {
+      const error = this.errorArchivoImagen(file);
+      if (error) {
+        this.abrirModal('error', 'Archivo inválido', error);
+        input.value = '';
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => this.nuevoIngrediente.imageBase64 = reader.result as string;
       reader.readAsDataURL(file);
     }
   }
 
-  onMultipleFilesSelected(event: any) {
-    const files = event.target.files;
-    if (files) {
-      for (let file of files) {
+  onMultipleFilesSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
+    if (files?.length) {
+      for (const file of Array.from(files)) {
+        const error = this.errorArchivoImagen(file);
+        if (error) {
+          this.abrirModal('error', 'Archivo inválido', error);
+          input.value = '';
+          return;
+        }
         const reader = new FileReader();
         reader.onload = () => {
           this.nuevoProducto.imagesBase64.push(reader.result as string);
@@ -73,11 +85,20 @@ export class AdminProductosComponent implements OnInit {
     }
   }
 
+  errorArchivoImagen(file: File): string | null {
+    if (file.size > this.maxBytesImagen) {
+      return 'La imagen no debe pesar más de 5MB.';
+    }
+    if (!this.tiposImagenPermitidos.includes(file.type)) {
+      return 'Solo se permite formato PNG o JPG.';
+    }
+    return null;
+  }
+
   eliminarImagenProducto(index: number) {
     this.nuevoProducto.imagesBase64.splice(index, 1);
   }
 
-  // --- LÓGICA DE INGREDIENTES ---
   guardarIngrediente() {
     if (!this.nuevoIngrediente.name || this.nuevoIngrediente.price <= 0) {
       return this.abrirModal('error', 'Datos Inválidos', 'El ingrediente necesita nombre y un precio válido.');
@@ -98,13 +119,11 @@ export class AdminProductosComponent implements OnInit {
     });
   }
 
-  // --- LÓGICA DE RECETAS (Unir Insumo a Plato) ---
   agregarInsumoAReceta() {
     if (!this.ingredienteSeleccionadoId || this.cantidadParaReceta <= 0) return;
     
     const insumo = this.ingredientes.find(i => i.id == this.ingredienteSeleccionadoId);
     if (insumo) {
-      // Evitar duplicados
       const index = this.recetaActual.findIndex(r => r.ingredientId === insumo.id);
       if(index >= 0) {
         this.recetaActual[index].quantity += this.cantidadParaReceta;
@@ -125,7 +144,6 @@ export class AdminProductosComponent implements OnInit {
     this.recetaActual.splice(index, 1);
   }
 
-  // --- LÓGICA DE PRODUCTOS ---
   guardarProducto() {
     if (!this.nuevoProducto.name || this.nuevoProducto.price <= 0) {
       return this.abrirModal('error', 'Datos Inválidos', 'Revisa el nombre y el precio del producto.');
@@ -140,7 +158,7 @@ export class AdminProductosComponent implements OnInit {
     this.cargando = true;
     const payload = {
       producto: this.nuevoProducto,
-      receta: this.recetaActual // DTO espera { ingredientId, quantity }
+      receta: this.recetaActual,
     };
 
     this.http.post('http://localhost:8080/api/catalogo/productos', payload).subscribe({

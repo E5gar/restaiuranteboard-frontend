@@ -1,177 +1,226 @@
-<div class="min-h-screen bg-orange-50 flex items-center justify-center p-4">
-  <div
-    class="max-w-md w-full bg-white shadow-2xl rounded-3xl overflow-hidden border border-orange-100 animate-in fade-in duration-500"
-  >
-    <!-- Banner de Bienvenida -->
-    <div class="bg-orange-500 p-8 text-white text-center">
-      <h2 class="text-3xl font-black italic tracking-tighter">Restaiuranteboard</h2>
-      <p class="text-sm opacity-90 mt-1 font-medium">Únete y disfruta del mejor sabor</p>
+<div class="rb-page-center relative">
+  <div class="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+    <app-logout-button />
+  </div>
+  <div class="rb-shell-sm rb-card overflow-hidden">
+    <div class="bg-primary px-8 py-7 text-center text-white">
+      <h2 class="text-xl font-semibold tracking-tight">Restaiuranteboard</h2>
+      <p class="mt-1 text-sm text-white/90">Únete y disfruta del mejor sabor</p>
     </div>
 
-    <!-- PASO 1: FORMULARIO DE DATOS -->
-    <form class="p-8 space-y-4" (ngSubmit)="enviarCodigo()" *ngIf="paso === 1">
-      <h3 class="text-xl font-bold text-gray-800 mb-4">Crear mi cuenta</h3>
+    <form class="space-y-4 p-8 sm:p-9" (ngSubmit)="enviarCodigo()" *ngIf="paso === 1">
+      <h3 class="text-lg font-semibold text-gray-900">Crear mi cuenta</h3>
 
-      <input
-        type="text"
-        [(ngModel)]="usuario.fullName"
-        name="fn"
-        placeholder="Nombre completo"
-        class="w-full p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 transition-all shadow-sm"
-      />
+      <div>
+        <label class="rb-label !normal-case">Nombre completo</label>
+        <input
+          type="text"
+          [(ngModel)]="usuario.fullName"
+          name="fn"
+          class="rb-input rb-focus-primary"
+        />
+      </div>
 
       <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="rb-label !normal-case !text-[10px]">DNI</label>
+          <input
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            (keydown)="bloquearNoNumerico($event)"
+            (input)="usuario.dni = soloNumeros($event, 8)"
+            [value]="usuario.dni"
+            name="dni"
+            class="rb-input rb-focus-primary"
+          />
+        </div>
+        <div>
+          <label class="rb-label !normal-case !text-[10px]">Celular</label>
+          <input
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            (keydown)="bloquearNoNumerico($event)"
+            (input)="usuario.phone = soloNumeros($event, 9)"
+            [value]="usuario.phone"
+            name="tel"
+            class="rb-input rb-focus-primary"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="rb-label !normal-case">Correo electrónico</label>
         <input
-          type="text"
-          (input)="usuario.dni = soloNumeros($event, 8)"
-          [value]="usuario.dni"
-          name="dni"
-          placeholder="DNI"
-          class="p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 shadow-sm"
+          type="email"
+          [(ngModel)]="usuario.email"
+          name="em"
+          class="rb-input rb-focus-primary"
         />
+      </div>
+      <div>
+        <label class="rb-label !normal-case">Dirección de entrega</label>
         <input
           type="text"
-          (input)="usuario.phone = soloNumeros($event, 9)"
-          [value]="usuario.phone"
-          name="tel"
-          placeholder="Celular"
-          class="p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 shadow-sm"
+          [(ngModel)]="usuario.address"
+          name="dir"
+          class="rb-input rb-focus-primary"
         />
       </div>
 
-      <input
-        type="email"
-        [(ngModel)]="usuario.email"
-        name="em"
-        placeholder="Correo electrónico"
-        class="w-full p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 shadow-sm"
-      />
-      <input
-        type="text"
-        [(ngModel)]="usuario.address"
-        name="dir"
-        placeholder="Dirección de entrega"
-        class="w-full p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 shadow-sm"
-      />
-
-      <div class="relative">
-        <input
-          [type]="verPass ? 'text' : 'password'"
-          [(ngModel)]="usuario.password"
-          name="pw"
-          placeholder="Contraseña segura"
-          class="w-full p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 shadow-sm"
-        />
-        <button
-          type="button"
-          (click)="verPass = !verPass"
-          class="absolute right-4 top-3.5 opacity-30 hover:opacity-100 transition"
-        >
-          {{ verPass ? '👁️' : '🙈' }}
-        </button>
+      <div>
+        <label class="rb-label !normal-case">Contraseña</label>
+        <div class="relative">
+          <input
+            [type]="mostrarPassword ? 'text' : 'password'"
+            [(ngModel)]="usuario.password"
+            name="pw"
+            class="rb-input rb-focus-primary pr-24"
+          />
+          <button
+            type="button"
+            (click)="mostrarPassword = !mostrarPassword"
+            class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-muted transition hover:opacity-80"
+            [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            <img
+              [src]="mostrarPassword ? '/iconos/ojo-abierto.png' : '/iconos/ojo-cerrado.png'"
+              alt=""
+              width="20"
+              height="20"
+              class="h-5 w-5 object-contain"
+            />
+          </button>
+        </div>
       </div>
 
-      <input
-        type="password"
-        [(ngModel)]="confirmarPassword"
-        name="cpw"
-        placeholder="Confirmar contraseña"
-        class="w-full p-3 bg-gray-50 rounded-xl outline-none border focus:border-orange-400 shadow-sm"
-      />
+      <div>
+        <label class="rb-label !normal-case">Confirmar contraseña</label>
+        <div class="relative">
+          <input
+            [type]="mostrarPassword ? 'text' : 'password'"
+            [(ngModel)]="confirmarPassword"
+            name="cpw"
+            class="rb-input rb-focus-primary pr-24"
+          />
+          <button
+            type="button"
+            (click)="mostrarPassword = !mostrarPassword"
+            class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-muted transition hover:opacity-80"
+            [attr.aria-label]="
+              mostrarPassword
+                ? 'Ocultar confirmación de contraseña'
+                : 'Mostrar confirmación de contraseña'
+            "
+          >
+            <img
+              [src]="mostrarPassword ? '/iconos/ojo-abierto.png' : '/iconos/ojo-cerrado.png'"
+              alt=""
+              width="20"
+              height="20"
+              class="h-5 w-5 object-contain"
+            />
+          </button>
+        </div>
+      </div>
 
-      <div class="flex items-center space-x-2 text-xs py-2">
+      <div class="flex items-center space-x-2 py-1 text-xs">
         <input
           type="checkbox"
           [(ngModel)]="aceptoTerminos"
           name="t"
           id="t"
-          class="accent-orange-500 h-4 w-4"
+          class="h-4 w-4 border-gray-300 accent-primary"
         />
-        <label for="t" class="text-gray-500 cursor-pointer"
+        <label for="t" class="cursor-pointer text-neutral-strong"
           >Acepto los términos y condiciones de uso.</label
         >
       </div>
 
-      <button
-        type="submit"
-        [disabled]="!aceptoTerminos || cargando"
-        [ngClass]="cargando ? 'bg-gray-300' : 'bg-orange-500 hover:bg-orange-600'"
-        class="w-full text-white py-4 rounded-2xl font-bold transition-all flex justify-center items-center gap-2 shadow-lg shadow-orange-100"
-      >
+      <button type="submit" [disabled]="cargando" class="rb-btn-primary disabled:!bg-neutral-muted">
         <span
           *ngIf="cargando"
-          class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
+          class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
         ></span>
         {{ cargando ? 'Procesando...' : 'Registrarme ahora' }}
       </button>
 
-      <p class="text-center text-xs text-gray-400 mt-4">
+      <p class="mt-4 text-center text-xs text-neutral-muted">
         ¿Ya eres parte?
-        <a routerLink="/login" class="text-orange-600 font-bold hover:underline">Inicia sesión</a>
+        <a routerLink="/login" class="font-semibold text-primary hover:underline">Inicia sesión</a>
       </p>
     </form>
 
-    <!-- PASO 2: VERIFICACIÓN OTP -->
-    <div class="p-10 text-center space-y-6" *ngIf="paso === 2">
-      <div
-        class="bg-orange-100 h-24 w-24 rounded-full flex items-center justify-center mx-auto animate-bounce"
-      >
-        <span class="text-4xl">📩</span>
+    <div class="space-y-6 p-8 text-center sm:p-9" *ngIf="paso === 2">
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+        <img
+          src="/iconos/correo.png"
+          alt=""
+          width="48"
+          height="48"
+          class="h-12 w-12 object-contain"
+        />
       </div>
-      <h3 class="text-2xl font-bold text-gray-800">Casi listo...</h3>
-      <p class="text-sm text-gray-500 px-4">
-        Ingresa el código enviado a<br /><span class="font-bold text-gray-700">{{
+      <h3 class="text-lg font-semibold text-gray-900">Casi listo...</h3>
+      <p class="px-2 text-sm text-neutral-strong">
+        Ingresa el código enviado a<br /><span class="font-semibold text-gray-900">{{
           usuario.email
         }}</span>
       </p>
 
+      <label class="rb-label !mb-1 !text-center !normal-case">Código de verificación</label>
       <input
         type="text"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+        (keydown)="bloquearNoNumerico($event)"
         (input)="codigoVerificacion = soloNumeros($event, 6)"
         [value]="codigoVerificacion"
-        class="text-5xl text-center tracking-[0.4em] font-mono border-b-4 border-orange-500 w-full outline-none py-3 bg-transparent text-gray-800"
-        placeholder="000000"
+        class="w-full border-0 border-b-2 border-primary bg-transparent py-3 text-center font-mono text-3xl tracking-[0.35em] text-gray-900 outline-none sm:text-4xl"
       />
 
       <button
+        type="button"
         (click)="registrarFinal()"
         [disabled]="cargando"
-        class="w-full bg-orange-600 text-white py-4 rounded-2xl font-bold hover:bg-orange-700 shadow-xl transition-all"
+        class="rb-btn-success disabled:opacity-60"
       >
         {{ cargando ? 'Validando...' : 'Finalizar Registro' }}
       </button>
-      <button (click)="paso = 1" class="text-xs text-gray-400 underline hover:text-orange-600">
+      <button
+        type="button"
+        (click)="paso = 1"
+        class="text-xs text-neutral-muted underline hover:text-primary"
+      >
         Volver a mis datos
       </button>
     </div>
   </div>
 
-  <!-- MODAL DINÁMICO (TAILWIND) -->
-  <div
-    *ngIf="modal.visible"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-  >
-    <div
-      class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center animate-in zoom-in duration-200"
-    >
-      <div
-        [ngClass]="modal.esError ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'"
-        class="mx-auto flex items-center justify-center h-20 w-20 rounded-full mb-6 text-4xl font-bold"
-      >
-        {{ modal.esError ? '!' : '✓' }}
+  <div *ngIf="modal.visible" class="rb-modal-backdrop">
+    <div class="rb-modal max-w-sm">
+      <div class="rb-modal-icon !mb-6 !h-16 !w-16 !text-3xl">
+        <img
+          [src]="modal.esExpirado ? '/iconos/advertencia-amarillo.png' : modal.esError ? '/iconos/error-rojo.png' : '/iconos/correcto-check-verde.png'"
+          [attr.alt]="modal.esExpirado ? 'Advertencia' : modal.esError ? 'Error' : 'Éxito'"
+          width="52"
+          height="52"
+          class="h-12 w-12 object-contain"
+        />
       </div>
-      <h3 class="text-2xl font-bold text-gray-900 mb-3">{{ modal.titulo }}</h3>
-      <p class="text-gray-500 mb-8 text-sm leading-relaxed">{{ modal.mensaje }}</p>
+      <h3 class="mb-2 text-lg font-semibold text-gray-900">{{ modal.titulo }}</h3>
+      <p
+        [ngClass]="modal.esError ? 'text-danger' : 'text-neutral-strong'"
+        class="mb-8 text-sm font-medium leading-relaxed"
+      >
+        {{ modal.mensaje }}
+      </p>
       <button
+        type="button"
         (click)="cerrarModal()"
-        class="w-full py-4 rounded-2xl font-bold text-white transition-all shadow-lg"
-        [ngClass]="
-          modal.esExpirado
-            ? 'bg-amber-500 hover:bg-amber-600'
-            : modal.esError
-              ? 'bg-red-600 hover:bg-red-700'
-              : 'bg-indigo-600 hover:bg-indigo-700'
-        "
+        class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+        [ngClass]="modal.esExpirado ? 'bg-warning' : modal.esError ? 'bg-danger' : 'bg-secondary'"
       >
         {{ modal.esExpirado ? 'Reenviar Código' : 'Entendido' }}
       </button>

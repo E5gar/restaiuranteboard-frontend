@@ -3,6 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
+import {
+  bloquearTeclasNoNumericas,
+  errorCodigo6,
+  errorEmailHistoriaUsuario,
+  errorPasswordHistoria,
+  filtrarSoloDigitos,
+} from '../../utils/form-validators';
 
 @Component({
   selector: 'app-recuperar-password',
@@ -17,30 +24,30 @@ export class RecuperarPasswordComponent {
   codigo = '';
   nuevaPassword = '';
   confirmarPassword = '';
-  verPass = false;
-  verConfirmarPass = false;
+  mostrarPassword = false;
 
   modal = { visible: false, titulo: '', mensaje: '', esError: false, esExpirado: false };
 
   constructor(private http: HttpClient, private router: Router) {}
 
-  soloNumeros(event: any, max: number) {
-    const val = event.target.value.replace(/[^0-9]/g, '');
-    return val.substring(0, max);
+  soloNumeros(event: Event, max: number) {
+    return filtrarSoloDigitos(event, max);
+  }
+
+  bloquearNoNumerico(event: KeyboardEvent) {
+    bloquearTeclasNoNumericas(event);
   }
 
   validarPassword(): { valido: boolean; error?: string } {
-    const p = this.nuevaPassword;
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@!¡¿?#$%/&])[A-Za-z\d@!¡¿?#$%/&]{8,}$/;
-
-    if (!regex.test(p)) return { valido: false, error: 'La clave requiere: 8+ caracteres, Mayúscula, Minúscula, Número y Símbolo.' };
-    if (p !== this.confirmarPassword) return { valido: false, error: 'Las contraseñas no coinciden.' };
+    const msg = errorPasswordHistoria(this.nuevaPassword, this.confirmarPassword, '', '');
+    if (msg) return { valido: false, error: msg };
     return { valido: true };
   }
 
   enviarCodigo() {
-    if (!this.email.includes('@')) {
-      this.abrirModal('Error', 'Ingresa un correo electrónico válido.', true);
+    const emailErr = errorEmailHistoriaUsuario(this.email);
+    if (emailErr) {
+      this.abrirModal('Error', emailErr, true);
       return;
     }
 
@@ -59,8 +66,9 @@ export class RecuperarPasswordComponent {
   }
 
   resetearPassword() {
-    if (this.codigo.length !== 6) {
-      this.abrirModal('Error', 'El código debe tener 6 dígitos.', true);
+    const codErr = errorCodigo6(this.codigo);
+    if (codErr) {
+      this.abrirModal('Error', codErr, true);
       return;
     }
 

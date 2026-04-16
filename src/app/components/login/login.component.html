@@ -1,75 +1,81 @@
-<div class="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-  <div class="max-w-md w-full bg-white shadow-2xl rounded-3xl p-10 border border-gray-100">
-    <div class="text-center mb-10">
-      <h1 class="text-4xl font-black text-indigo-600 italic">Restaiuranteboard</h1>
-      <p class="text-gray-400 text-sm mt-2">Bienvenido de nuevo, por favor ingresa.</p>
+<div class="rb-page-center relative">
+  <div class="rb-shell-sm rb-card rb-card-pad">
+    <div class="mb-8 text-center">
+      <div class="mb-4 flex justify-center">
+        <img
+          [src]="logoSrc"
+          [attr.alt]="logoEsDelNegocio ? 'Logo del negocio' : ''"
+          class="max-h-20 w-auto max-w-[220px] object-contain"
+        />
+      </div>
+      <h1 class="rb-heading">{{ tituloMarca }}</h1>
+      <p class="rb-kicker mt-2">Bienvenido de nuevo, por favor inicia sesión.</p>
     </div>
 
-    <form (ngSubmit)="onLogin()" class="space-y-6">
+    <form (ngSubmit)="onLogin()" class="space-y-5">
       <div>
-        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Email</label>
+        <label class="rb-label ml-0.5">Email</label>
         <input
           type="email"
           [(ngModel)]="email"
           name="email"
-          class="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-400 transition-all"
-          placeholder="correo@ejemplo.com"
+          class="rb-input rb-focus-primary"
+          autocomplete="username"
         />
       </div>
 
-      <div class="relative">
-        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Contraseña</label>
-        <input
-          [type]="verPass ? 'text' : 'password'"
-          [(ngModel)]="password"
-          name="pass"
-          class="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-400 transition-all"
-        />
-        <button
-          type="button"
-          (click)="verPass = !verPass"
-          class="absolute right-4 top-10 opacity-30 hover:opacity-100 transition"
-        >
-          {{ verPass ? '👁️' : '🙈' }}
-        </button>
+      <div>
+        <label class="rb-label ml-0.5">Contraseña</label>
+        <div class="relative">
+          <input
+            [type]="mostrarPassword ? 'text' : 'password'"
+            [(ngModel)]="password"
+            name="pass"
+            class="rb-input rb-focus-primary pr-24"
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            (click)="mostrarPassword = !mostrarPassword"
+            class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-muted transition hover:opacity-80"
+            [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+          >
+            <img
+              [src]="mostrarPassword ? '/iconos/ojo-abierto.png' : '/iconos/ojo-cerrado.png'"
+              alt=""
+              width="20"
+              height="20"
+              class="h-5 w-5 object-contain"
+            />
+          </button>
+        </div>
       </div>
 
-      <div class="flex justify-between items-center text-xs font-semibold px-1">
-        <a routerLink="/recuperar" class="text-indigo-600 hover:underline">¿Olvidaste tu clave?</a>
-        <a routerLink="/registro" class="text-gray-400 hover:text-indigo-600 transition"
+      <div class="flex items-center justify-between px-0.5 text-xs font-medium">
+        <a routerLink="/recuperar" class="text-secondary hover:underline">¿Olvidaste tu contraseña?</a>
+        <a routerLink="/registro" class="text-neutral-muted transition hover:text-primary"
           >Crear cuenta</a
         >
       </div>
 
-      <button
-        type="submit"
-        [disabled]="cargando"
-        class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 active:scale-95 transition-all flex justify-center items-center gap-3"
-      >
+      <button type="submit" [disabled]="cargando" class="rb-btn-primary">
         <span
           *ngIf="cargando"
-          class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
+          class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
         ></span>
         {{ cargando ? 'Verificando...' : 'Iniciar Sesión' }}
       </button>
     </form>
   </div>
 
-  <!-- MODAL (Reutiliza el mismo del setup-inicial) -->
-  <div
-    *ngIf="modal.visible"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-  >
-    <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center">
-      <div class="text-red-500 text-5xl mb-4">!</div>
-      <h3 class="text-xl font-bold mb-2">{{ modal.titulo }}</h3>
-      <p class="text-gray-500 mb-6 text-sm">{{ modal.mensaje }}</p>
-      <button
-        (click)="modal.visible = false"
-        class="w-full py-3 bg-gray-800 text-white rounded-xl font-bold"
-      >
-        Cerrar
-      </button>
+  <div *ngIf="modal.visible" class="rb-modal-backdrop">
+    <div class="rb-modal border-gray-200">
+      <div class="rb-modal-icon bg-red-50 text-danger">
+        <img src="/iconos/error-rojo.png" alt="Error" width="42" height="42" class="h-10 w-10 object-contain" />
+      </div>
+      <h3 class="mb-2 text-lg font-semibold text-gray-900">{{ modal.titulo }}</h3>
+      <p class="mb-6 text-sm font-medium text-danger/90">{{ modal.mensaje }}</p>
+      <button (click)="modal.visible = false" type="button" class="rb-btn-secondary">Cerrar</button>
     </div>
   </div>
 </div>

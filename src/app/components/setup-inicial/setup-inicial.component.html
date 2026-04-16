@@ -1,205 +1,305 @@
-<div class="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-  <!-- Contenedor del Formulario (Igual al anterior) -->
-  <div
-    class="max-w-2xl w-full bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200"
-  >
-    <div class="bg-indigo-700 p-8 text-white">
-      <h2 class="text-3xl font-extrabold">Configuración del Sistema</h2>
-      <div class="flex mt-4 items-center space-x-2 text-sm opacity-80">
-        <span [class.font-bold]="paso === 1" [class.underline]="paso === 1">1. SMTP Google</span>
-        <span>→</span>
-        <span [class.font-bold]="paso === 2" [class.underline]="paso === 2"
-          >2. Datos del Negocio</span
+<div class="rb-page-center relative px-2 py-8 sm:px-4">
+  <div *ngIf="configuracionYaCompleta && sesionActiva" class="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+    <app-logout-button />
+  </div>
+
+  <div class="rb-shell-md rb-card mx-auto w-full max-w-3xl overflow-hidden">
+    <div class="border-b border-white/10 bg-secondary px-6 py-6 text-white sm:px-8 sm:py-7">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 class="text-xl font-semibold tracking-tight">Información del negocio y correo SMTP</h2>
+          <p class="mt-2 text-sm text-white/85">
+            Los datos se cargan desde la base de datos. Si cambias el correo o la contraseña de aplicación
+            Gmail, solicita un código y complétalo antes de guardar.
+          </p>
+        </div>
+        <a
+          *ngIf="configuracionYaCompleta && sesionActiva"
+          routerLink="/gestion-administrador"
+          class="inline-flex shrink-0 items-center rounded-xl border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+          >Volver al panel</a
         >
       </div>
     </div>
 
-    <!-- FORM PASO 1 -->
-    <form class="p-8 space-y-6" (ngSubmit)="enviarCodigo()" *ngIf="paso === 1">
-      <div class="space-y-4">
+    <div *ngIf="cargandoInicial" class="flex justify-center py-16">
+      <div class="h-10 w-10 animate-spin rounded-full border-2 border-secondary border-t-transparent"></div>
+    </div>
+
+    <form *ngIf="!cargandoInicial" class="space-y-6 p-6 sm:p-9" (ngSubmit)="guardar()">
+      <section class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50/60 p-5">
+        <h3 class="text-sm font-semibold text-secondary">Correo SMTP (Gmail)</h3>
         <div>
-          <label class="block text-sm font-semibold text-gray-700">Email SMTP (Gmail)</label>
+          <label class="rb-label">Email SMTP</label>
           <input
             type="email"
             [(ngModel)]="config.emailSmtp"
             name="email"
-            class="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+            class="rb-input rb-focus-secondary"
+            autocomplete="off"
             required
           />
         </div>
         <div>
-          <label class="block text-sm font-semibold text-gray-700"
-            >Contraseña de Aplicación (16 dígitos)</label
-          >
+          <label class="rb-label">Contraseña de aplicación (16 caracteres)</label>
           <input
             type="password"
             [(ngModel)]="config.passwordSmtp"
             name="pass"
-            class="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-            required
+            class="rb-input rb-focus-secondary"
+            [attr.required]="!configuracionYaCompleta ? true : null"
           />
+          <p *ngIf="smtpPasswordConfigured && configuracionYaCompleta" class="mt-1 text-xs text-neutral-strong">
+            Ya hay una contraseña guardada. Déjala vacía si no la cambias.
+          </p>
         </div>
-      </div>
-      <button
-        type="submit"
-        [disabled]="cargando"
-        [ngClass]="
-          cargando ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
-        "
-        class="w-full text-white py-3 rounded-xl font-bold transition flex justify-center items-center gap-2"
-      >
-        <span
-          *ngIf="cargando"
-          class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
-        ></span>
-        {{ cargando ? 'Enviando...' : 'Verificar y Enviar Código' }}
-      </button>
-    </form>
-
-    <!-- PASO 2: FORMULARIO -->
-    <form class="p-8 space-y-6" (ngSubmit)="finalizarConfiguracion()" *ngIf="paso === 2">
-      <div class="bg-amber-50 p-4 rounded-lg border border-amber-200">
-        <p class="text-amber-800 text-sm text-center">Código enviado. Expira en 1 minuto.</p>
-        <!-- Validación de números y longitud -->
-        <input
-          type="text"
-          (input)="codigoVerificacion = soloNumeros($event, 6)"
-          [value]="codigoVerificacion"
-          class="w-full mt-2 p-3 text-center text-3xl tracking-[0.5em] font-mono border-2 border-amber-300 rounded-lg outline-none"
-          placeholder="000000"
-        />
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input
-          type="text"
-          [(ngModel)]="config.nombreNegocio"
-          name="n"
-          placeholder="Nombre Negocio"
-          class="p-3 border rounded-lg md:col-span-2 shadow-sm"
-        />
-
-        <!-- Teléfono solo números -->
-        <input
-          type="text"
-          (input)="config.telefonoNegocio = soloNumeros($event, 9)"
-          [value]="config.telefonoNegocio"
-          placeholder="Teléfono (9xx xxx xxx)"
-          class="p-3 border rounded-lg shadow-sm"
-        />
-
-        <!-- Input de archivo para Logo -->
-        <div class="flex flex-col">
-          <label class="text-[10px] text-gray-400 uppercase font-bold px-1"
-            >Logo del negocio (JPG/PNG)</label
-          >
-          <input
-            type="file"
-            (change)="onFileSelected($event)"
-            accept="image/jpeg,image/png"
-            class="text-xs p-2 border rounded-lg"
-          />
-        </div>
-      </div>
-
-      <textarea
-        [(ngModel)]="config.terminosCondiciones"
-        name="tc"
-        class="w-full p-3 border rounded-lg h-24 resize-none"
-        placeholder="Términos y condiciones..."
-      ></textarea>
-
-      <button
-        type="submit"
-        [disabled]="cargando"
-        [ngClass]="cargando ? 'bg-emerald-400' : 'bg-emerald-600'"
-        class="w-full text-white py-3 rounded-xl font-bold flex justify-center items-center gap-2 transition-all"
-      >
-        <span
-          *ngIf="cargando"
-          class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
-        ></span>
-        {{ cargando ? 'Guardando...' : 'Guardar Información' }}
-      </button>
-    </form>
-
-    <!-- MODAL DINÁMICO MEJORADO -->
-    <div
-      *ngIf="modal.visible"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-    >
-      <div
-        class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center animate-in fade-in zoom-in duration-300"
-      >
-        <div
-          [ngClass]="modal.esError ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'"
-          class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4"
-        >
-          <span class="text-3xl font-bold">{{ modal.esError ? '!' : '✓' }}</span>
-        </div>
-
-        <h3 class="text-xl font-bold text-gray-900 mb-2">{{ modal.titulo }}</h3>
-        <p class="text-gray-500 mb-6 text-sm">{{ modal.mensaje }}</p>
-
         <button
-          (click)="cerrarModal()"
+          type="button"
+          (click)="enviarCodigo()"
           [disabled]="cargando"
-          [ngClass]="
-            modal.esExpirado
-              ? 'bg-orange-500 hover:bg-orange-600'
-              : modal.esError
-                ? 'bg-red-600'
-                : 'bg-indigo-600'
-          "
-          class="w-full text-white font-bold py-3 rounded-xl transition flex justify-center items-center gap-2"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-secondary/30 bg-white px-4 py-3 text-sm font-semibold text-secondary shadow-sm transition hover:bg-secondary/5 disabled:opacity-50 sm:w-auto"
         >
           <span
             *ngIf="cargando"
-            class="animate-spin border-2 border-white border-t-transparent rounded-full w-4 h-4"
+            class="h-4 w-4 animate-spin rounded-full border-2 border-secondary border-t-transparent"
           ></span>
-          {{ modal.esExpirado ? 'Reenviar Código' : 'Entendido' }}
+          Enviar código de verificación al correo SMTP
         </button>
+      </section>
+
+      <div *ngIf="requiereCodigoSmtp()" class="rounded-xl border border-warning/30 bg-warning/10 p-4">
+        <label class="rb-label !text-warning">Código de 6 dígitos (expira en 1 minuto)</label>
+        <input
+          type="text"
+          name="codigo"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          (keydown)="bloquearNoNumerico($event)"
+          (input)="codigoVerificacion = soloNumeros($event, 6)"
+          [value]="codigoVerificacion"
+          class="rb-input rb-focus-secondary mt-2 text-center font-mono text-2xl tracking-[0.45em] sm:text-3xl"
+        />
       </div>
-    </div>
 
-    <!-- ========================================== -->
-    <!-- MODAL DINÁMICO (TAILWIND) -->
-    <!-- ========================================== -->
-    <div
-      *ngIf="modal.visible"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-    >
-      <div
-        class="bg-white rounded-2xl shadow-2xl max-w-sm w-full transform transition-all scale-110"
-      >
-        <div class="p-6 text-center">
-          <!-- Icono Condicional -->
-          <div
-            *ngIf="modal.esError"
-            class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4"
-          >
-            <span class="text-red-600 text-3xl font-bold">!</span>
-          </div>
-          <div
-            *ngIf="!modal.esError"
-            class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4"
-          >
-            <span class="text-green-600 text-3xl font-bold">✓</span>
-          </div>
-
-          <h3 class="text-xl font-bold text-gray-900 mb-2">{{ modal.titulo }}</h3>
-          <p class="text-gray-500 mb-6">{{ modal.mensaje }}</p>
-
-          <button
-            (click)="cerrarModal()"
-            [ngClass]="
-              modal.esError ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'
-            "
-            class="w-full text-white font-bold py-3 rounded-xl transition duration-200"
-          >
-            Entendido
-          </button>
+      <section class="space-y-4">
+        <h3 class="text-sm font-semibold text-secondary">Datos del negocio</h3>
+        <div>
+          <label class="rb-label !normal-case">Nombre del negocio</label>
+          <input
+            type="text"
+            [(ngModel)]="config.nombreNegocio"
+            name="n"
+            class="rb-input rb-focus-secondary"
+            required
+          />
         </div>
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label class="rb-label !normal-case">Teléfono del negocio</label>
+            <input
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              (keydown)="bloquearNoNumerico($event)"
+              (input)="config.telefonoNegocio = soloNumeros($event, 9)"
+              [value]="config.telefonoNegocio"
+              name="tel"
+              class="rb-input rb-focus-secondary"
+              required
+            />
+          </div>
+          <div class="flex flex-col gap-1">
+            <label class="rb-label !normal-case">Logo (JPG/PNG)</label>
+            <input
+              type="file"
+              (change)="onFileSelected($event)"
+              accept="image/jpeg,image/png"
+              class="rb-input py-2 text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-secondary/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-secondary"
+            />
+          </div>
+        </div>
+
+        <div *ngIf="config.logoBase64" class="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3">
+          <img [src]="config.logoBase64" alt="Vista previa del logo" class="h-16 w-16 rounded-lg object-cover" />
+          <span class="text-xs text-neutral-strong">Vista previa del logo actual o recién seleccionado.</span>
+        </div>
+
+        <div>
+          <label class="rb-label !normal-case">Términos y condiciones</label>
+          <textarea
+            [(ngModel)]="config.terminosCondiciones"
+            name="tc"
+            rows="5"
+            class="rb-input rb-focus-secondary resize-y"
+            required
+          ></textarea>
+        </div>
+      </section>
+
+      <section class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50/60 p-5">
+        <h3 class="text-sm font-semibold text-secondary">Medios de pago</h3>
+
+        <div class="space-y-3">
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-800">
+            <input
+              type="checkbox"
+              [(ngModel)]="config.mediosPago.yapeActivo"
+              (change)="onYapeToggle()"
+              name="yapeActivo"
+              class="h-4 w-4 accent-secondary"
+            />
+            1. Yape
+          </label>
+          <div *ngIf="config.mediosPago.yapeActivo" class="pl-6">
+            <input
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              (keydown)="bloquearNoNumerico($event)"
+              (input)="config.mediosPago.yapeTelefono = soloNumeros($event, 9)"
+              [value]="config.mediosPago.yapeTelefono"
+              name="yapeTelefono"
+              class="rb-input rb-focus-secondary"
+              placeholder="Número Yape (9 dígitos)"
+            />
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-800">
+            <input
+              type="checkbox"
+              [(ngModel)]="config.mediosPago.plinActivo"
+              (change)="onPlinToggle()"
+              name="plinActivo"
+              class="h-4 w-4 accent-secondary"
+            />
+            2. Plin
+          </label>
+          <div *ngIf="config.mediosPago.plinActivo" class="pl-6">
+            <input
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              (keydown)="bloquearNoNumerico($event)"
+              (input)="config.mediosPago.plinTelefono = soloNumeros($event, 9)"
+              [value]="config.mediosPago.plinTelefono"
+              name="plinTelefono"
+              class="rb-input rb-focus-secondary"
+              placeholder="Número Plin (9 dígitos)"
+            />
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-800">
+            <input
+              type="checkbox"
+              [(ngModel)]="config.mediosPago.transferenciaActiva"
+              (change)="onTransferenciaToggle()"
+              name="transferenciaActiva"
+              class="h-4 w-4 accent-secondary"
+            />
+            3. Transferencia bancaria
+          </label>
+
+          <div *ngIf="config.mediosPago.transferenciaActiva" class="space-y-3 pl-6">
+            <div
+              *ngFor="let t of config.mediosPago.transferencias; let i = index"
+              class="rounded-xl border border-gray-200 bg-white p-4"
+            >
+              <div class="mb-3 flex items-center justify-between">
+                <p class="text-xs font-semibold uppercase tracking-wide text-neutral-strong">Banco {{ i + 1 }}</p>
+                <button
+                  type="button"
+                  (click)="eliminarTransferencia(i)"
+                  [disabled]="config.mediosPago.transferencias.length <= 1"
+                  class="text-xs font-semibold text-danger disabled:opacity-40"
+                >
+                  Quitar
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <input
+                  type="text"
+                  [(ngModel)]="t.banco"
+                  name="banco{{ i }}"
+                  class="rb-input rb-focus-secondary"
+                  placeholder="Nombre del banco"
+                />
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  (keydown)="bloquearNoNumerico($event)"
+                  (input)="onCuentaInput($event, i)"
+                  [value]="t.numeroCuenta"
+                  name="cuenta{{ i }}"
+                  class="rb-input rb-focus-secondary"
+                  placeholder="Número de cuenta (máx. 20)"
+                />
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  (keydown)="bloquearNoNumerico($event)"
+                  (input)="onCciInput($event, i)"
+                  [value]="t.cci"
+                  name="cci{{ i }}"
+                  class="rb-input rb-focus-secondary"
+                  placeholder="CCI (máx. 20)"
+                />
+              </div>
+            </div>
+
+            <button type="button" (click)="agregarTransferencia()" class="rb-btn-neutral !w-auto">
+              Agregar otro banco
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <button type="submit" [disabled]="cargando" class="rb-btn-success w-full disabled:opacity-60">
+        <span
+          *ngIf="cargando"
+          class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+        ></span>
+        {{ cargando ? 'Guardando...' : 'Guardar configuración' }}
+      </button>
+    </form>
+
+    <div *ngIf="modal.visible" class="rb-modal-backdrop">
+      <div class="rb-modal max-w-sm">
+        <div class="rb-modal-icon">
+          <img
+            [src]="modal.esExpirado ? '/iconos/advertencia-amarillo.png' : modal.esError ? '/iconos/error-rojo.png' : '/iconos/correcto-check-verde.png'"
+            [attr.alt]="modal.esExpirado ? 'Advertencia' : modal.esError ? 'Error' : 'Éxito'"
+            width="48"
+            height="48"
+            class="h-12 w-12 object-contain"
+          />
+        </div>
+
+        <h3 class="mb-2 text-lg font-semibold text-gray-900">{{ modal.titulo }}</h3>
+        <p class="mb-6 text-sm text-neutral-strong">{{ modal.mensaje }}</p>
+
+        <button
+          type="button"
+          (click)="cerrarModal()"
+          [disabled]="cargando"
+          class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:opacity-50"
+          [ngClass]="
+            modal.esExpirado ? 'bg-warning' : modal.esError ? 'bg-danger' : 'bg-secondary'
+          "
+        >
+          <span
+            *ngIf="cargando"
+            class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+          ></span>
+          {{ modal.esExpirado ? 'Reenviar código' : 'Entendido' }}
+        </button>
       </div>
     </div>
   </div>

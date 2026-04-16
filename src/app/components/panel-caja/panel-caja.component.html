@@ -1,34 +1,51 @@
-<div class="min-h-screen bg-slate-100 flex flex-col">
-  <nav class="bg-indigo-800 text-white p-4 shadow-md flex justify-between items-center">
-    <h1 class="text-xl font-bold">💳 Panel de Caja</h1>
-    <a routerLink="/login" class="text-sm underline hover:text-indigo-200">Cerrar sesión</a>
+<div class="rb-page flex min-h-screen flex-col">
+  <nav class="rb-nav bg-secondary text-white shadow-sm">
+    <h1 class="rb-nav-title text-white">Panel de Caja</h1>
+    <app-logout-button variant="on-dark" />
   </nav>
 
-  <div class="p-8 flex-1 max-w-6xl mx-auto w-full">
-    <div class="bg-white rounded-3xl shadow-lg p-6 border border-gray-200">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6">Solicitudes de Órdenes</h2>
-      
-      <!-- Tabla Placeholder (HU-13) -->
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+  <div class="rb-container max-w-6xl flex-1">
+    <div class="rb-section !p-0 overflow-hidden">
+      <h2 class="border-b border-gray-100 px-6 py-5 text-lg font-semibold text-secondary">
+        Solicitudes de Órdenes
+      </h2>
+
+      <div class="overflow-x-auto px-2 pb-2 sm:px-0 sm:pb-0">
+        <table class="w-full border-collapse text-left text-sm">
           <thead>
-            <tr class="bg-slate-50 text-gray-500 text-sm uppercase">
-              <th class="p-4 rounded-tl-xl">Orden ID</th>
+            <tr class="border-b border-gray-200 bg-gray-50/80 text-xs font-medium uppercase tracking-wide text-neutral-strong">
+              <th class="p-4">Orden ID</th>
               <th class="p-4">Cliente</th>
               <th class="p-4">Total</th>
               <th class="p-4">Comprobante</th>
-              <th class="p-4 rounded-tr-xl text-center">Acciones</th>
+              <th class="p-4 text-center">Acciones</th>
             </tr>
           </thead>
-          <tbody class="text-gray-700">
-            <tr class="border-b border-gray-100 hover:bg-slate-50">
+          <tbody class="text-gray-900">
+            <tr class="border-b border-gray-100 transition hover:bg-gray-50/80">
               <td class="p-4 font-mono text-xs">#ORD-1234</td>
-              <td class="p-4 font-bold">Cargando...</td>
-              <td class="p-4 text-green-600 font-bold">$0.00</td>
-              <td class="p-4"><button class="text-indigo-600 underline">Ver Imagen</button></td>
-              <td class="p-4 flex gap-2 justify-center">
-                <button class="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold hover:bg-green-500 hover:text-white transition">Aprobar</button>
-                <button class="bg-red-100 text-red-700 px-4 py-2 rounded-lg font-bold hover:bg-red-500 hover:text-white transition">Rechazar</button>
+              <td class="p-4 font-medium">Cargando...</td>
+              <td class="p-4 font-semibold text-success">$0.00</td>
+              <td class="p-4">
+                <button type="button" class="text-sm font-medium text-secondary underline-offset-2 hover:underline">
+                  Ver Imagen
+                </button>
+              </td>
+              <td class="p-4">
+                <div class="flex flex-wrap justify-center gap-2">
+                  <button
+                    type="button"
+                    class="rb-btn-success !w-auto rb-btn-sm px-4"
+                  >
+                    Aprobar
+                  </button>
+                  <button
+                    type="button"
+                    class="rb-btn-danger !w-auto rb-btn-sm px-4"
+                  >
+                    Rechazar
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>

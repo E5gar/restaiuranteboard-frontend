@@ -3,6 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
+import { catchError, of } from 'rxjs';
+import { ConfigService } from '../../services/config.service';
+import {
+  bloquearTeclasNoNumericas,
+  errorCodigo6,
+  errorDni8,
+  errorEmailHistoriaUsuario,
+  errorPasswordHistoria,
+  errorTelefono9,
+  filtrarSoloDigitos,
+} from '../../utils/form-validators';
 
 @Component({
   selector: 'app-registro',
@@ -13,8 +24,7 @@ import { Router, RouterModule } from '@angular/router';
 export class RegistroComponent implements OnInit {
   isAdminMode: boolean | null = null;
   paso = 1;
-  verPass = false;
-  verConfirmarPass = false;
+  mostrarPassword = false;
   aceptoTerminos = false;
   cargando = false;
   confirmarPassword = '';
@@ -30,15 +40,31 @@ export class RegistroComponent implements OnInit {
     address: '',
   };
 
-  // Tipo de modal: 'error', 'exito', 'info', 'terminos'
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '', esExpirado: false };
+  logoSrc = '/iconos/candado.png';
+  logoEsDelNegocio = false;
+  tituloMarca = 'Restaiuranteboard';
 
   constructor(
     private http: HttpClient,
     private router: Router,
+    private config: ConfigService,
   ) {}
 
   ngOnInit() {
+    this.config
+      .obtenerConfiguracion()
+      .pipe(catchError(() => of(null)))
+      .subscribe((cfg) => {
+        const nombre = cfg?.nombreNegocio?.trim();
+        if (nombre) this.tituloMarca = nombre;
+        const logo = cfg?.logoBase64?.trim();
+        if (logo) {
+          this.logoSrc = logo;
+          this.logoEsDelNegocio = true;
+        }
+      });
+
     this.http.get('http://localhost:8080/api/auth/check-admin').subscribe({
       next: (res: any) => (this.isAdminMode = !res.hasAdmin),
       error: () =>
@@ -46,18 +72,14 @@ export class RegistroComponent implements OnInit {
     });
   }
 
-  // RESTRICCIÓN DE TECLADO: Solo permite números y corta a la longitud máxima
-  soloNumeros(event: any, max: number) {
-    const input = event.target as HTMLInputElement;
-    let valorFiltrado = input.value.replace(/[^0-9]/g, ''); // Elimina letras/símbolos
-    if (valorFiltrado.length > max) {
-      valorFiltrado = valorFiltrado.substring(0, max);
-    }
-    input.value = valorFiltrado;
-    return valorFiltrado;
+  soloNumeros(event: Event, max: number) {
+    return filtrarSoloDigitos(event, max);
   }
 
-  // VALIDACIONES ESTRICTAS (HU-19 y HU-06)
+  bloquearNoNumerico(event: KeyboardEvent) {
+    bloquearTeclasNoNumericas(event);
+  }
+
   validarFormulario(): { valido: boolean; error?: string } {
     if (
       !this.usuario.nombres.trim() ||
@@ -67,63 +89,37 @@ export class RegistroComponent implements OnInit {
       return { valido: false, error: 'Nombres, apellidos y dirección no pueden quedar en blanco.' };
     }
 
-    if (this.usuario.dni.length !== 8) {
-      return { valido: false, error: 'El DNI debe tener exactamente 8 dígitos numéricos.' };
-    }
+    const dniErr = errorDni8(this.usuario.dni);
+    if (dniErr) return { valido: false, error: dniErr };
 
-    if (this.usuario.phone.length !== 9 || !this.usuario.phone.startsWith('9')) {
-      return {
-        valido: false,
-        error: 'El teléfono debe empezar con 9 y tener exactamente 9 dígitos numéricos.',
-      };
-    }
+    const telErr = errorTelefono9(this.usuario.phone);
+    if (telErr) return { valido: false, error: telErr };
 
-    if (!this.usuario.email.trim())
-      return { valido: false, error: 'El correo no puede estar en blanco.' };
+    const emailErr = errorEmailHistoriaUsuario(this.usuario.email);
+    if (emailErr) return { valido: false, error: emailErr };
 
-    const dominios = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com'];
-    if (!this.usuario.email.includes('@'))
-      return { valido: false, error: 'El correo debe tener un @.' };
-    const dominio = this.usuario.email.split('@')[1];
-    if (!dominios.includes(dominio)) {
-      return {
-        valido: false,
-        error: 'Solo dominios permitidos: gmail, outlook, hotmail, yahoo o icloud.',
-      };
-    }
-
-    const p = this.usuario.password;
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@!¡¿?#$%/&])[A-Za-z\d@!¡¿?#$%/&]{8,}$/;
-    if (!regex.test(p)) {
-      return {
-        valido: false,
-        error:
-          'La clave requiere: 8+ caracteres, Mayúscula, Minúscula, Número y Símbolo especial (@!¡¿?#$%/&).',
-      };
-    }
-
-    // Validar que no contenga el nombre o apellido
-    const nombreFirst = this.usuario.nombres.split(' ')[0].toLowerCase();
-    const apellidoFirst = this.usuario.apellidos.split(' ')[0].toLowerCase();
-    if (nombreFirst && p.toLowerCase().includes(nombreFirst))
-      return { valido: false, error: 'La clave no puede contener tu nombre.' };
-    if (apellidoFirst && p.toLowerCase().includes(apellidoFirst))
-      return { valido: false, error: 'La clave no puede contener tu apellido.' };
-
-    if (p !== this.confirmarPassword)
-      return { valido: false, error: 'Las contraseñas no coinciden.' };
+    const nombreFirst = this.usuario.nombres.split(' ')[0]?.toLowerCase() ?? '';
+    const apellidoFirst = this.usuario.apellidos.split(' ')[0]?.toLowerCase() ?? '';
+    const pwdErr = errorPasswordHistoria(
+      this.usuario.password,
+      this.confirmarPassword,
+      nombreFirst,
+      apellidoFirst,
+    );
+    if (pwdErr) return { valido: false, error: pwdErr };
 
     return { valido: true };
   }
 
-  // GESTIÓN DE TÉRMINOS (HU-19 y 06 Crit. 8, 9)
   abrirTerminos(event: Event) {
-    event.preventDefault(); // Evita que el checkbox se marque automáticamente
-    this.abrirModal(
-      'terminos',
-      'Términos y Condiciones de Uso',
-      'Al utilizar este software, usted se compromete a hacer un uso responsable de los datos. Toda la información registrada está sujeta a políticas de privacidad...',
-    );
+    event.preventDefault();
+    this.config.obtenerConfiguracion().subscribe({
+      next: (cfg) => {
+        const t = cfg.terminosCondiciones?.trim();
+        this.abrirModal('terminos', 'Términos y Condiciones de Uso', t || 'No hay términos configurados.');
+      },
+      error: () => this.abrirModal('terminos', 'Términos y Condiciones de Uso', 'No se pudieron cargar los términos.'),
+    });
   }
 
   aceptarTerminos() {
@@ -164,14 +160,14 @@ export class RegistroComponent implements OnInit {
   }
 
   registrarFinal() {
-    if (this.codigoVerificacion.length !== 6) {
-      this.abrirModal('error', 'Código Inválido', 'El código debe tener 6 dígitos numéricos.');
+    const codErr = errorCodigo6(this.codigoVerificacion);
+    if (codErr) {
+      this.abrirModal('error', 'Código Inválido', codErr);
       return;
     }
 
     this.cargando = true;
 
-    // Concatenamos nombres y apellidos para el Backend
     const payload = {
       fullName: `${this.usuario.nombres} ${this.usuario.apellidos}`.trim(),
       dni: this.usuario.dni,

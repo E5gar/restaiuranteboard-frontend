@@ -1,8 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
+import { catchError, of } from 'rxjs';
+import { errorEmailHistoriaUsuario } from '../../utils/form-validators';
+import { AuthService } from '../../services/auth.service';
+import { ConfigService } from '../../services/config.service';
 
 @Component({
   selector: 'app-login',
@@ -10,30 +14,52 @@ import { Router, RouterModule } from '@angular/router';
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './login.component.html'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   email = '';
   password = '';
-  verPass = false;
+  mostrarPassword = false;
   cargando = false;
+
+  logoSrc = '/iconos/candado.png';
+  logoEsDelNegocio = false;
+
+  tituloMarca = 'Restaiuranteboard';
 
   modal = { visible: false, titulo: '', mensaje: '', esError: false };
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private auth: AuthService,
+    private configService: ConfigService,
+  ) {}
 
-  validarDominio(email: string): boolean {
-    const dominiosValidos = ['gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com'];
-    const dominio = email.split('@')[1];
-    return dominiosValidos.includes(dominio);
+  ngOnInit() {
+    this.configService
+      .obtenerConfiguracion()
+      .pipe(catchError(() => of(null)))
+      .subscribe((cfg) => {
+        const nombre = cfg?.nombreNegocio?.trim();
+        if (nombre) {
+          this.tituloMarca = nombre;
+        }
+        const logo = cfg?.logoBase64?.trim();
+        if (logo) {
+          this.logoSrc = logo;
+          this.logoEsDelNegocio = true;
+        }
+      });
   }
 
   onLogin() {
-    if (!this.email || !this.password) {
+    if (!this.email?.trim() || !this.password) {
       this.abrirModal('Campos Vacíos', 'Por favor ingresa tus credenciales.', true);
       return;
     }
 
-    if (!this.validarDominio(this.email)) {
-      this.abrirModal('Correo Inválido', 'Solo se permiten correos personales (Gmail, Outlook, etc.)', true);
+    const emailErr = errorEmailHistoriaUsuario(this.email);
+    if (emailErr) {
+      this.abrirModal('Correo Inválido', emailErr, true);
       return;
     }
 
@@ -42,15 +68,15 @@ export class LoginComponent {
       .subscribe({
         next: (user: any) => {
           this.cargando = false;
-          
+          this.auth.setSession(user);
+
           if (user.firstLogin) {
-            // HU-21: Empleado nuevo entra aquí, pasamos el email por query params
             this.router.navigate(['/confirmar-cuenta'], { queryParams: { email: user.email } });
             return;
           }
 
           switch(user.role) {
-            case 'ADMIN': this.router.navigate(['/gestion-administrador']); break; // ACTUALIZADO
+            case 'ADMIN': this.router.navigate(['/gestion-administrador']); break;
             case 'CLIENTE': this.router.navigate(['/menu']); break;
             case 'CAJERO': this.router.navigate(['/caja']); break;
             case 'COCINERO': this.router.navigate(['/cocina']); break;

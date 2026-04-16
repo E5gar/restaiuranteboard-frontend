@@ -3,11 +3,19 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
+import { LogoutButtonComponent } from '../logout-button/logout-button';
+import {
+  bloquearTeclasNoNumericas,
+  errorDni8,
+  errorEmailHistoriaUsuario,
+  errorTelefono9,
+  filtrarSoloDigitos,
+} from '../../utils/form-validators';
 
 @Component({
   selector: 'app-crear-personal',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent],
   templateUrl: './crear-personal.component.html'
 })
 export class CrearPersonalComponent {
@@ -26,12 +34,12 @@ export class CrearPersonalComponent {
 
   constructor(private http: HttpClient) {}
 
-  soloNumeros(event: any, max: number) {
-    const input = event.target as HTMLInputElement;
-    let val = input.value.replace(/[^0-9]/g, '');
-    if (val.length > max) val = val.substring(0, max);
-    input.value = val;
-    return val;
+  soloNumeros(event: Event, max: number) {
+    return filtrarSoloDigitos(event, max);
+  }
+
+  bloquearNoNumerico(event: KeyboardEvent) {
+    bloquearTeclasNoNumericas(event);
   }
 
   seleccionarRol(rol: string) {
@@ -47,12 +55,19 @@ export class CrearPersonalComponent {
       this.abrirModal('error', 'Campos Vacíos', 'Todos los campos son obligatorios.');
       return;
     }
-    if (this.empleado.dni.length !== 8) {
-      this.abrirModal('error', 'DNI Inválido', 'El DNI debe tener 8 dígitos.');
+    const dniErr = errorDni8(this.empleado.dni);
+    if (dniErr) {
+      this.abrirModal('error', 'DNI Inválido', dniErr);
       return;
     }
-    if (this.empleado.phone.length !== 9 || !this.empleado.phone.startsWith('9')) {
-      this.abrirModal('error', 'Teléfono Inválido', 'Debe empezar con 9 y tener 9 dígitos.');
+    const telErr = errorTelefono9(this.empleado.phone);
+    if (telErr) {
+      this.abrirModal('error', 'Teléfono Inválido', telErr);
+      return;
+    }
+    const emailErr = errorEmailHistoriaUsuario(this.empleado.email);
+    if (emailErr) {
+      this.abrirModal('error', 'Correo Inválido', emailErr);
       return;
     }
 
