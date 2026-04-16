@@ -16,12 +16,12 @@ import {
   selector: 'app-crear-personal',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent],
-  templateUrl: './crear-personal.component.html'
+  templateUrl: './crear-personal.component.html',
 })
 export class CrearPersonalComponent {
   cargando = false;
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '' };
-  
+
   empleado = {
     role: '',
     nombres: '',
@@ -29,7 +29,7 @@ export class CrearPersonalComponent {
     dni: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
   };
 
   constructor(private http: HttpClient) {}
@@ -51,7 +51,14 @@ export class CrearPersonalComponent {
       this.abrirModal('error', 'Falta Rol', 'Por favor selecciona Cajero, Cocinero o Repartidor.');
       return;
     }
-    if (!this.empleado.nombres || !this.empleado.apellidos || !this.empleado.dni || !this.empleado.email || !this.empleado.phone || !this.empleado.address) {
+    if (
+      !this.empleado.nombres ||
+      !this.empleado.apellidos ||
+      !this.empleado.dni ||
+      !this.empleado.email ||
+      !this.empleado.phone ||
+      !this.empleado.address
+    ) {
       this.abrirModal('error', 'Campos Vacíos', 'Todos los campos son obligatorios.');
       return;
     }
@@ -74,24 +81,36 @@ export class CrearPersonalComponent {
     this.cargando = true;
     const payload = {
       ...this.empleado,
-      fullName: `${this.empleado.nombres} ${this.empleado.apellidos}`.trim()
+      fullName: `${this.empleado.nombres} ${this.empleado.apellidos}`.trim(),
     };
 
-    this.http.post('http://localhost:8080/api/auth/crear-empleado', payload).subscribe({
-      next: (res: any) => {
-        this.cargando = false;
-        this.abrirModal('exito', 'Personal Creado', res.message);
-        this.empleado = { role: '', nombres: '', apellidos: '', dni: '', email: '', phone: '', address: '' };
-      },
-      error: (err) => {
-        this.cargando = false;
-        this.abrirModal('error', 'Error al crear', err.error?.message || 'Error del servidor.');
-      }
-    });
+    this.http
+      .post('https://restaiuranteboard-backend.onrender.com/api/auth/crear-empleado', payload)
+      .subscribe({
+        next: (res: any) => {
+          this.cargando = false;
+          this.abrirModal('exito', 'Personal Creado', res.message);
+          this.empleado = {
+            role: '',
+            nombres: '',
+            apellidos: '',
+            dni: '',
+            email: '',
+            phone: '',
+            address: '',
+          };
+        },
+        error: (err) => {
+          this.cargando = false;
+          this.abrirModal('error', 'Error al crear', err.error?.message || 'Error del servidor.');
+        },
+      });
   }
 
   abrirModal(tipo: string, titulo: string, mensaje: string) {
     this.modal = { visible: true, tipo, titulo, mensaje };
   }
-  cerrarModal() { this.modal.visible = false; }
+  cerrarModal() {
+    this.modal.visible = false;
+  }
 }

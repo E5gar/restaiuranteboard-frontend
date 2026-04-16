@@ -17,7 +17,7 @@ import {
   selector: 'app-confirmar-cuenta',
   standalone: true,
   imports: [CommonModule, FormsModule, LogoutButtonComponent],
-  templateUrl: './confirmar-cuenta.component.html'
+  templateUrl: './confirmar-cuenta.component.html',
 })
 export class ConfirmarCuentaComponent implements OnInit {
   paso = 1;
@@ -41,7 +41,7 @@ export class ConfirmarCuentaComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe((params) => {
       this.email = params['email'] || '';
       if (!this.email) {
         const s = this.auth.getSession();
@@ -69,17 +69,25 @@ export class ConfirmarCuentaComponent implements OnInit {
 
   enviarCodigo() {
     this.cargando = true;
-    this.http.post('http://localhost:8080/api/auth/enviar-codigo-empleado', { email: this.email }).subscribe({
-      next: () => {
-        this.cargando = false;
-        this.paso = 2;
-        this.abrirModal('exito', 'Código Enviado', `Se envió un código a ${this.email} para verificar tu identidad.`);
-      },
-      error: (err) => {
-        this.cargando = false;
-        this.abrirModal('error', 'Error', err.error?.message || 'Error al enviar código');
-      }
-    });
+    this.http
+      .post('https://restaiuranteboard-backend.onrender.com/api/auth/enviar-codigo-empleado', {
+        email: this.email,
+      })
+      .subscribe({
+        next: () => {
+          this.cargando = false;
+          this.paso = 2;
+          this.abrirModal(
+            'exito',
+            'Código Enviado',
+            `Se envió un código a ${this.email} para verificar tu identidad.`,
+          );
+        },
+        error: (err) => {
+          this.cargando = false;
+          this.abrirModal('error', 'Error', err.error?.message || 'Error al enviar código');
+        },
+      });
   }
 
   confirmarYCrearClave() {
@@ -96,22 +104,32 @@ export class ConfirmarCuentaComponent implements OnInit {
     }
 
     this.cargando = true;
-    const payload = { email: this.email, codigo: this.codigoVerificacion, password: this.nuevaPassword };
+    const payload = {
+      email: this.email,
+      codigo: this.codigoVerificacion,
+      password: this.nuevaPassword,
+    };
 
-    this.http.post('http://localhost:8080/api/auth/confirmar-empleado', payload).subscribe({
-      next: () => {
-        this.cargando = false;
-        this.abrirModal('exito', '¡Cuenta Activada!', 'Tu contraseña ha sido configurada correctamente.');
-        setTimeout(() => {
-          this.auth.clearSession();
-          void this.router.navigate(['/login']);
-        }, 2500);
-      },
-      error: (err) => {
-        this.cargando = false;
-        this.abrirModal('error', 'Error', err.error?.message || 'Código incorrecto o expirado.');
-      }
-    });
+    this.http
+      .post('https://restaiuranteboard-backend.onrender.com/api/auth/confirmar-empleado', payload)
+      .subscribe({
+        next: () => {
+          this.cargando = false;
+          this.abrirModal(
+            'exito',
+            '¡Cuenta Activada!',
+            'Tu contraseña ha sido configurada correctamente.',
+          );
+          setTimeout(() => {
+            this.auth.clearSession();
+            void this.router.navigate(['/login']);
+          }, 2500);
+        },
+        error: (err) => {
+          this.cargando = false;
+          this.abrirModal('error', 'Error', err.error?.message || 'Código incorrecto o expirado.');
+        },
+      });
   }
 
   mostrarTerminos() {
@@ -120,7 +138,12 @@ export class ConfirmarCuentaComponent implements OnInit {
         const t = cfg.terminosCondiciones?.trim();
         this.abrirModal('terminos', 'Términos y Condiciones', t || 'No hay términos configurados.');
       },
-      error: () => this.abrirModal('terminos', 'Términos y Condiciones', 'No se pudieron cargar los términos.'),
+      error: () =>
+        this.abrirModal(
+          'terminos',
+          'Términos y Condiciones',
+          'No se pudieron cargar los términos.',
+        ),
     });
   }
 
@@ -133,7 +156,13 @@ export class ConfirmarCuentaComponent implements OnInit {
     this.modal.visible = false;
     if (this.modal.esExpirado) this.enviarCodigo();
   }
-  
-  aceptarTerminos() { this.aceptoTerminos = true; this.modal.visible = false; }
-  rechazarTerminos() { this.aceptoTerminos = false; this.modal.visible = false; }
+
+  aceptarTerminos() {
+    this.aceptoTerminos = true;
+    this.modal.visible = false;
+  }
+  rechazarTerminos() {
+    this.aceptoTerminos = false;
+    this.modal.visible = false;
+  }
 }

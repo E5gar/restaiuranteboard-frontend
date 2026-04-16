@@ -99,7 +99,9 @@ export class RegistroClienteComponent {
 
     this.cargando = true;
     this.http
-      .post('http://localhost:8080/api/auth/enviar-codigo-registro', { email: this.usuario.email })
+      .post('https://restaiuranteboard-backend.onrender.com/api/auth/enviar-codigo-registro', {
+        email: this.usuario.email,
+      })
       .subscribe({
         next: () => {
           this.cargando = false;
@@ -127,25 +129,27 @@ export class RegistroClienteComponent {
     this.cargando = true;
     const payload = { ...this.usuario, codigo: this.codigoVerificacion };
 
-    this.http.post('http://localhost:8080/api/auth/registrar-cliente', payload).subscribe({
-      next: () => {
-        this.cargando = false;
-        this.abrirModal(
-          '¡Bienvenido!',
-          'Tu cuenta ha sido creada. Ya puedes pedir tu comida favorita.',
-          false,
-        );
-        setTimeout(() => this.router.navigate(['/login']), 2500);
-      },
-      error: (err) => {
-        this.cargando = false;
-        this.abrirModal(
-          'Error de Validación',
-          err.error?.message || 'Código inválido o expirado.',
-          true,
-        );
-      },
-    });
+    this.http
+      .post('https://restaiuranteboard-backend.onrender.com/api/auth/registrar-cliente', payload)
+      .subscribe({
+        next: () => {
+          this.cargando = false;
+          this.abrirModal(
+            '¡Bienvenido!',
+            'Tu cuenta ha sido creada. Ya puedes pedir tu comida favorita.',
+            false,
+          );
+          setTimeout(() => this.router.navigate(['/login']), 2500);
+        },
+        error: (err) => {
+          this.cargando = false;
+          this.abrirModal(
+            'Error de Validación',
+            err.error?.message || 'Código inválido o expirado.',
+            true,
+          );
+        },
+      });
   }
 
   abrirModal(titulo: string, mensaje: string, esError: boolean) {

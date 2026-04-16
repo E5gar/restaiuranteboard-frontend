@@ -3,12 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class HealthService {
-  private apiUrl = 'http://localhost:8080/api/estado_bases_datos';
+  private apiUrl = 'https://restaiuranteboard-backend.onrender.com/api/estado_bases_datos';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   getStatus(): Observable<any> {
     return this.http.get<any>(this.apiUrl);

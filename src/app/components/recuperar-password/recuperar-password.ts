@@ -15,7 +15,7 @@ import {
   selector: 'app-recuperar-password',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './recuperar-password.component.html'
+  templateUrl: './recuperar-password.component.html',
 })
 export class RecuperarPasswordComponent {
   paso = 1;
@@ -28,7 +28,10 @@ export class RecuperarPasswordComponent {
 
   modal = { visible: false, titulo: '', mensaje: '', esError: false, esExpirado: false };
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+  ) {}
 
   soloNumeros(event: Event, max: number) {
     return filtrarSoloDigitos(event, max);
@@ -52,17 +55,21 @@ export class RecuperarPasswordComponent {
     }
 
     this.cargando = true;
-    this.http.post('http://localhost:8080/api/auth/enviar-codigo-recuperacion', { email: this.email }).subscribe({
-      next: () => {
-        this.cargando = false;
-        this.paso = 2;
-        this.abrirModal('Código Enviado', 'Revisa tu bandeja de entrada o spam.', false);
-      },
-      error: (err) => {
-        this.cargando = false;
-        this.abrirModal('Error', err.error?.message || 'Error al enviar el código.', true);
-      }
-    });
+    this.http
+      .post('https://restaiuranteboard-backend.onrender.com/api/auth/enviar-codigo-recuperacion', {
+        email: this.email,
+      })
+      .subscribe({
+        next: () => {
+          this.cargando = false;
+          this.paso = 2;
+          this.abrirModal('Código Enviado', 'Revisa tu bandeja de entrada o spam.', false);
+        },
+        error: (err) => {
+          this.cargando = false;
+          this.abrirModal('Error', err.error?.message || 'Error al enviar el código.', true);
+        },
+      });
   }
 
   resetearPassword() {
@@ -81,17 +88,19 @@ export class RecuperarPasswordComponent {
     this.cargando = true;
     const payload = { email: this.email, codigo: this.codigo, newPassword: this.nuevaPassword };
 
-    this.http.post('http://localhost:8080/api/auth/reset-password', payload).subscribe({
-      next: () => {
-        this.cargando = false;
-        this.abrirModal('¡Éxito!', 'Tu contraseña ha sido actualizada.', false);
-        setTimeout(() => this.router.navigate(['/login']), 2000);
-      },
-      error: (err) => {
-        this.cargando = false;
-        this.abrirModal('Error', err.error?.message || 'Código inválido o expirado.', true);
-      }
-    });
+    this.http
+      .post('https://restaiuranteboard-backend.onrender.com/api/auth/reset-password', payload)
+      .subscribe({
+        next: () => {
+          this.cargando = false;
+          this.abrirModal('¡Éxito!', 'Tu contraseña ha sido actualizada.', false);
+          setTimeout(() => this.router.navigate(['/login']), 2000);
+        },
+        error: (err) => {
+          this.cargando = false;
+          this.abrirModal('Error', err.error?.message || 'Código inválido o expirado.', true);
+        },
+      });
   }
 
   abrirModal(titulo: string, mensaje: string, esError: boolean) {

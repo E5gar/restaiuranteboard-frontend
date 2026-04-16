@@ -65,7 +65,7 @@ export class RegistroComponent implements OnInit {
         }
       });
 
-    this.http.get('http://localhost:8080/api/auth/check-admin').subscribe({
+    this.http.get('https://restaiuranteboard-backend.onrender.com/api/auth/check-admin').subscribe({
       next: (res: any) => (this.isAdminMode = !res.hasAdmin),
       error: () =>
         this.abrirModal('error', 'Error de Conexión', 'No se pudo contactar al servidor.'),
@@ -116,9 +116,18 @@ export class RegistroComponent implements OnInit {
     this.config.obtenerConfiguracion().subscribe({
       next: (cfg) => {
         const t = cfg.terminosCondiciones?.trim();
-        this.abrirModal('terminos', 'Términos y Condiciones de Uso', t || 'No hay términos configurados.');
+        this.abrirModal(
+          'terminos',
+          'Términos y Condiciones de Uso',
+          t || 'No hay términos configurados.',
+        );
       },
-      error: () => this.abrirModal('terminos', 'Términos y Condiciones de Uso', 'No se pudieron cargar los términos.'),
+      error: () =>
+        this.abrirModal(
+          'terminos',
+          'Términos y Condiciones de Uso',
+          'No se pudieron cargar los términos.',
+        ),
     });
   }
 
@@ -141,7 +150,9 @@ export class RegistroComponent implements OnInit {
 
     this.cargando = true;
     this.http
-      .post('http://localhost:8080/api/auth/enviar-codigo-registro', { email: this.usuario.email })
+      .post('https://restaiuranteboard-backend.onrender.com/api/auth/enviar-codigo-registro', {
+        email: this.usuario.email,
+      })
       .subscribe({
         next: () => {
           this.cargando = false;
@@ -178,24 +189,26 @@ export class RegistroComponent implements OnInit {
       codigo: this.codigoVerificacion,
     };
 
-    this.http.post('http://localhost:8080/api/auth/registrar', payload).subscribe({
-      next: () => {
-        this.cargando = false;
-        const msg = this.isAdminMode
-          ? 'Cuenta de Administrador creada.'
-          : 'Tu cuenta ha sido creada. ¡A disfrutar!';
-        this.abrirModal('exito', '¡Bienvenido!', msg);
-        setTimeout(() => this.router.navigate(['/login']), 2500);
-      },
-      error: (err) => {
-        this.cargando = false;
-        this.abrirModal(
-          'error',
-          'Error de Verificación',
-          err.error?.message || 'Código inválido o expirado.',
-        );
-      },
-    });
+    this.http
+      .post('https://restaiuranteboard-backend.onrender.com/api/auth/registrar', payload)
+      .subscribe({
+        next: () => {
+          this.cargando = false;
+          const msg = this.isAdminMode
+            ? 'Cuenta de Administrador creada.'
+            : 'Tu cuenta ha sido creada. ¡A disfrutar!';
+          this.abrirModal('exito', '¡Bienvenido!', msg);
+          setTimeout(() => this.router.navigate(['/login']), 2500);
+        },
+        error: (err) => {
+          this.cargando = false;
+          this.abrirModal(
+            'error',
+            'Error de Verificación',
+            err.error?.message || 'Código inválido o expirado.',
+          );
+        },
+      });
   }
 
   abrirModal(tipo: string, titulo: string, mensaje: string) {

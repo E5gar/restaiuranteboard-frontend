@@ -33,7 +33,7 @@ export type EstadoConfiguracionDto = { configuracionCompleta: boolean };
 
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
-  private apiUrl = 'http://localhost:8080/api/configuracion';
+  private apiUrl = 'https://restaiuranteboard-backend.onrender.com/api/configuracion';
 
   constructor(private http: HttpClient) {}
 
@@ -45,7 +45,10 @@ export class ConfigService {
     return this.http.get<EstadoConfiguracionDto>(`${this.apiUrl}/estado`);
   }
 
-  enviarVerificacion(data: { emailSmtp: string; passwordSmtp: string }): Observable<MensajeRespuestaDto> {
+  enviarVerificacion(data: {
+    emailSmtp: string;
+    passwordSmtp: string;
+  }): Observable<MensajeRespuestaDto> {
     return this.http.post<MensajeRespuestaDto>(`${this.apiUrl}/enviar-verificacion`, data);
   }
 

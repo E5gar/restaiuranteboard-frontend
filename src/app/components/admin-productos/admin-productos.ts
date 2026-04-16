@@ -9,18 +9,31 @@ import { LogoutButtonComponent } from '../logout-button/logout-button';
   selector: 'app-admin-productos',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent],
-  templateUrl: './admin-productos.component.html'
+  templateUrl: './admin-productos.component.html',
 })
 export class AdminProductosComponent implements OnInit {
-  pestanaActiva = 'ingredientes'; 
+  pestanaActiva = 'ingredientes';
   cargando = false;
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '' };
 
-  nuevoIngrediente = { name: '', unit: 'UNIDADES', stockQuantity: 0, category: 'Carnes', price: 0, imageBase64: '' };
+  nuevoIngrediente = {
+    name: '',
+    unit: 'UNIDADES',
+    stockQuantity: 0,
+    category: 'Carnes',
+    price: 0,
+    imageBase64: '',
+  };
   ingredientes: any[] = [];
 
-  nuevoProducto: any = { name: '', price: 0, category: 'Platos', description: '', imagesBase64: [] };
-  recetaActual: { ingredientId: number, name: string, quantity: number, unit: string }[] = [];
+  nuevoProducto: any = {
+    name: '',
+    price: 0,
+    category: 'Platos',
+    description: '',
+    imagesBase64: [],
+  };
+  recetaActual: { ingredientId: number; name: string; quantity: number; unit: string }[] = [];
   ingredienteSeleccionadoId: number | string = '';
   cantidadParaReceta = 1;
   productos: any[] = [];
@@ -38,15 +51,19 @@ export class AdminProductosComponent implements OnInit {
   }
 
   cargarDatos() {
-    this.http.get<any[]>('http://localhost:8080/api/catalogo/ingredientes').subscribe({
-      next: (data) => this.ingredientes = data,
-      error: (err) => console.error('Error cargando ingredientes', err)
-    });
+    this.http
+      .get<any[]>('https://restaiuranteboard-backend.onrender.com/api/catalogo/ingredientes')
+      .subscribe({
+        next: (data) => (this.ingredientes = data),
+        error: (err) => console.error('Error cargando ingredientes', err),
+      });
 
-    this.http.get<any[]>('http://localhost:8080/api/catalogo/productos').subscribe({
-      next: (data) => this.productos = data,
-      error: (err) => console.error('Error cargando productos', err)
-    });
+    this.http
+      .get<any[]>('https://restaiuranteboard-backend.onrender.com/api/catalogo/productos')
+      .subscribe({
+        next: (data) => (this.productos = data),
+        error: (err) => console.error('Error cargando productos', err),
+      });
   }
 
   onSingleFileSelected(event: Event) {
@@ -60,7 +77,7 @@ export class AdminProductosComponent implements OnInit {
         return;
       }
       const reader = new FileReader();
-      reader.onload = () => this.nuevoIngrediente.imageBase64 = reader.result as string;
+      reader.onload = () => (this.nuevoIngrediente.imageBase64 = reader.result as string);
       reader.readAsDataURL(file);
     }
   }
@@ -101,41 +118,57 @@ export class AdminProductosComponent implements OnInit {
 
   guardarIngrediente() {
     if (!this.nuevoIngrediente.name || this.nuevoIngrediente.price <= 0) {
-      return this.abrirModal('error', 'Datos Inválidos', 'El ingrediente necesita nombre y un precio válido.');
+      return this.abrirModal(
+        'error',
+        'Datos Inválidos',
+        'El ingrediente necesita nombre y un precio válido.',
+      );
     }
-    
+
     this.cargando = true;
-    this.http.post('http://localhost:8080/api/catalogo/ingredientes', this.nuevoIngrediente).subscribe({
-      next: () => {
-        this.cargando = false;
-        this.abrirModal('exito', 'Guardado', 'Ingrediente registrado en el inventario.');
-        this.nuevoIngrediente = { name: '', unit: 'UNIDADES', stockQuantity: 0, category: 'Carnes', price: 0, imageBase64: '' };
-        this.cargarDatos();
-      },
-      error: () => {
-        this.cargando = false;
-        this.abrirModal('error', 'Error', 'No se pudo guardar el ingrediente.');
-      }
-    });
+    this.http
+      .post(
+        'https://restaiuranteboard-backend.onrender.com/api/catalogo/ingredientes',
+        this.nuevoIngrediente,
+      )
+      .subscribe({
+        next: () => {
+          this.cargando = false;
+          this.abrirModal('exito', 'Guardado', 'Ingrediente registrado en el inventario.');
+          this.nuevoIngrediente = {
+            name: '',
+            unit: 'UNIDADES',
+            stockQuantity: 0,
+            category: 'Carnes',
+            price: 0,
+            imageBase64: '',
+          };
+          this.cargarDatos();
+        },
+        error: () => {
+          this.cargando = false;
+          this.abrirModal('error', 'Error', 'No se pudo guardar el ingrediente.');
+        },
+      });
   }
 
   agregarInsumoAReceta() {
     if (!this.ingredienteSeleccionadoId || this.cantidadParaReceta <= 0) return;
-    
-    const insumo = this.ingredientes.find(i => i.id == this.ingredienteSeleccionadoId);
+
+    const insumo = this.ingredientes.find((i) => i.id == this.ingredienteSeleccionadoId);
     if (insumo) {
-      const index = this.recetaActual.findIndex(r => r.ingredientId === insumo.id);
-      if(index >= 0) {
+      const index = this.recetaActual.findIndex((r) => r.ingredientId === insumo.id);
+      if (index >= 0) {
         this.recetaActual[index].quantity += this.cantidadParaReceta;
       } else {
         this.recetaActual.push({
           ingredientId: insumo.id,
           name: insumo.name,
           quantity: this.cantidadParaReceta,
-          unit: insumo.unit
+          unit: insumo.unit,
         });
       }
-      this.cantidadParaReceta = 1; 
+      this.cantidadParaReceta = 1;
       this.ingredienteSeleccionadoId = '';
     }
   }
@@ -146,10 +179,18 @@ export class AdminProductosComponent implements OnInit {
 
   guardarProducto() {
     if (!this.nuevoProducto.name || this.nuevoProducto.price <= 0) {
-      return this.abrirModal('error', 'Datos Inválidos', 'Revisa el nombre y el precio del producto.');
+      return this.abrirModal(
+        'error',
+        'Datos Inválidos',
+        'Revisa el nombre y el precio del producto.',
+      );
     }
     if (this.recetaActual.length === 0) {
-      return this.abrirModal('error', 'Receta Vacía', 'Un producto debe tener al menos un ingrediente para descontar del inventario.');
+      return this.abrirModal(
+        'error',
+        'Receta Vacía',
+        'Un producto debe tener al menos un ingrediente para descontar del inventario.',
+      );
     }
     if (this.nuevoProducto.imagesBase64.length === 0) {
       return this.abrirModal('error', 'Falta Imagen', 'Debes subir al menos una foto del plato.');
@@ -161,32 +202,52 @@ export class AdminProductosComponent implements OnInit {
       receta: this.recetaActual,
     };
 
-    this.http.post('http://localhost:8080/api/catalogo/productos', payload).subscribe({
-      next: () => {
-        this.cargando = false;
-        this.abrirModal('exito', 'Plato Creado', 'Producto guardado en el catálogo y receta vinculada.');
-        this.nuevoProducto = { name: '', price: 0, category: 'Platos', description: '', imagesBase64: [] };
-        this.recetaActual = [];
-        this.cargarDatos();
-      },
-      error: (err) => {
-        this.cargando = false;
-        this.abrirModal('error', 'Error', err.error?.message || 'No se pudo guardar el producto.');
-      }
-    });
+    this.http
+      .post('https://restaiuranteboard-backend.onrender.com/api/catalogo/productos', payload)
+      .subscribe({
+        next: () => {
+          this.cargando = false;
+          this.abrirModal(
+            'exito',
+            'Plato Creado',
+            'Producto guardado en el catálogo y receta vinculada.',
+          );
+          this.nuevoProducto = {
+            name: '',
+            price: 0,
+            category: 'Platos',
+            description: '',
+            imagesBase64: [],
+          };
+          this.recetaActual = [];
+          this.cargarDatos();
+        },
+        error: (err) => {
+          this.cargando = false;
+          this.abrirModal(
+            'error',
+            'Error',
+            err.error?.message || 'No se pudo guardar el producto.',
+          );
+        },
+      });
   }
 
   eliminarProducto(idMongo: string) {
-    if(confirm('¿Estás seguro de eliminar este producto del catálogo?')) {
-      this.http.delete(`http://localhost:8080/api/catalogo/productos/${idMongo}`).subscribe({
-        next: () => this.cargarDatos(),
-        error: () => this.abrirModal('error', 'Error', 'No se pudo eliminar.')
-      });
+    if (confirm('¿Estás seguro de eliminar este producto del catálogo?')) {
+      this.http
+        .delete(`https://restaiuranteboard-backend.onrender.com/api/catalogo/productos/${idMongo}`)
+        .subscribe({
+          next: () => this.cargarDatos(),
+          error: () => this.abrirModal('error', 'Error', 'No se pudo eliminar.'),
+        });
     }
   }
 
   abrirModal(tipo: string, titulo: string, mensaje: string) {
     this.modal = { visible: true, tipo, titulo, mensaje };
   }
-  cerrarModal() { this.modal.visible = false; }
+  cerrarModal() {
+    this.modal.visible = false;
+  }
 }

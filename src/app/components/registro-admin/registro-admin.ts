@@ -101,7 +101,9 @@ export class RegistroAdminComponent {
 
     this.cargando = true;
     this.http
-      .post('http://localhost:8080/api/auth/enviar-codigo-registro', { email: this.usuario.email })
+      .post('https://restaiuranteboard-backend.onrender.com/api/auth/enviar-codigo-registro', {
+        email: this.usuario.email,
+      })
       .subscribe({
         next: () => {
           this.cargando = false;
@@ -125,22 +127,24 @@ export class RegistroAdminComponent {
     this.cargando = true;
     const payload = { ...this.usuario, codigo: this.codigoVerificacion };
 
-    this.http.post('http://localhost:8080/api/auth/registrar-admin', payload).subscribe({
-      next: () => {
-        this.cargando = false;
-        this.abrirModal(
-          '¡Éxito!',
-          'Cuenta de Administrador creada. Ahora puedes iniciar sesión.',
-          false,
-        );
-        setTimeout(() => this.router.navigate(['/login']), 2500);
-      },
-      error: (err) => {
-        this.cargando = false;
-        const msg = err.error?.message || 'Código incorrecto';
-        this.abrirModal('Error de Validación', msg, true);
-      },
-    });
+    this.http
+      .post('https://restaiuranteboard-backend.onrender.com/api/auth/registrar-admin', payload)
+      .subscribe({
+        next: () => {
+          this.cargando = false;
+          this.abrirModal(
+            '¡Éxito!',
+            'Cuenta de Administrador creada. Ahora puedes iniciar sesión.',
+            false,
+          );
+          setTimeout(() => this.router.navigate(['/login']), 2500);
+        },
+        error: (err) => {
+          this.cargando = false;
+          const msg = err.error?.message || 'Código incorrecto';
+          this.abrirModal('Error de Validación', msg, true);
+        },
+      });
   }
 
   abrirModal(titulo: string, mensaje: string, esError: boolean) {
@@ -159,7 +163,8 @@ export class RegistroAdminComponent {
         const t = cfg.terminosCondiciones?.trim();
         this.abrirModal('Términos y Condiciones', t || 'No hay términos configurados.', false);
       },
-      error: () => this.abrirModal('Términos y Condiciones', 'No se pudieron cargar los términos.', true),
+      error: () =>
+        this.abrirModal('Términos y Condiciones', 'No se pudieron cargar los términos.', true),
     });
   }
 }

@@ -12,7 +12,7 @@ import { ConfigService } from '../../services/config.service';
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './login.component.html'
+  templateUrl: './login.component.html',
 })
 export class LoginComponent implements OnInit {
   email = '';
@@ -64,7 +64,11 @@ export class LoginComponent implements OnInit {
     }
 
     this.cargando = true;
-    this.http.post('http://localhost:8080/api/auth/login', { email: this.email, password: this.password })
+    this.http
+      .post('https://restaiuranteboard-backend.onrender.com/api/auth/login', {
+        email: this.email,
+        password: this.password,
+      })
       .subscribe({
         next: (user: any) => {
           this.cargando = false;
@@ -75,19 +79,29 @@ export class LoginComponent implements OnInit {
             return;
           }
 
-          switch(user.role) {
-            case 'ADMIN': this.router.navigate(['/gestion-administrador']); break;
-            case 'CLIENTE': this.router.navigate(['/menu']); break;
-            case 'CAJERO': this.router.navigate(['/caja']); break;
-            case 'COCINERO': this.router.navigate(['/cocina']); break;
-            case 'REPARTIDOR': this.router.navigate(['/entregas']); break;
+          switch (user.role) {
+            case 'ADMIN':
+              this.router.navigate(['/gestion-administrador']);
+              break;
+            case 'CLIENTE':
+              this.router.navigate(['/menu']);
+              break;
+            case 'CAJERO':
+              this.router.navigate(['/caja']);
+              break;
+            case 'COCINERO':
+              this.router.navigate(['/cocina']);
+              break;
+            case 'REPARTIDOR':
+              this.router.navigate(['/entregas']);
+              break;
           }
         },
-        
+
         error: (err) => {
           this.cargando = false;
           this.abrirModal('Acceso Denegado', err.error?.message || 'Credenciales inválidas', true);
-        }
+        },
       });
   }
 
