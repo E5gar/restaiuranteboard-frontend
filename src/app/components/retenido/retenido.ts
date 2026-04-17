@@ -39,7 +39,7 @@ export class RetenidoComponent implements OnInit, OnDestroy {
           if (this.remainingSeconds > 0) this.remainingSeconds--;
           if (this.remainingSeconds <= 0) {
             this.tickSub?.unsubscribe();
-            void this.router.navigate(['/presentacion']);
+            this.verificarDesbloqueoYRedirigir();
           }
         });
       });
@@ -57,6 +57,27 @@ export class RetenidoComponent implements OnInit, OnDestroy {
     const mm = String(m).padStart(2, '0');
     const ss = String(s).padStart(2, '0');
     return `${hh}:${mm}:${ss}`;
+  }
+
+  private verificarDesbloqueoYRedirigir() {
+    this.ipStatus
+      .obtenerEstado()
+      .pipe(catchError(() => of({ blocked: false, ipAddress: '-', remainingSeconds: 0 })))
+      .subscribe((res) => {
+        if (!res.blocked) {
+          void this.router.navigate(['/presentacion']);
+          return;
+        }
+        this.ipAddress = res.ipAddress || this.ipAddress;
+        this.remainingSeconds = Math.max(1, Number(res.remainingSeconds) || 1);
+        this.tickSub = timer(1000, 1000).subscribe(() => {
+          if (this.remainingSeconds > 0) this.remainingSeconds--;
+          if (this.remainingSeconds <= 0) {
+            this.tickSub?.unsubscribe();
+            this.verificarDesbloqueoYRedirigir();
+          }
+        });
+      });
   }
 }
 
