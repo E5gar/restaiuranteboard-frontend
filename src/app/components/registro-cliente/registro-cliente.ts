@@ -119,7 +119,9 @@ export class RegistroClienteComponent {
         },
         error: (err) => {
           this.cargando = false;
-          this.abrirModal('Error', err.error?.message || 'No pudimos enviar el código.', true);
+          const msg = err.error?.message || 'No pudimos enviar el código.';
+          const titulo = String(msg).includes('Ya existe') ? 'Datos duplicados' : 'Error';
+          this.abrirModal(titulo, msg, true);
         },
       });
   }
@@ -148,9 +150,11 @@ export class RegistroClienteComponent {
         },
         error: (err) => {
           this.cargando = false;
+          const msg = err.error?.message || 'Código inválido o expirado.';
+          const titulo = String(msg).includes('Ya existe') ? 'Datos duplicados' : 'Error de Validación';
           this.abrirModal(
-            'Error de Validación',
-            err.error?.message || 'Código inválido o expirado.',
+            titulo,
+            msg,
             true,
           );
         },
