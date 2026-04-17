@@ -13,6 +13,7 @@ import {
   errorTelefono9,
   extraerNombreApellidoDeFullName,
   filtrarSoloDigitos,
+  filtrarSoloLetrasYEspacios,
 } from '../../utils/form-validators';
 
 @Component({
@@ -47,6 +48,10 @@ export class RegistroClienteComponent {
 
   soloNumeros(event: Event, max: number) {
     return filtrarSoloDigitos(event, max);
+  }
+
+  soloLetras(event: Event, max?: number) {
+    return filtrarSoloLetrasYEspacios(event, max);
   }
 
   bloquearNoNumerico(event: KeyboardEvent) {

@@ -14,6 +14,15 @@ export function filtrarSoloDigitos(event: Event, maxLen: number): string {
   return v;
 }
 
+export function filtrarSoloLetrasYEspacios(event: Event, maxLen?: number): string {
+  const input = event.target as HTMLInputElement;
+  let v = input.value.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]/g, '');
+  v = v.replace(/\s+/g, ' ');
+  if (maxLen && v.length > maxLen) v = v.substring(0, maxLen);
+  input.value = v;
+  return v;
+}
+
 export function bloquearTeclasNoNumericas(event: KeyboardEvent): void {
   const nav = [
     'Backspace',

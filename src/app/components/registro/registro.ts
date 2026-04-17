@@ -13,6 +13,7 @@ import {
   errorPasswordHistoria,
   errorTelefono9,
   filtrarSoloDigitos,
+  filtrarSoloLetrasYEspacios,
 } from '../../utils/form-validators';
 
 @Component({
@@ -74,6 +75,10 @@ export class RegistroComponent implements OnInit {
 
   soloNumeros(event: Event, max: number) {
     return filtrarSoloDigitos(event, max);
+  }
+
+  soloLetras(event: Event, max?: number) {
+    return filtrarSoloLetrasYEspacios(event, max);
   }
 
   bloquearNoNumerico(event: KeyboardEvent) {

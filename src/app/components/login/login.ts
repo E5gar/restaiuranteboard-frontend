@@ -26,6 +26,7 @@ export class LoginComponent implements OnInit {
   tituloMarca = 'Restaiuranteboard';
 
   modal = { visible: false, titulo: '', mensaje: '', esError: false };
+  redirectAlCerrarModal = false;
 
   constructor(
     private http: HttpClient,
@@ -100,12 +101,44 @@ export class LoginComponent implements OnInit {
 
         error: (err) => {
           this.cargando = false;
-          this.abrirModal('Acceso Denegado', err.error?.message || 'Credenciales inválidas', true);
+          const status = err.status;
+          const mensaje = err.error?.message || 'Credenciales inválidas';
+          const intentos = Number(err.error?.failedAttempts ?? 0);
+          const restantes = Number(err.error?.remainingAttempts ?? 0);
+
+          if (status === 423 || err.error?.blocked === true) {
+            this.redirectAlCerrarModal = true;
+            this.abrirModal(
+              'Acceso restringido',
+              `${mensaje} Serás redirigido a la vista de retención.`,
+              true,
+            );
+            return;
+          }
+
+          if (status === 401 && intentos > 0) {
+            this.abrirModal(
+              'Intento fallido',
+              `Contraseña incorrecta. Intento ${intentos}/3. Te quedan ${restantes} intento(s).`,
+              true,
+            );
+            return;
+          }
+
+          this.abrirModal('Acceso Denegado', mensaje, true);
         },
       });
   }
 
   abrirModal(titulo: string, mensaje: string, esError: boolean) {
     this.modal = { visible: true, titulo, mensaje, esError };
+  }
+
+  cerrarModal() {
+    this.modal.visible = false;
+    if (this.redirectAlCerrarModal) {
+      this.redirectAlCerrarModal = false;
+      void this.router.navigate(['/retenido']);
+    }
   }
 }

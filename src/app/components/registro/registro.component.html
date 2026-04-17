@@ -51,7 +51,8 @@
           <label class="rb-label !normal-case">Nombres</label>
           <input
             type="text"
-            [(ngModel)]="usuario.nombres"
+            (input)="usuario.nombres = soloLetras($event, 60)"
+            [value]="usuario.nombres"
             name="nombres"
             class="rb-input"
             [ngClass]="isAdminMode ? 'rb-focus-secondary' : 'rb-focus-primary'"
@@ -61,7 +62,8 @@
           <label class="rb-label !normal-case">Apellidos</label>
           <input
             type="text"
-            [(ngModel)]="usuario.apellidos"
+            (input)="usuario.apellidos = soloLetras($event, 60)"
+            [value]="usuario.apellidos"
             name="apellidos"
             class="rb-input"
             [ngClass]="isAdminMode ? 'rb-focus-secondary' : 'rb-focus-primary'"

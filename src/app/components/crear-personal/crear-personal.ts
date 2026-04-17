@@ -10,6 +10,7 @@ import {
   errorEmailHistoriaUsuario,
   errorTelefono9,
   filtrarSoloDigitos,
+  filtrarSoloLetrasYEspacios,
 } from '../../utils/form-validators';
 
 @Component({
@@ -36,6 +37,10 @@ export class CrearPersonalComponent {
 
   soloNumeros(event: Event, max: number) {
     return filtrarSoloDigitos(event, max);
+  }
+
+  soloLetras(event: Event, max?: number) {
+    return filtrarSoloLetrasYEspacios(event, max);
   }
 
   bloquearNoNumerico(event: KeyboardEvent) {
@@ -102,7 +107,9 @@ export class CrearPersonalComponent {
         },
         error: (err) => {
           this.cargando = false;
-          this.abrirModal('error', 'Error al crear', err.error?.message || 'Error del servidor.');
+          const msg = err.error?.message || 'Error del servidor.';
+          const duplicado = String(msg).includes('Ya existe');
+          this.abrirModal(duplicado ? 'advertencia' : 'error', duplicado ? 'Datos duplicados' : 'Error al crear', msg);
         },
       });
   }

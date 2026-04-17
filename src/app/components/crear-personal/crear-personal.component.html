@@ -72,7 +72,8 @@
               <label class="rb-label !normal-case">Nombres</label>
               <input
                 type="text"
-                [(ngModel)]="empleado.nombres"
+                (input)="empleado.nombres = soloLetras($event, 60)"
+                [value]="empleado.nombres"
                 name="n"
                 class="rb-input rb-focus-secondary"
               />
@@ -81,7 +82,8 @@
               <label class="rb-label !normal-case">Apellidos</label>
               <input
                 type="text"
-                [(ngModel)]="empleado.apellidos"
+                (input)="empleado.apellidos = soloLetras($event, 60)"
+                [value]="empleado.apellidos"
                 name="a"
                 class="rb-input rb-focus-secondary"
               />
@@ -148,8 +150,16 @@
     <div class="rb-modal max-w-sm">
       <div class="rb-modal-icon !mb-6">
         <img
-          [src]="modal.tipo === 'error' ? '/iconos/error-rojo.png' : '/iconos/correcto-check-verde.png'"
-          [attr.alt]="modal.tipo === 'error' ? 'Error' : 'Éxito'"
+          [src]="
+            modal.tipo === 'error'
+              ? '/iconos/error-rojo.png'
+              : modal.tipo === 'advertencia'
+                ? '/iconos/advertencia-amarillo.png'
+                : '/iconos/correcto-check-verde.png'
+          "
+          [attr.alt]="
+            modal.tipo === 'error' ? 'Error' : modal.tipo === 'advertencia' ? 'Advertencia' : 'Éxito'
+          "
           width="48"
           height="48"
           class="h-12 w-12 object-contain"
@@ -162,7 +172,9 @@
         type="button"
         (click)="cerrarModal()"
         class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
-        [ngClass]="modal.tipo === 'error' ? 'bg-danger' : 'bg-secondary'"
+        [ngClass]="
+          modal.tipo === 'error' ? 'bg-danger' : modal.tipo === 'advertencia' ? 'bg-warning' : 'bg-secondary'
+        "
       >
         Entendido
       </button>

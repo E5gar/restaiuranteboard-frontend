@@ -15,7 +15,8 @@
         <label class="rb-label !normal-case">Nombre completo</label>
         <input
           type="text"
-          [(ngModel)]="usuario.fullName"
+          (input)="usuario.fullName = soloLetras($event, 120)"
+          [value]="usuario.fullName"
           name="fn"
           class="rb-input rb-focus-primary"
         />

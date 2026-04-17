@@ -13,42 +13,45 @@ import { PanelRepartidorComponent } from './components/panel-repartidor/panel-re
 import { AdminProductosComponent } from './components/admin-productos/admin-productos';
 import { InicioRedirectComponent } from './components/inicio-redirect/inicio-redirect';
 import { PresentacionComponent } from './components/presentacion/presentacion';
+import { RetenidoComponent } from './components/retenido/retenido';
 import { authGuard } from './guards/auth.guard';
 import { guestGuard } from './guards/guest.guard';
 import { adminGuard } from './guards/admin.guard';
 import { configRequiredGuard } from './guards/config-required.guard';
 import { setupFlowGuard } from './guards/setup-flow.guard';
+import { ipBlockGuard } from './guards/ip-block.guard';
 
 export const routes: Routes = [
-  { path: 'presentacion', component: PresentacionComponent, canActivate: [configRequiredGuard] },
-  { path: 'login', component: LoginComponent, canActivate: [configRequiredGuard, guestGuard] },
-  { path: 'registro', component: RegistroComponent, canActivate: [configRequiredGuard, guestGuard] },
-  { path: 'recuperar', component: RecuperarPasswordComponent, canActivate: [configRequiredGuard, guestGuard] },
+  { path: 'retenido', component: RetenidoComponent },
+  { path: 'presentacion', component: PresentacionComponent, canActivate: [ipBlockGuard, configRequiredGuard] },
+  { path: 'login', component: LoginComponent, canActivate: [ipBlockGuard, configRequiredGuard, guestGuard] },
+  { path: 'registro', component: RegistroComponent, canActivate: [ipBlockGuard, configRequiredGuard, guestGuard] },
+  { path: 'recuperar', component: RecuperarPasswordComponent, canActivate: [ipBlockGuard, configRequiredGuard, guestGuard] },
   {
     path: 'setup',
     component: SetupInicialComponent,
-    canActivate: [setupFlowGuard],
+    canActivate: [ipBlockGuard, setupFlowGuard],
   },
   {
     path: 'gestion-administrador',
     component: GestionAdministradorComponent,
-    canActivate: [configRequiredGuard, authGuard, adminGuard],
+    canActivate: [ipBlockGuard, configRequiredGuard, authGuard, adminGuard],
   },
   {
     path: 'crear-personal',
     component: CrearPersonalComponent,
-    canActivate: [configRequiredGuard, authGuard, adminGuard],
+    canActivate: [ipBlockGuard, configRequiredGuard, authGuard, adminGuard],
   },
-  { path: 'confirmar-cuenta', component: ConfirmarCuentaComponent, canActivate: [configRequiredGuard, authGuard] },
-  { path: 'menu', component: MenuClienteComponent, canActivate: [configRequiredGuard, authGuard] },
+  { path: 'confirmar-cuenta', component: ConfirmarCuentaComponent, canActivate: [ipBlockGuard, configRequiredGuard, authGuard] },
+  { path: 'menu', component: MenuClienteComponent, canActivate: [ipBlockGuard, configRequiredGuard, authGuard] },
   {
     path: 'admin-productos',
     component: AdminProductosComponent,
-    canActivate: [configRequiredGuard, authGuard, adminGuard],
+    canActivate: [ipBlockGuard, configRequiredGuard, authGuard, adminGuard],
   },
-  { path: 'caja', component: PanelCajaComponent, canActivate: [configRequiredGuard, authGuard] },
-  { path: 'cocina', component: PanelCocinaComponent, canActivate: [configRequiredGuard, authGuard] },
-  { path: 'entregas', component: PanelRepartidorComponent, canActivate: [configRequiredGuard, authGuard] },
-  { path: '', component: InicioRedirectComponent, pathMatch: 'full' },
+  { path: 'caja', component: PanelCajaComponent, canActivate: [ipBlockGuard, configRequiredGuard, authGuard] },
+  { path: 'cocina', component: PanelCocinaComponent, canActivate: [ipBlockGuard, configRequiredGuard, authGuard] },
+  { path: 'entregas', component: PanelRepartidorComponent, canActivate: [ipBlockGuard, configRequiredGuard, authGuard] },
+  { path: '', component: InicioRedirectComponent, canActivate: [ipBlockGuard], pathMatch: 'full' },
   { path: '**', redirectTo: '' },
 ];
