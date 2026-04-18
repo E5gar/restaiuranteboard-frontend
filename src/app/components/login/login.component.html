@@ -5,7 +5,7 @@
         <img
           [src]="logoSrc"
           [attr.alt]="logoEsDelNegocio ? 'Logo del negocio' : ''"
-          class="max-h-20 w-auto max-w-[220px] object-contain"
+          class="h-8 w-auto max-w-[200px] object-contain sm:h-12 sm:max-h-20 sm:max-w-[220px]"
         />
       </div>
       <h1 class="rb-heading">{{ tituloMarca }}</h1>
@@ -51,20 +51,24 @@
         </div>
       </div>
 
-      <div class="flex items-center justify-between px-0.5 text-xs font-medium">
+      <div
+        class="flex flex-col gap-3 px-0.5 text-sm font-medium sm:flex-row sm:items-center sm:justify-between lg:text-base"
+      >
         <a routerLink="/recuperar" class="text-secondary hover:underline">¿Olvidaste tu contraseña?</a>
         <a routerLink="/registro" class="text-neutral-muted transition hover:text-primary"
           >Crear cuenta</a
         >
       </div>
 
-      <button type="submit" [disabled]="cargando" class="rb-btn-primary">
+      <div class="flex justify-center">
+        <button type="submit" [disabled]="cargando" class="rb-btn-primary">
         <span
           *ngIf="cargando"
           class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
         ></span>
         {{ cargando ? 'Verificando...' : 'Iniciar Sesión' }}
-      </button>
+        </button>
+      </div>
     </form>
   </div>
 
@@ -75,7 +79,9 @@
       </div>
       <h3 class="mb-2 text-lg font-semibold text-gray-900">{{ modal.titulo }}</h3>
       <p class="mb-6 text-sm font-medium text-danger/90">{{ modal.mensaje }}</p>
-      <button (click)="cerrarModal()" type="button" class="rb-btn-secondary">Aceptar</button>
+      <div class="flex justify-center">
+        <button (click)="cerrarModal()" type="button" class="rb-btn-secondary">Aceptar</button>
+      </div>
     </div>
   </div>
 </div>

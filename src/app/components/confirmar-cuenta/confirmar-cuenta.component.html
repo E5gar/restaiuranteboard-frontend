@@ -15,13 +15,13 @@
           class="h-10 w-10 object-contain"
         />
       </div>
-      <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl">Activa tu cuenta</h1>
+      <h1 class="text-2xl font-semibold text-gray-900 sm:text-3xl lg:text-4xl">Activa tu cuenta</h1>
       <p class="rb-kicker mt-2">Configura tu contraseña segura.</p>
     </div>
 
     <form (ngSubmit)="enviarCodigo()" *ngIf="paso === 1" class="space-y-5">
       <div
-        class="rounded-xl border border-secondary/15 bg-secondary/5 p-4 text-center text-sm font-medium text-secondary"
+        class="rounded-xl border border-secondary/15 bg-secondary/5 p-4 text-center text-sm font-medium text-secondary lg:text-base"
       >
         Verificaremos tu correo <strong>{{ email }}</strong> antes de continuar.
       </div>
@@ -168,26 +168,30 @@
         {{ modal.mensaje }}
       </div>
 
-      <div *ngIf="modal.tipo === 'terminos'" class="flex gap-3">
+      <div *ngIf="modal.tipo === 'terminos'" class="flex flex-col gap-2 sm:flex-row sm:gap-3">
         <button
           type="button"
           (click)="rechazarTerminos()"
-          class="rb-btn-neutral w-1/2 !shadow-none"
+          class="rb-btn-neutral !shadow-none sm:flex-1"
         >
           No Acepto
         </button>
-        <button type="button" (click)="aceptarTerminos()" class="rb-btn-success w-1/2">
+        <button type="button" (click)="aceptarTerminos()" class="rb-btn-success sm:flex-1">
           Acepto
         </button>
       </div>
 
-      <div *ngIf="modal.tipo !== 'terminos'">
+      <div *ngIf="modal.tipo !== 'terminos'" class="flex justify-center">
         <button
           type="button"
           (click)="cerrarModal()"
-          class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+          class="w-full sm:w-max"
           [ngClass]="
-            modal.esExpirado ? 'bg-warning' : modal.tipo === 'error' ? 'bg-danger' : 'bg-secondary'
+            modal.esExpirado
+              ? 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-warning px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95'
+              : modal.tipo === 'error'
+                ? 'rb-btn-danger'
+                : 'rb-btn-secondary'
           "
         >
           {{ modal.esExpirado ? 'Reenviar Código' : 'Entendido' }}

@@ -4,13 +4,13 @@
   ></div>
 </div>
 
-<div *ngIf="isAdminMode === true" class="rb-page-center relative px-4 py-12">
+<div *ngIf="isAdminMode === true" class="rb-page-center relative">
   <div
-    class="rb-shell-lg rb-card flex max-h-[min(900px,90vh)] flex-col overflow-hidden md:max-h-none md:flex-row"
+    class="rb-shell-lg rb-card mx-auto flex max-h-[min(900px,90vh)] w-full flex-col overflow-hidden md:max-h-none md:flex-row"
   >
-    <div class="md:w-1/3 bg-secondary px-8 py-10 text-white">
-      <h2 class="text-xl font-semibold tracking-tight">Bienvenido</h2>
-      <p class="mt-3 text-sm leading-relaxed text-white/90">
+    <div class="md:w-1/3 bg-secondary px-4 py-8 text-white sm:px-8 sm:py-10">
+      <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">Bienvenido</h2>
+      <p class="mt-3 text-sm leading-relaxed text-white/90 lg:text-base">
         Estás configurando el acceso del <strong>Administrador Principal</strong>. Esta cuenta
         tendrá control total sobre el sistema.
       </p>
@@ -19,27 +19,27 @@
   </div>
 </div>
 
-<div *ngIf="isAdminMode === false" class="rb-page-center relative px-4 py-12">
+<div *ngIf="isAdminMode === false" class="rb-page-center relative">
   <div class="rb-shell-sm rb-card overflow-hidden">
-    <div class="bg-primary px-8 py-7 text-center text-white">
-      <div class="mx-auto mb-3 flex h-20 items-center justify-center">
+    <div class="bg-primary px-4 py-6 text-center text-white sm:px-8 sm:py-7">
+      <div class="mx-auto mb-3 flex h-12 items-center justify-center sm:h-16">
         <img
           [src]="logoSrc"
           [attr.alt]="logoEsDelNegocio ? 'Logo del negocio' : ''"
           width="200"
           height="80"
-          class="max-h-20 w-auto max-w-[220px] object-contain"
+          class="h-8 w-auto max-w-[180px] object-contain sm:h-12 sm:max-w-[240px] lg:max-h-20 lg:max-w-[280px]"
         />
       </div>
-      <h2 class="text-xl font-semibold tracking-tight">{{ tituloMarca }}</h2>
-      <p class="mt-1 text-sm text-white/90">Únete y disfruta del mejor sabor</p>
+      <h2 class="text-xl font-semibold tracking-tight sm:text-2xl">{{ tituloMarca }}</h2>
+      <p class="mt-1 text-sm text-white/90 lg:text-base">Únete y disfruta del mejor sabor</p>
     </div>
     <ng-container *ngTemplateOutlet="formularioTemplate"></ng-container>
   </div>
 </div>
 
 <ng-template #formularioTemplate>
-  <div class="w-full p-8 sm:p-9" [ngClass]="{ 'md:w-2/3 md:overflow-y-auto': isAdminMode }">
+  <div class="w-full p-4 sm:p-6 md:p-9" [ngClass]="{ 'md:w-2/3 md:overflow-y-auto': isAdminMode }">
     <form (ngSubmit)="enviarCodigo()" *ngIf="paso === 1" class="space-y-4">
       <h3 class="rb-heading-accent border-b border-gray-100 pb-3" *ngIf="isAdminMode">
         Registro de Administrador
@@ -71,7 +71,7 @@
         </div>
 
         <div
-          class="grid grid-cols-2 gap-2"
+          class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4"
           [ngClass]="{ 'md:col-span-2': !isAdminMode, 'md:col-span-1': isAdminMode }"
         >
           <div>
@@ -325,20 +325,24 @@
       {{ modal.mensaje }}
     </div>
 
-    <div *ngIf="modal.tipo === 'terminos'" class="flex gap-3">
-      <button type="button" (click)="rechazarTerminos()" class="rb-btn-neutral w-1/2 !shadow-none">
+    <div *ngIf="modal.tipo === 'terminos'" class="flex flex-col gap-2 sm:flex-row sm:gap-3">
+      <button type="button" (click)="rechazarTerminos()" class="rb-btn-neutral !shadow-none sm:flex-1">
         No Acepto
       </button>
-      <button type="button" (click)="aceptarTerminos()" class="rb-btn-success w-1/2">Acepto</button>
+      <button type="button" (click)="aceptarTerminos()" class="rb-btn-success sm:flex-1">Acepto</button>
     </div>
 
-    <div *ngIf="modal.tipo !== 'terminos'">
+    <div *ngIf="modal.tipo !== 'terminos'" class="flex justify-center">
       <button
         type="button"
         (click)="cerrarModal()"
-        class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+        class="w-full sm:w-max"
         [ngClass]="
-          modal.esExpirado ? 'bg-warning' : modal.tipo === 'error' ? 'bg-danger' : 'bg-secondary'
+          modal.esExpirado
+            ? 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-warning px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95'
+            : modal.tipo === 'error'
+              ? 'rb-btn-danger'
+              : 'rb-btn-secondary'
         "
       >
         {{ modal.esExpirado ? 'Reenviar Código' : 'Entendido' }}

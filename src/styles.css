@@ -20,19 +20,19 @@ body {
   }
 
   .rb-page-center {
-    @apply min-h-screen bg-white flex items-center justify-center px-4 py-12 sm:py-16;
+    @apply min-h-screen bg-white flex items-center justify-center px-4 py-8 sm:px-6 sm:py-12 lg:px-8;
   }
 
   .rb-container {
-    @apply mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10;
+    @apply mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8;
   }
 
   .rb-container-tight {
-    @apply mx-auto w-full max-w-7xl px-4 py-6 sm:px-6;
+    @apply mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8;
   }
 
   .rb-shell-sm {
-    @apply w-full max-w-md;
+    @apply mx-auto w-full max-w-md;
   }
   .rb-shell-md {
     @apply w-full max-w-2xl;
@@ -58,15 +58,15 @@ body {
   }
 
   .rb-heading {
-    @apply text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl;
+    @apply text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl lg:text-4xl;
   }
 
   .rb-heading-accent {
-    @apply text-lg font-semibold tracking-tight text-secondary sm:text-xl;
+    @apply text-lg font-semibold tracking-tight text-secondary sm:text-xl lg:text-2xl;
   }
 
   .rb-kicker {
-    @apply text-sm text-neutral-strong;
+    @apply text-sm text-neutral-strong lg:text-base;
   }
 
   .rb-label {
@@ -74,7 +74,7 @@ body {
   }
 
   .rb-input {
-    @apply w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition;
+    @apply min-h-11 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition lg:text-base;
   }
 
   .rb-focus-primary {
@@ -86,31 +86,31 @@ body {
   }
 
   .rb-btn-primary {
-    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-45;
+    @apply inline-flex w-full min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-45 sm:w-max sm:min-w-[8rem];
   }
 
   .rb-btn-secondary {
-    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-45;
+    @apply inline-flex w-full min-h-11 items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-45 sm:w-max sm:min-w-[8rem];
   }
 
   .rb-btn-success {
-    @apply inline-flex w-full items-center justify-center gap-2 rounded-xl bg-success px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-45;
+    @apply inline-flex w-full min-h-11 items-center justify-center gap-2 rounded-xl bg-success px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-45 sm:w-max sm:min-w-[8rem];
   }
 
   .rb-btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-danger px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-45;
+    @apply inline-flex w-full min-h-11 items-center justify-center gap-2 rounded-xl bg-danger px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:pointer-events-none disabled:opacity-45 sm:w-max sm:min-w-[8rem];
   }
 
   .rb-btn-neutral {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm font-semibold text-neutral-strong shadow-sm transition hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-45;
+    @apply inline-flex w-full min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm font-semibold text-neutral-strong shadow-sm transition hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-45 sm:w-max sm:min-w-[8rem];
   }
 
   .rb-btn-sm {
-    @apply rounded-lg px-3 py-2 text-xs font-semibold;
+    @apply rounded-lg px-3 py-2.5 text-sm font-semibold;
   }
 
   .rb-nav {
-    @apply flex items-center justify-between border-b border-black/5 px-4 py-3.5 sm:px-6;
+    @apply sticky top-0 z-50 flex items-center justify-between border-b border-black/5 px-4 py-3.5 sm:px-6 lg:px-8;
   }
 
   .rb-nav-title {

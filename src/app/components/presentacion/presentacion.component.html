@@ -1,36 +1,42 @@
 <div class="rb-page">
   <div class="rb-container">
     <section class="rb-card overflow-hidden">
-      <div class="bg-secondary px-6 py-10 text-white sm:px-10">
-        <div class="grid grid-cols-1 gap-8 md:grid-cols-2 md:items-center">
+      <div class="bg-secondary px-4 py-8 text-white sm:px-6 sm:py-10 lg:px-10">
+        <div class="grid grid-cols-1 gap-6 gap-y-8 md:grid-cols-2 md:items-center md:gap-8 lg:gap-10">
           <div>
-            <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Restaiuranteboard</h1>
-            <p class="mt-3 max-w-xl text-sm leading-relaxed text-white/90 sm:text-base">
+            <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">Restaiuranteboard</h1>
+            <p class="mt-3 max-w-xl text-sm leading-relaxed text-white/90 lg:text-base">
               Plataforma web para gestionar un Restaurante Virtual con login por roles, menú, pagos, cocina y delivery.
             </p>
-            <div class="mt-6 flex flex-wrap gap-3">
-              <a routerLink="/login" class="rb-btn-primary !w-auto !bg-white !px-5 !text-secondary">Iniciar sesión</a>
+            <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
+              <a routerLink="/login" class="rb-btn-primary !bg-white !px-5 !text-secondary">Iniciar sesión</a>
               <a
                 routerLink="/registro"
-                class="inline-flex items-center rounded-xl border border-white/35 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+                class="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-white/35 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20 sm:w-max"
                 >Crear cuenta</a
               >
             </div>
           </div>
           <div class="mx-auto flex w-full max-w-sm items-center justify-center">
-            <img src="/iconos/primer-logo-base.png" alt="" width="180" height="180" class="h-36 w-36 object-contain sm:h-44 sm:w-44" />
+            <div class="aspect-square w-32 shrink-0 rounded-2xl bg-gray-100 sm:w-40 lg:w-48">
+              <img
+                src="/iconos/primer-logo-base.png"
+                alt=""
+                class="h-full w-full object-contain p-2 sm:p-3"
+              />
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <section class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       <article class="rb-card p-5">
         <div class="mb-3 flex items-center gap-3">
           <img src="/iconos/candado.png" alt="" width="28" height="28" class="h-7 w-7 object-contain" />
           <h2 class="text-base font-semibold text-gray-900">Accesos por rol</h2>
         </div>
-        <p class="text-sm text-neutral-strong">
+        <p class="text-sm text-neutral-strong lg:text-base">
           Login para cliente, administrador, cajero, cocinero y repartidor con validaciones de seguridad y recuperación de clave.
         </p>
       </article>
@@ -40,7 +46,7 @@
           <img src="/iconos/correo.png" alt="" width="28" height="28" class="h-7 w-7 object-contain" />
           <h2 class="text-base font-semibold text-gray-900">Flujos con correo</h2>
         </div>
-        <p class="text-sm text-neutral-strong">
+        <p class="text-sm text-neutral-strong lg:text-base">
           Confirmación por código en registro, activación de personal y recuperación de contraseña usando SMTP configurado.
         </p>
       </article>
@@ -50,7 +56,7 @@
           <img src="/iconos/carrito-compras.png" alt="" width="28" height="28" class="h-7 w-7 object-contain" />
           <h2 class="text-base font-semibold text-gray-900">Venta y operación</h2>
         </div>
-        <p class="text-sm text-neutral-strong">
+        <p class="text-sm text-neutral-strong lg:text-base">
           Menú para clientes, validación de pagos en caja, avance de órdenes en cocina y seguimiento para entrega.
         </p>
       </article>
@@ -60,7 +66,7 @@
           <img src="/iconos/documento.png" alt="" width="28" height="28" class="h-7 w-7 object-contain" />
           <h2 class="text-base font-semibold text-gray-900">Gestión del negocio</h2>
         </div>
-        <p class="text-sm text-neutral-strong">
+        <p class="text-sm text-neutral-strong lg:text-base">
           Setup inicial con nombre, logo, términos y medios de pago; además de administración de ingredientes y productos.
         </p>
       </article>
@@ -68,7 +74,7 @@
 
     <section class="mt-8 rb-card p-6 sm:p-8">
       <h3 class="rb-heading-accent">Cobertura de Historias de Usuario</h3>
-      <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div class="mt-4 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
         <div class="rounded-xl border border-gray-200 p-4">
           <h4 class="text-sm font-semibold text-gray-900">Login y cuentas</h4>
           <p class="mt-2 text-sm text-neutral-strong">

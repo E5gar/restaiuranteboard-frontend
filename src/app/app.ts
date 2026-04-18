@@ -20,8 +20,10 @@ import { RouterOutlet } from '@angular/router';
             class="h-12 w-12 object-contain"
           />
         </div>
-        <h3 class="mb-8 text-lg font-semibold text-gray-900">Esta entrada no es válida</h3>
-        <button type="button" (click)="cerrarEntradaInvalida()" class="rb-btn-secondary w-full">Aceptar</button>
+        <h3 class="mb-8 text-lg font-semibold text-gray-900 sm:text-xl">Esta entrada no es válida</h3>
+        <div class="flex justify-center">
+          <button type="button" (click)="cerrarEntradaInvalida()" class="rb-btn-secondary">Aceptar</button>
+        </div>
       </div>
     </div>
   `,

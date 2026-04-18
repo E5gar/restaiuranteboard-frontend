@@ -1,12 +1,14 @@
 <div class="rb-page">
-  <nav class="rb-nav bg-primary text-white shadow-sm">
+  <nav
+    class="rb-nav flex flex-col items-stretch gap-3 bg-primary text-white shadow-sm sm:flex-row sm:items-center sm:justify-between"
+  >
     <h1 class="rb-nav-title text-white">Restaiuranteboard</h1>
-    <div class="flex items-center gap-3">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
       <button
         type="button"
-        class="inline-flex items-center gap-2 rounded-xl bg-white/15 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/25"
+        class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white/15 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/25 sm:w-max"
       >
-        <img src="/iconos/carrito.png" alt="" width="22" height="22" class="h-5 w-5 object-contain" />
+        <img src="/iconos/carrito.png" alt="" width="22" height="22" class="h-5 w-5 shrink-0 object-contain" />
         <span>Carrito (0)</span>
       </button>
       <app-logout-button variant="on-dark" />
@@ -15,29 +17,24 @@
 
   <div class="rb-container">
     <div
-      class="relative mb-10 overflow-hidden rounded-2xl border border-secondary/20 bg-gray-50/50 p-6 sm:p-8"
+      class="relative mb-8 overflow-hidden rounded-2xl border border-secondary/20 bg-gray-50/50 p-4 sm:mb-10 sm:p-6 lg:p-8"
     >
       <div class="absolute left-0 top-0 h-full w-0.5 bg-secondary/35" aria-hidden="true"></div>
-      <h2 class="rb-heading-accent mb-1 flex items-center gap-2">
-        <img src="/iconos/destellos.png" alt="" width="24" height="24" class="h-6 w-6 shrink-0 object-contain" />
+      <h2 class="rb-heading-accent mb-1 flex flex-wrap items-center gap-2">
+        <img src="/iconos/destellos.png" alt="" width="24" height="24" class="h-6 w-6 shrink-0 object-contain sm:h-7 sm:w-7" />
         Recomendados para ti
       </h2>
       <p class="rb-kicker">Basado en tus gustos y el clima de hoy.</p>
     </div>
 
-    <h3 class="mb-5 text-lg font-semibold text-gray-900">Nuestro Menú</h3>
-    <div class="grid grid-cols-1 gap-5 md:grid-cols-3 lg:grid-cols-4">
+    <h3 class="mb-4 text-lg font-semibold text-gray-900 sm:mb-5 sm:text-xl">Nuestro Menú</h3>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       <div class="rb-card overflow-hidden transition hover:shadow-md">
-        <div class="h-40 animate-pulse bg-gray-100"></div>
-        <div class="p-4">
-          <h4 class="font-semibold text-gray-900">Cargando producto...</h4>
-          <p class="mt-2 text-sm font-semibold text-primary">$0.00</p>
-          <button
-            type="button"
-            class="rb-btn-primary mt-4 !py-2.5 text-sm"
-          >
-            Agregar
-          </button>
+        <div class="aspect-video w-full animate-pulse bg-gray-100"></div>
+        <div class="p-4 sm:p-5">
+          <h4 class="text-sm font-semibold text-gray-900 sm:text-base">Cargando producto...</h4>
+          <p class="mt-2 text-sm font-semibold text-primary lg:text-base">$0.00</p>
+          <button type="button" class="rb-btn-primary mt-4">Agregar</button>
         </div>
       </div>
     </div>

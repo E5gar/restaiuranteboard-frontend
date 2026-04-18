@@ -3,13 +3,13 @@
     <app-logout-button />
   </div>
   <div class="rb-shell-sm rb-card overflow-hidden">
-    <div class="bg-primary px-8 py-7 text-center text-white">
-      <h2 class="text-xl font-semibold tracking-tight">Restaiuranteboard</h2>
-      <p class="mt-1 text-sm text-white/90">Únete y disfruta del mejor sabor</p>
+    <div class="bg-primary px-4 py-6 text-center text-white sm:px-8 sm:py-7">
+      <h2 class="text-xl font-semibold tracking-tight sm:text-2xl">Restaiuranteboard</h2>
+      <p class="mt-1 text-sm text-white/90 lg:text-base">Únete y disfruta del mejor sabor</p>
     </div>
 
-    <form class="space-y-4 p-8 sm:p-9" (ngSubmit)="enviarCodigo()" *ngIf="paso === 1">
-      <h3 class="text-lg font-semibold text-gray-900">Crear mi cuenta</h3>
+    <form class="space-y-4 p-4 sm:p-6 md:p-9" (ngSubmit)="enviarCodigo()" *ngIf="paso === 1">
+      <h3 class="text-lg font-semibold text-gray-900 sm:text-xl">Crear mi cuenta</h3>
 
       <div>
         <label class="rb-label !normal-case">Nombre completo</label>
@@ -22,7 +22,7 @@
         />
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <div>
           <label class="rb-label !normal-case !text-[10px]">DNI</label>
           <input
@@ -126,15 +126,15 @@
         </div>
       </div>
 
-      <div class="flex items-center space-x-2 py-1 text-xs">
+      <div class="flex items-start gap-3 py-1">
         <input
           type="checkbox"
           [(ngModel)]="aceptoTerminos"
           name="t"
           id="t"
-          class="h-4 w-4 border-gray-300 accent-primary"
+          class="mt-1 h-4 w-4 shrink-0 border-gray-300 accent-primary"
         />
-        <label for="t" class="cursor-pointer text-neutral-strong"
+        <label for="t" class="cursor-pointer text-sm text-neutral-strong lg:text-base"
           >Acepto los términos y condiciones de uso.</label
         >
       </div>
@@ -153,7 +153,7 @@
       </p>
     </form>
 
-    <div class="space-y-6 p-8 text-center sm:p-9" *ngIf="paso === 2">
+    <div class="space-y-6 p-4 text-center sm:p-6 md:p-9" *ngIf="paso === 2">
       <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
         <img
           src="/iconos/correo.png"
@@ -217,14 +217,22 @@
       >
         {{ modal.mensaje }}
       </p>
-      <button
-        type="button"
-        (click)="cerrarModal()"
-        class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
-        [ngClass]="modal.esExpirado ? 'bg-warning' : modal.esError ? 'bg-danger' : 'bg-secondary'"
-      >
-        {{ modal.esExpirado ? 'Reenviar Código' : 'Entendido' }}
-      </button>
+      <div class="flex justify-center">
+        <button
+          type="button"
+          (click)="cerrarModal()"
+          class="w-full sm:w-max"
+          [ngClass]="
+            modal.esExpirado
+              ? 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-warning px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95'
+              : modal.esError
+                ? 'rb-btn-danger'
+                : 'rb-btn-secondary'
+          "
+        >
+          {{ modal.esExpirado ? 'Reenviar Código' : 'Entendido' }}
+        </button>
+      </div>
     </div>
   </div>
 </div>

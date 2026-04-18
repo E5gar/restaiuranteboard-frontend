@@ -1,22 +1,22 @@
 <div class="rb-page">
-  <div class="rb-container-tight mx-auto max-w-7xl">
+  <div class="rb-container">
     <div class="rb-card overflow-hidden">
-      <div class="border-b border-white/10 bg-secondary px-6 py-7 text-white sm:px-8">
-        <div class="mb-6 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <h2 class="text-xl font-semibold tracking-tight sm:text-2xl">
+      <div class="border-b border-white/10 bg-secondary px-4 py-6 text-white sm:px-6 sm:py-7 lg:px-8">
+        <div class="mb-6 flex flex-col items-stretch justify-between gap-4 sm:items-start md:flex-row md:items-center">
+          <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">
             Administrar Ingredientes y Productos
           </h2>
-          <div class="flex flex-wrap items-center gap-2">
+          <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <a
               routerLink="/gestion-administrador"
-              class="inline-flex items-center rounded-xl border border-white/25 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+              class="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-white/25 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20 sm:w-max"
               >Volver al Panel</a
             >
             <app-logout-button variant="on-dark" />
           </div>
         </div>
 
-        <div class="flex gap-1 border-b border-white/20 pb-0 text-sm">
+        <div class="-mx-1 flex gap-1 overflow-x-auto border-b border-white/20 pb-0 px-1 text-sm sm:mx-0 sm:px-0">
           <button
             type="button"
             (click)="cambiarPestana('ingredientes')"
@@ -25,7 +25,7 @@
                 ? 'border-b-2 border-white font-semibold text-white'
                 : 'text-white/75 hover:text-white'
             "
-            class="px-4 pb-3 transition"
+            class="min-h-11 shrink-0 whitespace-nowrap px-4 pb-3 pt-1 transition"
           >
             1. Ingredientes (Insumos)
           </button>
@@ -37,14 +37,14 @@
                 ? 'border-b-2 border-white font-semibold text-white'
                 : 'text-white/75 hover:text-white'
             "
-            class="px-4 pb-3 transition"
+            class="min-h-11 shrink-0 whitespace-nowrap px-4 pb-3 pt-1 transition"
           >
             2. Platos y Bebidas
           </button>
         </div>
       </div>
 
-      <div *ngIf="pestanaActiva === 'ingredientes'" class="grid grid-cols-1 gap-8 p-6 sm:p-8 lg:grid-cols-2">
+      <div *ngIf="pestanaActiva === 'ingredientes'" class="grid grid-cols-1 gap-4 p-4 sm:gap-6 sm:p-6 lg:grid-cols-2 lg:gap-8 lg:p-8">
         <div class="rb-section-muted h-fit !shadow-none">
           <h3 class="rb-heading-accent mb-4 text-base">Registrar Nuevo Insumo</h3>
           <form (ngSubmit)="guardarIngrediente()" class="space-y-4">
@@ -59,7 +59,7 @@
               />
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
               <div>
                 <label class="rb-label !normal-case">Categoría</label>
                 <select
@@ -88,7 +88,7 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
               <div>
                 <label class="rb-label !normal-case">Stock inicial</label>
                 <input
@@ -117,11 +117,12 @@
                   accept="image/jpeg,image/jpg,image/png"
                 class="rb-input mt-1 py-2 text-sm"
               />
-              <img
+              <div
                 *ngIf="nuevoIngrediente.imageBase64"
-                [src]="nuevoIngrediente.imageBase64"
-                class="mt-2 h-20 w-20 rounded-lg border border-gray-200 object-cover"
-              />
+                class="mt-2 aspect-square w-20 max-w-full rounded-lg border border-gray-200 bg-gray-100 sm:w-24"
+              >
+                <img [src]="nuevoIngrediente.imageBase64" alt="" class="h-full w-full rounded-lg object-cover" />
+              </div>
             </div>
 
             <button type="submit" [disabled]="cargando" class="rb-btn-secondary">
@@ -135,30 +136,29 @@
         </div>
 
         <div>
-          <h3 class="mb-4 text-lg font-semibold text-gray-900">Insumos Registrados en Almacén</h3>
-          <div class="grid max-h-[500px] grid-cols-1 gap-3 overflow-y-auto pr-1 md:grid-cols-2">
+          <h3 class="mb-4 text-lg font-semibold text-gray-900 sm:text-xl">Insumos Registrados en Almacén</h3>
+          <div class="grid max-h-[500px] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:gap-4 md:grid-cols-2">
             <div
               *ngFor="let ing of ingredientes"
               class="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
             >
-              <img
-                [src]="ing.imageBase64 || 'assets/no-image.png'"
-                class="h-12 w-12 rounded-lg bg-gray-100 object-cover"
-              />
+              <div class="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-14 sm:w-14">
+                <img [src]="ing.imageBase64 || 'assets/no-image.png'" alt="" class="h-full w-full object-cover" />
+              </div>
               <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold leading-tight text-gray-900">{{ ing.name }}</p>
-                <p class="text-xs text-neutral-muted">{{ ing.category }} • {{ ing.stockQuantity }} {{ ing.unit }}</p>
-                <p class="text-xs font-semibold text-success">${{ ing.price }}</p>
+                <p class="text-sm font-semibold leading-tight text-gray-900 lg:text-base">{{ ing.name }}</p>
+                <p class="text-xs text-neutral-muted sm:text-sm">{{ ing.category }} • {{ ing.stockQuantity }} {{ ing.unit }}</p>
+                <p class="text-sm font-semibold text-success">${{ ing.price }}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div *ngIf="pestanaActiva === 'productos'" class="p-6 sm:p-8">
-        <div class="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div *ngIf="pestanaActiva === 'productos'" class="p-4 sm:p-6 lg:p-8">
+        <div class="mb-8 grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:gap-8">
           <div>
-            <h3 class="mb-4 text-lg font-semibold text-primary">1. Datos para el Cliente (Catálogo)</h3>
+            <h3 class="mb-4 text-lg font-semibold text-primary sm:text-xl">1. Datos para el Cliente (Catálogo)</h3>
             <form class="space-y-4">
               <div>
                 <label class="rb-label !normal-case">Nombre del plato o bebida</label>
@@ -170,7 +170,7 @@
                 />
               </div>
 
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
                 <div>
                   <label class="rb-label !normal-case">Categoría en menú</label>
                   <select
@@ -214,9 +214,9 @@
                   class="rb-input mt-1 py-2 text-sm"
                 />
 
-                <div class="mt-3 flex flex-wrap gap-2">
-                  <div *ngFor="let img of nuevoProducto.imagesBase64; let i = index" class="group relative">
-                    <img [src]="img" class="h-16 w-16 rounded-lg border border-gray-200 object-cover" />
+                <div class="mt-3 flex flex-wrap gap-2 sm:gap-3">
+                  <div *ngFor="let img of nuevoProducto.imagesBase64; let i = index" class="group relative aspect-square w-16 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100 sm:w-20">
+                    <img [src]="img" alt="" class="h-full w-full object-cover" />
                     <button
                       (click)="eliminarImagenProducto(i)"
                       type="button"
@@ -231,13 +231,13 @@
             </form>
           </div>
 
-          <div class="flex flex-col rounded-2xl border border-primary/15 bg-primary/5 p-6">
-            <h3 class="mb-2 text-lg font-semibold text-gray-900">2. Receta Interna</h3>
-            <p class="mb-4 text-xs text-neutral-strong">
+          <div class="flex flex-col rounded-2xl border border-primary/15 bg-primary/5 p-4 sm:p-6">
+            <h3 class="mb-2 text-lg font-semibold text-gray-900 sm:text-xl">2. Receta Interna</h3>
+            <p class="mb-4 text-sm text-neutral-strong lg:text-base">
               Selecciona los insumos que se descontarán de cocina al vender este producto.
             </p>
 
-            <div class="mb-4 flex flex-wrap items-end gap-2">
+            <div class="mb-4 flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-end">
               <div class="min-w-0 flex-1">
                 <label class="rb-label !normal-case !mb-1 !text-[10px]">Insumo</label>
                 <select
@@ -250,7 +250,7 @@
                   </option>
                 </select>
               </div>
-              <div class="w-24 shrink-0">
+              <div class="w-full shrink-0 sm:w-28">
                 <label class="rb-label !normal-case !mb-1 !text-[10px]">Cantidad</label>
                 <input
                   type="number"
@@ -261,7 +261,7 @@
               <button
                 type="button"
                 (click)="agregarInsumoAReceta()"
-                class="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
+                class="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 sm:w-auto"
                 aria-label="Añadir insumo a la receta"
               >
                 <img src="/iconos/agregar.png" alt="" width="18" height="18" class="h-5 w-5 object-contain" />
@@ -312,8 +312,8 @@
         </div>
 
         <div class="rb-divider pt-8">
-          <h3 class="mb-4 text-lg font-semibold text-gray-900">Productos en el Catálogo</h3>
-          <div class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
+          <h3 class="mb-4 text-lg font-semibold text-gray-900 sm:text-xl">Productos en el Catálogo</h3>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             <div
               *ngFor="let prod of productos"
               class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
@@ -326,11 +326,14 @@
               >
                 <img src="/iconos/tacho.png" alt="" width="16" height="16" class="h-4 w-4 object-contain" />
               </button>
-              <img
-                [src]="prod.imagesBase64[0] || 'assets/no-image.png'"
-                class="mb-3 h-24 w-full rounded-xl bg-gray-100 object-cover"
-              />
-              <h4 class="mb-1 text-sm font-semibold leading-tight text-gray-900">{{ prod.name }}</h4>
+              <div class="mb-3 aspect-square w-full overflow-hidden rounded-xl bg-gray-100">
+                <img
+                  [src]="prod.imagesBase64[0] || 'assets/no-image.png'"
+                  alt=""
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <h4 class="mb-1 text-sm font-semibold leading-tight text-gray-900 lg:text-base">{{ prod.name }}</h4>
               <span class="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-neutral-strong">{{
                 prod.category
               }}</span>
@@ -354,15 +357,17 @@
         />
       </div>
       <h3 class="mb-2 text-lg font-semibold text-gray-900">{{ modal.titulo }}</h3>
-      <p class="mb-8 text-sm text-neutral-strong">{{ modal.mensaje }}</p>
-      <button
-        type="button"
-        (click)="cerrarModal()"
-        class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
-        [ngClass]="modal.tipo === 'error' ? 'bg-danger' : 'bg-secondary'"
-      >
-        Entendido
-      </button>
+      <p class="mb-8 text-sm text-neutral-strong lg:text-base">{{ modal.mensaje }}</p>
+      <div class="flex justify-center">
+        <button
+          type="button"
+          (click)="cerrarModal()"
+          class="w-full sm:w-max"
+          [ngClass]="modal.tipo === 'error' ? 'rb-btn-danger' : 'rb-btn-secondary'"
+        >
+          Entendido
+        </button>
+      </div>
     </div>
   </div>
 </div>

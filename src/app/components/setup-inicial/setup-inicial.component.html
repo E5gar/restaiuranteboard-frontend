@@ -1,14 +1,16 @@
-<div class="rb-page-center relative px-2 py-8 sm:px-4">
+<div class="rb-page-center relative">
   <div *ngIf="configuracionYaCompleta && sesionActiva" class="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
     <app-logout-button />
   </div>
 
   <div class="rb-shell-md rb-card mx-auto w-full max-w-3xl overflow-hidden">
-    <div class="border-b border-white/10 bg-secondary px-6 py-6 text-white sm:px-8 sm:py-7">
+    <div class="border-b border-white/10 bg-secondary px-4 py-6 text-white sm:px-6 sm:py-7 lg:px-8">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 class="text-xl font-semibold tracking-tight">Información del negocio y correo SMTP</h2>
-          <p class="mt-2 text-sm text-white/85">
+          <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">
+            Información del negocio y correo SMTP
+          </h2>
+          <p class="mt-2 text-sm text-white/85 lg:text-base">
             Los datos se cargan desde la base de datos. Si cambias el correo o la contraseña de aplicación
             Gmail, solicita un código y complétalo antes de guardar.
           </p>
@@ -16,7 +18,7 @@
         <a
           *ngIf="configuracionYaCompleta && sesionActiva"
           routerLink="/gestion-administrador"
-          class="inline-flex shrink-0 items-center rounded-xl border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+          class="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/20 sm:w-max"
           >Volver al panel</a
         >
       </div>
@@ -26,7 +28,7 @@
       <div class="h-10 w-10 animate-spin rounded-full border-2 border-secondary border-t-transparent"></div>
     </div>
 
-    <form *ngIf="!cargandoInicial" class="space-y-6 p-6 sm:p-9" (ngSubmit)="guardar()">
+    <form *ngIf="!cargandoInicial" class="space-y-6 p-4 sm:p-6 lg:p-9" (ngSubmit)="guardar()">
       <section class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50/60 p-5">
         <h3 class="text-sm font-semibold text-secondary">Correo SMTP (Gmail)</h3>
         <div>
@@ -57,7 +59,7 @@
           type="button"
           (click)="enviarCodigo()"
           [disabled]="cargando"
-          class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-secondary/30 bg-white px-4 py-3 text-sm font-semibold text-secondary shadow-sm transition hover:bg-secondary/5 disabled:opacity-50 sm:w-auto"
+          class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-secondary/30 bg-white px-4 py-3 text-sm font-semibold text-secondary shadow-sm transition hover:bg-secondary/5 disabled:opacity-50 sm:w-max"
         >
           <span
             *ngIf="cargando"
@@ -121,8 +123,10 @@
         </div>
 
         <div *ngIf="config.logoBase64" class="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3">
-          <img [src]="config.logoBase64" alt="Vista previa del logo" class="h-16 w-16 rounded-lg object-cover" />
-          <span class="text-xs text-neutral-strong">Vista previa del logo actual o recién seleccionado.</span>
+          <div class="aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-20 sm:w-20">
+            <img [src]="config.logoBase64" alt="Vista previa del logo" class="h-full w-full object-cover" />
+          </div>
+          <span class="text-sm text-neutral-strong lg:text-base">Vista previa del logo actual o recién seleccionado.</span>
         </div>
 
         <div>
@@ -261,13 +265,15 @@
         </div>
       </section>
 
-      <button type="submit" [disabled]="cargando" class="rb-btn-success w-full disabled:opacity-60">
-        <span
-          *ngIf="cargando"
-          class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
-        ></span>
-        {{ cargando ? 'Guardando...' : 'Guardar configuración' }}
-      </button>
+      <div class="flex justify-center pt-2">
+        <button type="submit" [disabled]="cargando" class="rb-btn-success disabled:opacity-60">
+          <span
+            *ngIf="cargando"
+            class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+          ></span>
+          {{ cargando ? 'Guardando...' : 'Guardar configuración' }}
+        </button>
+      </div>
     </form>
 
     <div *ngIf="modal.visible" class="rb-modal-backdrop">
@@ -283,23 +289,29 @@
         </div>
 
         <h3 class="mb-2 text-lg font-semibold text-gray-900">{{ modal.titulo }}</h3>
-        <p class="mb-6 text-sm text-neutral-strong">{{ modal.mensaje }}</p>
+        <p class="mb-6 text-sm text-neutral-strong lg:text-base">{{ modal.mensaje }}</p>
 
-        <button
-          type="button"
-          (click)="cerrarModal()"
-          [disabled]="cargando"
-          class="inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95 disabled:opacity-50"
-          [ngClass]="
-            modal.esExpirado ? 'bg-warning' : modal.esError ? 'bg-danger' : 'bg-secondary'
-          "
-        >
-          <span
-            *ngIf="cargando"
-            class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
-          ></span>
-          {{ modal.esExpirado ? 'Reenviar código' : 'Entendido' }}
-        </button>
+        <div class="flex justify-center">
+          <button
+            type="button"
+            (click)="cerrarModal()"
+            [disabled]="cargando"
+            class="w-full disabled:opacity-50 sm:w-max"
+            [ngClass]="
+              modal.esExpirado
+                ? 'inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-warning px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95'
+                : modal.esError
+                  ? 'rb-btn-danger'
+                  : 'rb-btn-secondary'
+            "
+          >
+            <span
+              *ngIf="cargando"
+              class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+            ></span>
+            {{ modal.esExpirado ? 'Reenviar código' : 'Entendido' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
