@@ -4,7 +4,7 @@
   </div>
 
   <div class="rb-shell-md rb-card mx-auto w-full max-w-3xl overflow-hidden">
-    <div class="border-b border-white/10 bg-secondary px-4 py-6 text-white sm:px-6 sm:py-7 lg:px-8">
+    <div class="border-b border-white/10 bg-secondary px-4 py-6 text-white dark:bg-slate-800 sm:px-6 sm:py-7 lg:px-8">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">
@@ -25,12 +25,14 @@
     </div>
 
     <div *ngIf="cargandoInicial" class="flex justify-center py-16">
-      <div class="h-10 w-10 animate-spin rounded-full border-2 border-secondary border-t-transparent"></div>
+      <div
+        class="h-10 w-10 animate-spin rounded-full border-2 border-secondary border-t-transparent dark:border-blue-400"
+      ></div>
     </div>
 
     <form *ngIf="!cargandoInicial" class="space-y-6 p-4 sm:p-6 lg:p-9" (ngSubmit)="guardar()">
-      <section class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50/60 p-5">
-        <h3 class="text-sm font-semibold text-secondary">Correo SMTP (Gmail)</h3>
+      <section class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50/60 p-5 dark:border-dark-border dark:bg-slate-900/40">
+        <h3 class="rb-setup-section-title">Correo SMTP (Gmail)</h3>
         <div>
           <label class="rb-label">Email SMTP</label>
           <input
@@ -51,7 +53,10 @@
             class="rb-input rb-focus-secondary"
             [attr.required]="!configuracionYaCompleta ? true : null"
           />
-          <p *ngIf="smtpPasswordConfigured && configuracionYaCompleta" class="mt-1 text-xs text-neutral-strong">
+          <p
+            *ngIf="smtpPasswordConfigured && configuracionYaCompleta"
+            class="mt-1 text-xs text-neutral-strong dark:text-slate-300"
+          >
             Ya hay una contraseña guardada. Déjala vacía si no la cambias.
           </p>
         </div>
@@ -59,7 +64,7 @@
           type="button"
           (click)="enviarCodigo()"
           [disabled]="cargando"
-          class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-secondary/30 bg-white px-4 py-3 text-sm font-semibold text-secondary shadow-sm transition hover:bg-secondary/5 disabled:opacity-50 sm:w-max"
+          class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-secondary/30 bg-white px-4 py-3 text-sm font-semibold text-secondary shadow-sm transition hover:bg-secondary/5 disabled:opacity-50 dark:border-blue-400/40 dark:bg-slate-900 dark:text-sky-300 dark:hover:bg-slate-800 sm:w-max"
         >
           <span
             *ngIf="cargando"
@@ -69,8 +74,8 @@
         </button>
       </section>
 
-      <div *ngIf="requiereCodigoSmtp()" class="rounded-xl border border-warning/30 bg-warning/10 p-4">
-        <label class="rb-label !text-warning">Código de 6 dígitos (expira en 1 minuto)</label>
+      <div *ngIf="requiereCodigoSmtp()" class="rounded-xl border border-warning/30 bg-warning/10 p-4 dark:border-warning/40 dark:bg-amber-950/30">
+        <label class="rb-label !text-warning dark:!text-amber-300">Código de 6 dígitos (expira en 1 minuto)</label>
         <input
           type="text"
           name="codigo"
@@ -84,7 +89,7 @@
       </div>
 
       <section class="space-y-4">
-        <h3 class="text-sm font-semibold text-secondary">Datos del negocio</h3>
+        <h3 class="rb-setup-section-title">Datos del negocio</h3>
         <div>
           <label class="rb-label !normal-case">Nombre del negocio</label>
           <input
@@ -117,16 +122,19 @@
               type="file"
               (change)="onFileSelected($event)"
               accept="image/jpeg,image/png"
-              class="rb-input py-2 text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-secondary/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-secondary"
+              class="rb-input py-2 text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-secondary/10 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-secondary dark:file:bg-blue-950 dark:file:text-sky-300"
             />
           </div>
         </div>
 
-        <div *ngIf="config.logoBase64" class="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3">
+        <div
+          *ngIf="config.logoBase64"
+          class="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-3 dark:border-dark-border dark:bg-slate-900/60"
+        >
           <div class="aspect-square h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-20 sm:w-20">
             <img [src]="config.logoBase64" alt="Vista previa del logo" class="h-full w-full object-cover" />
           </div>
-          <span class="text-sm text-neutral-strong lg:text-base">Vista previa del logo actual o recién seleccionado.</span>
+          <span class="text-sm text-neutral-strong lg:text-base dark:text-slate-300">Vista previa del logo actual o recién seleccionado.</span>
         </div>
 
         <div>
@@ -141,11 +149,11 @@
         </div>
       </section>
 
-      <section class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50/60 p-5">
-        <h3 class="text-sm font-semibold text-secondary">Medios de pago</h3>
+      <section class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50/60 p-5 dark:border-dark-border dark:bg-slate-900/40">
+        <h3 class="rb-setup-section-title">Medios de pago</h3>
 
         <div class="space-y-3">
-          <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-800">
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-800 dark:text-dark-text-strong">
             <input
               type="checkbox"
               [(ngModel)]="config.mediosPago.yapeActivo"
@@ -171,7 +179,7 @@
         </div>
 
         <div class="space-y-3">
-          <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-800">
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-800 dark:text-dark-text-strong">
             <input
               type="checkbox"
               [(ngModel)]="config.mediosPago.plinActivo"
@@ -197,7 +205,7 @@
         </div>
 
         <div class="space-y-3">
-          <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-800">
+          <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-800 dark:text-dark-text-strong">
             <input
               type="checkbox"
               [(ngModel)]="config.mediosPago.transferenciaActiva"
@@ -211,15 +219,17 @@
           <div *ngIf="config.mediosPago.transferenciaActiva" class="space-y-3 pl-6">
             <div
               *ngFor="let t of config.mediosPago.transferencias; let i = index"
-              class="rounded-xl border border-gray-200 bg-white p-4"
+              class="rounded-xl border border-gray-200 bg-white p-4 dark:border-dark-border dark:bg-slate-900"
             >
               <div class="mb-3 flex items-center justify-between">
-                <p class="text-xs font-semibold uppercase tracking-wide text-neutral-strong">Banco {{ i + 1 }}</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-neutral-strong dark:text-slate-200">
+                  Banco {{ i + 1 }}
+                </p>
                 <button
                   type="button"
                   (click)="eliminarTransferencia(i)"
                   [disabled]="config.mediosPago.transferencias.length <= 1"
-                  class="text-xs font-semibold text-danger disabled:opacity-40"
+                  class="text-xs font-semibold text-danger disabled:opacity-40 dark:text-red-400"
                 >
                   Quitar
                 </button>
@@ -288,8 +298,8 @@
           />
         </div>
 
-        <h3 class="mb-2 text-lg font-semibold text-gray-900">{{ modal.titulo }}</h3>
-        <p class="mb-6 text-sm text-neutral-strong lg:text-base">{{ modal.mensaje }}</p>
+        <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">{{ modal.titulo }}</h3>
+        <p class="mb-6 text-sm text-neutral-strong lg:text-base dark:text-slate-300">{{ modal.mensaje }}</p>
 
         <div class="flex justify-center">
           <button

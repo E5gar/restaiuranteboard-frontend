@@ -78,7 +78,12 @@ body {
   }
 
   .rb-label {
-    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-neutral-strong dark:text-dark-text-muted;
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-neutral-strong dark:text-slate-200;
+  }
+
+  /** Títulos de bloque en formularios largos (setup, etc.) */
+  .rb-setup-section-title {
+    @apply text-sm font-semibold text-secondary dark:text-blue-300;
   }
 
   .rb-input {
@@ -138,7 +143,7 @@ body {
   }
 
   .rb-modal-icon {
-    @apply mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full text-2xl font-semibold dark:bg-slate-900;
+    @apply mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-gray-50 text-2xl font-semibold ring-1 ring-gray-200/80 dark:bg-white dark:ring-dark-border;
   }
 
   .rb-divider {

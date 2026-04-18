@@ -75,8 +75,13 @@ export class LoginComponent implements OnInit {
       .subscribe({
         next: (user: any) => {
           this.cargando = false;
-          this.auth.setSession(user);
-          this.theme.applyFromLogin(user.darkMode);
+          const guest = sessionStorage.getItem('rb_guest_dark');
+          let dark = user.darkMode === true;
+          if (guest === '1') dark = true;
+          else if (guest === '0') dark = false;
+          sessionStorage.removeItem('rb_guest_dark');
+          this.auth.setSession({ ...user, darkMode: dark });
+          this.theme.persistLoginTheme(dark, String(user.email || ''));
 
           if (user.firstLogin) {
             this.router.navigate(['/confirmar-cuenta'], { queryParams: { email: user.email } });

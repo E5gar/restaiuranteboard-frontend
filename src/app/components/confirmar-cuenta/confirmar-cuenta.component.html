@@ -149,22 +149,18 @@
           class="h-12 w-12 object-contain"
         />
       </div>
-      <div
-        *ngIf="modal.tipo === 'terminos'"
-        class="rb-modal-icon flex items-center justify-center bg-secondary/10 !p-2"
-      >
-        <img
-          src="/iconos/documento.png"
-          alt=""
-          width="40"
-          height="40"
-          class="h-10 w-10 object-contain"
-        />
+      <div *ngIf="modal.tipo === 'terminos'" class="rb-modal-icon flex items-center justify-center !p-2">
+        <span class="rb-logo-chip !rounded-full !p-2">
+          <img src="/iconos/documento.png" alt="" width="40" height="40" class="h-10 w-10 object-contain" />
+        </span>
       </div>
 
-      <h3 class="mb-2 text-lg font-semibold text-gray-900">{{ modal.titulo }}</h3>
+      <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">{{ modal.titulo }}</h3>
 
-      <div class="mb-6 max-h-40 overflow-y-auto px-1 text-sm text-neutral-strong">
+      <div
+        class="mb-6 max-h-40 overflow-y-auto px-1 text-sm text-neutral-strong dark:text-slate-200"
+        [ngClass]="modal.tipo === 'terminos' ? 'text-left leading-relaxed' : 'text-center'"
+      >
         {{ modal.mensaje }}
       </div>
 

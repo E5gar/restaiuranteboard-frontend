@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ConfigService } from '../../services/config.service';
+import { ThemeService } from '../../services/theme.service';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import {
   bloquearTeclasNoNumericas,
@@ -38,6 +39,7 @@ export class ConfirmarCuentaComponent implements OnInit {
     private route: ActivatedRoute,
     private auth: AuthService,
     private config: ConfigService,
+    private theme: ThemeService,
   ) {}
 
   ngOnInit() {
@@ -122,6 +124,7 @@ export class ConfirmarCuentaComponent implements OnInit {
           );
           setTimeout(() => {
             this.auth.clearSession();
+            this.theme.onLogout();
             void this.router.navigate(['/login']);
           }, 2500);
         },

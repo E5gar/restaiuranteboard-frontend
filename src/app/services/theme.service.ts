@@ -3,7 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
 
 const AUTH_KEY = 'rb_auth';
+/** Preferencia persistida en BD (espejo local solo con sesión iniciada). */
 const THEME_LS = 'rb_theme_dark';
+/** Preferencia temporal solo en navegación sin sesión (se pierde al cerrar pestaña). */
+const GUEST_THEME_SS = 'rb_guest_dark';
 
 const API_AUTH = 'https://restaiuranteboard-backend.onrender.com/api/auth';
 
@@ -12,20 +15,23 @@ export class ThemeService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
 
-  /** Ejecutar antes del primer render (APP_INITIALIZER). */
+  /** Sin sesión → claro salvo vista previa temporal en la misma pestaña. Con sesión → `darkMode` en sesión o espejo local. */
   initSync(): void {
-    let fromSession: boolean | null = null;
     const raw = sessionStorage.getItem(AUTH_KEY);
-    if (raw) {
-      try {
-        const s = JSON.parse(raw) as { darkMode?: boolean };
-        if (typeof s.darkMode === 'boolean') fromSession = s.darkMode;
-      } catch {
-        /* ignore */
-      }
+    if (!raw) {
+      this.applyDark(sessionStorage.getItem(GUEST_THEME_SS) === '1');
+      return;
     }
-    const useDark = fromSession ?? localStorage.getItem(THEME_LS) === '1';
-    this.applyDark(useDark);
+    try {
+      const s = JSON.parse(raw) as { darkMode?: boolean };
+      if (typeof s.darkMode === 'boolean') {
+        this.applyDark(s.darkMode);
+        return;
+      }
+    } catch {
+      /* ignore */
+    }
+    this.applyDark(localStorage.getItem(THEME_LS) === '1');
   }
 
   isDark(): boolean {
@@ -36,25 +42,57 @@ export class ThemeService {
     document.documentElement.classList.toggle('dark', on);
   }
 
-  /** Tras login: preferencia del servidor y caché local alineada. */
-  applyFromLogin(darkMode: unknown): void {
-    const on = darkMode === true;
-    this.applyDark(on);
-    localStorage.setItem(THEME_LS, on ? '1' : '0');
+  /**
+   * Tras `setSession` con `darkMode` ya fusionado (invitado vs servidor):
+   * aplica tema, espejo local y persiste en BD.
+   */
+  persistLoginTheme(dark: boolean, email: string): void {
+    this.applyDark(dark);
+    localStorage.setItem(THEME_LS, dark ? '1' : '0');
+    if (!email) return;
+    this.http.patch(`${API_AUTH}/dark-mode`, { email, darkMode: dark }).subscribe({
+      error: () => {
+        /* silencioso */
+      },
+    });
   }
 
+  /** Invitado: solo sessionStorage. Con sesión: localStorage + sesión + BD. */
   toggle(): void {
     const next = !this.isDark();
     this.applyDark(next);
+
+    const raw = sessionStorage.getItem(AUTH_KEY);
+    const loggedIn = !!raw;
+
+    if (!loggedIn) {
+      sessionStorage.setItem(GUEST_THEME_SS, next ? '1' : '0');
+      return;
+    }
+
     localStorage.setItem(THEME_LS, next ? '1' : '0');
     this.auth.patchSession({ darkMode: next });
-    const s = this.auth.getSession();
-    const email = s?.email != null ? String(s.email) : '';
+
+    let email = '';
+    try {
+      const s = JSON.parse(raw!) as { email?: string };
+      if (s.email) email = String(s.email);
+    } catch {
+      /* ignore */
+    }
     if (!email) return;
+
     this.http.patch(`${API_AUTH}/dark-mode`, { email, darkMode: next }).subscribe({
       error: () => {
-        /* silencioso: la UI ya cambió; reintento en próximo login */
+        /* silencioso */
       },
     });
+  }
+
+  /** Cerrar sesión: tema claro y limpiar cachés de tema en cliente. */
+  onLogout(): void {
+    sessionStorage.removeItem(GUEST_THEME_SS);
+    localStorage.removeItem(THEME_LS);
+    this.applyDark(false);
   }
 }
