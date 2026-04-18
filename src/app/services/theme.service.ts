@@ -89,10 +89,15 @@ export class ThemeService {
     });
   }
 
-  /** Cerrar sesión: tema claro y limpiar cachés de tema en cliente. */
+  /**
+   * Cerrar sesión o dejar de tener sesión: sin usuario, el tema se trata como “invitado”.
+   * Conserva el modo actual (claro/oscuro) para que no haya un salto brusco al ir a /login o /presentacion.
+   * El espejo local de sesión (THEME_LS) se limpia; la preferencia temporal queda en sessionStorage.
+   */
   onLogout(): void {
-    sessionStorage.removeItem(GUEST_THEME_SS);
+    const keepDark = this.isDark();
+    sessionStorage.setItem(GUEST_THEME_SS, keepDark ? '1' : '0');
     localStorage.removeItem(THEME_LS);
-    this.applyDark(false);
+    this.applyDark(keepDark);
   }
 }
