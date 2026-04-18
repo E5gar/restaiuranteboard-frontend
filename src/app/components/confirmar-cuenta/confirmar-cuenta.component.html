@@ -1,29 +1,33 @@
-<div class="rb-page-center relative">
+<div class="rb-page-center relative items-start">
   <div class="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
     <app-logout-button />
   </div>
   <div class="rb-shell-sm rb-card rb-card-pad">
     <div class="mb-8 text-center">
-      <div
-        class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-secondary/10 ring-1 ring-secondary/20"
-      >
-        <img
-          src="/iconos/candado.png"
-          alt=""
-          width="40"
-          height="40"
-          class="h-10 w-10 object-contain"
-        />
+      <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center">
+        <span class="rb-logo-chip !rounded-full !p-2">
+          <img
+            src="/iconos/candado.png"
+            alt=""
+            width="40"
+            height="40"
+            class="h-10 w-10 object-contain"
+          />
+        </span>
       </div>
-      <h1 class="text-2xl font-semibold text-gray-900 sm:text-3xl lg:text-4xl">Activa tu cuenta</h1>
+      <h1 class="text-2xl font-semibold text-gray-900 sm:text-3xl lg:text-4xl dark:text-dark-text-strong">
+        Activa tu cuenta
+      </h1>
       <p class="rb-kicker mt-2">Configura tu contraseña segura.</p>
     </div>
 
     <form (ngSubmit)="enviarCodigo()" *ngIf="paso === 1" class="space-y-5">
       <div
-        class="rounded-xl border border-secondary/15 bg-secondary/5 p-4 text-center text-sm font-medium text-secondary lg:text-base"
+        class="rounded-xl border border-secondary/15 bg-secondary/5 p-4 text-center text-sm font-medium text-secondary lg:text-base dark:border-dark-border dark:bg-slate-900/60 dark:text-dark-text-muted"
       >
-        Verificaremos tu correo <strong>{{ email }}</strong> antes de continuar.
+        Verificaremos tu correo
+        <strong class="font-semibold text-secondary dark:text-dark-text-strong">{{ email }}</strong>
+        antes de continuar.
       </div>
 
       <button type="submit" [disabled]="cargando" class="rb-btn-primary">
@@ -36,8 +40,13 @@
     </form>
 
     <form (ngSubmit)="confirmarYCrearClave()" *ngIf="paso === 2" class="space-y-4">
-      <div class="mb-2 rounded-2xl border border-secondary/15 bg-secondary/5 p-4">
-        <label class="rb-label !mb-1 !text-center !text-secondary">Código de 6 dígitos</label>
+      <div
+        class="mb-2 rounded-2xl border border-secondary/15 bg-secondary/5 p-4 dark:border-dark-border dark:bg-slate-900/60"
+      >
+        <label
+          class="rb-label !mb-1 !text-center !text-secondary dark:!text-blue-400"
+          >Código de 6 dígitos</label
+        >
         <input
           type="text"
           inputmode="numeric"
@@ -57,13 +66,13 @@
           [type]="mostrarPassword ? 'text' : 'password'"
           [(ngModel)]="nuevaPassword"
           name="npw"
-          class="rb-input border-gray-200 bg-gray-50/80 rb-focus-primary pr-14"
+          class="rb-input rb-focus-primary pr-14"
           required
         />
         <button
           type="button"
           (click)="mostrarPassword = !mostrarPassword"
-          class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-muted transition hover:opacity-80"
+          class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-muted transition hover:opacity-80 dark:text-slate-400"
           [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
         >
           <img
@@ -84,13 +93,13 @@
           [type]="mostrarPassword ? 'text' : 'password'"
           [(ngModel)]="confirmarPassword"
           name="cpw"
-          class="rb-input border-gray-200 bg-gray-50/80 rb-focus-primary pr-14"
+          class="rb-input rb-focus-primary pr-14"
           required
         />
         <button
           type="button"
           (click)="mostrarPassword = !mostrarPassword"
-          class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-muted transition hover:opacity-80"
+          class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-muted transition hover:opacity-80 dark:text-slate-400"
           [attr.aria-label]="mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
         >
           <img
@@ -104,7 +113,9 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-1 px-0.5 text-[10px] text-neutral-muted">
+      <div
+        class="grid grid-cols-2 gap-1 px-0.5 text-xs text-neutral-muted dark:text-dark-text-muted"
+      >
         <span [class.text-success]="nuevaPassword.length >= 8">● 8+ Caracteres</span>
         <span [class.text-success]="/[A-Z]/.test(nuevaPassword)">● Mayúscula</span>
         <span [class.text-success]="/[a-z]/.test(nuevaPassword)">● Minúscula</span>
@@ -118,10 +129,13 @@
           (click)="mostrarTerminos(); $event.preventDefault()"
           class="h-4 w-4 accent-primary"
         />
-        <label class="cursor-pointer text-xs text-neutral-strong" (click)="mostrarTerminos()"
-          >Acepto los
-          <span class="font-semibold text-secondary underline">términos de uso</span>.</label
+        <label
+          class="cursor-pointer text-sm text-neutral-strong dark:text-slate-200"
+          (click)="mostrarTerminos()"
         >
+          Acepto los
+          <span class="font-semibold text-secondary underline dark:text-sky-300">términos de uso</span>.
+        </label>
       </div>
 
       <button
