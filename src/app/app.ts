@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HealthService } from './services/health.service';
 import { RouterOutlet } from '@angular/router';
@@ -9,58 +9,83 @@ import { RouterOutlet } from '@angular/router';
   imports: [CommonModule, RouterOutlet],
   template: `
     <router-outlet></router-outlet>
-
-    <div *ngIf="modalInvalidoVisible" class="rb-modal-backdrop">
-      <div class="rb-modal max-w-sm">
-        <div class="rb-modal-icon">
-          <img src="/iconos/error-rojo.png" alt="Error" width="48" height="48" class="h-12 w-12 object-contain" />
+    <div *ngIf="entradaInvalidaModal" class="rb-modal-backdrop">
+      <div class="rb-modal max-w-sm border-gray-200">
+        <div class="rb-modal-icon !mb-6">
+          <img
+            src="/iconos/advertencia-amarillo.png"
+            alt="Advertencia"
+            width="48"
+            height="48"
+            class="h-12 w-12 object-contain"
+          />
         </div>
-        <h3 class="mb-2 text-lg font-semibold text-gray-900">Entrada inválida</h3>
-        <p class="mb-6 text-sm text-neutral-strong">Esta entrada no es válida</p>
-        <button type="button" (click)="cerrarModalInvalido()" class="rb-btn-secondary">Aceptar</button>
+        <h3 class="mb-8 text-lg font-semibold text-gray-900">Esta entrada no es válida</h3>
+        <button type="button" (click)="cerrarEntradaInvalida()" class="rb-btn-secondary w-full">Aceptar</button>
       </div>
     </div>
   `,
 })
-export class App implements OnInit {
+export class App implements OnInit, OnDestroy {
   statusData: any = null;
-  modalInvalidoVisible = false;
-  private ignorarSiguienteEvento = false;
+  entradaInvalidaModal = false;
+
+  private readonly patroScript = /script/i;
+
+  private readonly onDocumentInput = (event: Event) => this.validarEntradaGlobal(event);
 
   constructor(private healthService: HealthService) {}
 
   ngOnInit() {
+    document.addEventListener('input', this.onDocumentInput, true);
     this.healthService.getStatus().subscribe({
-      next: (data) => this.statusData = data,
+      next: (data) => (this.statusData = data),
       error: (err) => {
         console.error('Error conectando al backend:', err);
-        this.statusData = { 
-          postgresql: 'Error de conexión', 
-          mongodb: 'Error de conexión', 
-          backend_status: 'Offline' 
+        this.statusData = {
+          postgresql: 'Error de conexión',
+          mongodb: 'Error de conexión',
+          backend_status: 'Offline',
         };
-      }
+      },
     });
   }
 
-  @HostListener('document:input', ['$event'])
-  onAnyInput(event: Event) {
-    if (this.ignorarSiguienteEvento) {
-      this.ignorarSiguienteEvento = false;
-      return;
-    }
-    const target = event.target;
-    if (!(target instanceof HTMLInputElement) && !(target instanceof HTMLTextAreaElement)) return;
-    if (!target.value) return;
-    if (!/<script/i.test(target.value)) return;
-
-    target.value = '';
-    this.modalInvalidoVisible = true;
-    this.ignorarSiguienteEvento = true;
-    target.dispatchEvent(new Event('input', { bubbles: true }));
+  ngOnDestroy() {
+    document.removeEventListener('input', this.onDocumentInput, true);
   }
 
-  cerrarModalInvalido() {
-    this.modalInvalidoVisible = false;
+  cerrarEntradaInvalida() {
+    this.entradaInvalidaModal = false;
+  }
+
+  private validarEntradaGlobal(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement) && !(target instanceof HTMLTextAreaElement)) return;
+    const el = target as HTMLInputElement | HTMLTextAreaElement;
+    if (!this.esCampoTexto(el)) return;
+    const v = el.value ?? '';
+    if (!this.patroScript.test(v)) return;
+    el.value = '';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    this.entradaInvalidaModal = true;
+  }
+
+  private esCampoTexto(el: HTMLInputElement | HTMLTextAreaElement): boolean {
+    if (el instanceof HTMLTextAreaElement) return true;
+    const t = (el.type || 'text').toLowerCase();
+    const excluidos = new Set([
+      'checkbox',
+      'radio',
+      'file',
+      'hidden',
+      'button',
+      'submit',
+      'image',
+      'range',
+      'color',
+      'reset',
+    ]);
+    return !excluidos.has(t);
   }
 }
