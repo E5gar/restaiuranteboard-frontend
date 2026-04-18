@@ -56,7 +56,7 @@ export class LoginComponent implements OnInit {
 
   onLogin() {
     if (!this.email?.trim() || !this.password) {
-      this.abrirModal('Campos Vacíos', 'Por favor ingresa tus credenciales.', true);
+      this.abrirModal('Campos Vacíos', 'Por favor ingresa tus credenciales.', false);
       return;
     }
 

@@ -148,7 +148,14 @@
 
   <div *ngIf="modal.visible" class="rb-modal-backdrop">
     <div class="rb-modal max-w-sm">
-      <div class="rb-modal-icon !mb-6">
+      <div
+        class="rb-modal-icon !mb-6"
+        [ngClass]="{
+          'bg-red-50 ring-red-200/80 dark:bg-red-950/45 dark:ring-red-900/50': modal.tipo === 'error',
+          'bg-amber-50 ring-amber-200/80 dark:bg-amber-950/40 dark:ring-amber-800/40': modal.tipo === 'advertencia',
+          'bg-emerald-50 ring-emerald-200/80 dark:bg-emerald-950/35 dark:ring-emerald-900/45': modal.tipo === 'exito',
+        }"
+      >
         <img
           [src]="
             modal.tipo === 'error'
@@ -165,8 +172,19 @@
           class="h-12 w-12 object-contain"
         />
       </div>
-      <h3 class="mb-2 text-lg font-semibold text-gray-900">{{ modal.titulo }}</h3>
-      <p class="mb-8 text-sm text-neutral-strong lg:text-base">{{ modal.mensaje }}</p>
+      <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">{{ modal.titulo }}</h3>
+      <p
+        class="mb-8 text-sm lg:text-base"
+        [ngClass]="{
+          'font-medium text-danger dark:text-red-200': modal.tipo === 'error',
+          'font-medium text-amber-900 dark:text-amber-200': modal.tipo === 'advertencia',
+          'text-emerald-800 dark:text-emerald-200': modal.tipo === 'exito',
+          'text-neutral-strong dark:text-dark-text-muted':
+            modal.tipo !== 'error' && modal.tipo !== 'advertencia' && modal.tipo !== 'exito',
+        }"
+      >
+        {{ modal.mensaje }}
+      </p>
 
       <div class="flex justify-center">
         <button

@@ -82,11 +82,33 @@
 
   <div *ngIf="modal.visible" class="rb-modal-backdrop">
     <div class="rb-modal border-gray-200">
-      <div class="rb-modal-icon bg-red-50 text-danger">
-        <img src="/iconos/error-rojo.png" alt="Error" width="42" height="42" class="h-10 w-10 object-contain" />
+      <div
+        class="rb-modal-icon"
+        [ngClass]="
+          modal.esError
+            ? 'bg-red-50 text-danger ring-red-200/80 dark:bg-red-950/45 dark:ring-red-900/50'
+            : 'bg-amber-50 text-amber-700 ring-amber-200/80 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-800/40'
+        "
+      >
+        <img
+          [src]="modal.esError ? '/iconos/error-rojo.png' : '/iconos/advertencia-amarillo.png'"
+          [attr.alt]="modal.esError ? 'Error' : 'Advertencia'"
+          width="42"
+          height="42"
+          class="h-10 w-10 object-contain"
+        />
       </div>
       <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">{{ modal.titulo }}</h3>
-      <p class="mb-6 text-sm font-medium text-danger/90 dark:text-red-300">{{ modal.mensaje }}</p>
+      <p
+        class="mb-6 text-sm"
+        [ngClass]="
+          modal.esError
+            ? 'font-medium text-danger/90 dark:text-red-200'
+            : 'text-neutral-strong dark:text-dark-text-muted'
+        "
+      >
+        {{ modal.mensaje }}
+      </p>
       <div class="flex justify-center">
         <button (click)="cerrarModal()" type="button" class="rb-btn-secondary">Aceptar</button>
       </div>
