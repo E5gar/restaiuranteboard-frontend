@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../services/theme.service';
 
@@ -10,7 +10,7 @@ import { ThemeService } from '../../services/theme.service';
     <button
       type="button"
       (click)="onToggle()"
-      class="rb-logo-chip fixed bottom-4 right-4 z-[45] shadow-md ring-2 ring-black/10 transition hover:opacity-90 dark:ring-white/20"
+      [ngClass]="buttonClass"
       [attr.aria-label]="useSolIcon ? 'Activar modo claro' : 'Activar modo oscuro'"
       [attr.title]="useSolIcon ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
     >
@@ -25,8 +25,16 @@ import { ThemeService } from '../../services/theme.service';
   `,
 })
 export class ThemeToggleComponent implements OnInit {
-  /** En modo oscuro mostramos el sol (volver a claro); en claro, la luna. */
+  @Input() mode: 'fab' | 'inline' = 'fab';
   useSolIcon = false;
+
+  get buttonClass(): string {
+    const base =
+      'rb-logo-chip shadow-md ring-2 ring-black/10 transition hover:opacity-90 dark:ring-white/20';
+    return this.mode === 'inline'
+      ? `${base} inline-flex shrink-0`
+      : `${base} fixed bottom-4 right-4 z-[45]`;
+  }
 
   constructor(private readonly theme: ThemeService) {}
 

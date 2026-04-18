@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HealthService } from './services/health.service';
-import { RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { filter, Subscription } from 'rxjs';
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
 
 @Component({
@@ -10,7 +11,7 @@ import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.com
   imports: [CommonModule, RouterOutlet, ThemeToggleComponent],
   template: `
     <router-outlet></router-outlet>
-    <app-theme-toggle />
+    <app-theme-toggle *ngIf="!hideThemeFab" />
     <div *ngIf="entradaInvalidaModal" class="rb-modal-backdrop">
       <div class="rb-modal max-w-sm border-gray-200 dark:border-dark-border">
         <div class="rb-modal-icon !mb-6">
@@ -36,13 +37,25 @@ export class App implements OnInit, OnDestroy {
   statusData: any = null;
   entradaInvalidaModal = false;
 
+  hideThemeFab = false;
+
   private readonly patroScript = /script/i;
 
   private readonly onDocumentInput = (event: Event) => this.validarEntradaGlobal(event);
 
-  constructor(private healthService: HealthService) {}
+  private navSub?: Subscription;
+
+  constructor(
+    private healthService: HealthService,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
+    this.refreshHideThemeFab();
+    this.navSub = this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe(() => this.refreshHideThemeFab());
+
     document.addEventListener('input', this.onDocumentInput, true);
     this.healthService.getStatus().subscribe({
       next: (data) => (this.statusData = data),
@@ -58,7 +71,13 @@ export class App implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.navSub?.unsubscribe();
     document.removeEventListener('input', this.onDocumentInput, true);
+  }
+
+  private refreshHideThemeFab(): void {
+    const path = this.router.url.split('#')[0].split('?')[0];
+    this.hideThemeFab = path === '/entregas';
   }
 
   cerrarEntradaInvalida() {

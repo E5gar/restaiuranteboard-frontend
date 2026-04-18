@@ -3,9 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
 
 const AUTH_KEY = 'rb_auth';
-/** Preferencia persistida en BD (espejo local solo con sesión iniciada). */
 const THEME_LS = 'rb_theme_dark';
-/** Preferencia temporal solo en navegación sin sesión (se pierde al cerrar pestaña). */
 const GUEST_THEME_SS = 'rb_guest_dark';
 
 const API_AUTH = 'https://restaiuranteboard-backend.onrender.com/api/auth';
@@ -15,7 +13,6 @@ export class ThemeService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
 
-  /** Sin sesión → claro salvo vista previa temporal en la misma pestaña. Con sesión → `darkMode` en sesión o espejo local. */
   initSync(): void {
     const raw = sessionStorage.getItem(AUTH_KEY);
     if (!raw) {
@@ -29,7 +26,7 @@ export class ThemeService {
         return;
       }
     } catch {
-      /* ignore */
+      
     }
     this.applyDark(localStorage.getItem(THEME_LS) === '1');
   }
@@ -42,22 +39,16 @@ export class ThemeService {
     document.documentElement.classList.toggle('dark', on);
   }
 
-  /**
-   * Tras `setSession` con `darkMode` ya fusionado (invitado vs servidor):
-   * aplica tema, espejo local y persiste en BD.
-   */
   persistLoginTheme(dark: boolean, email: string): void {
     this.applyDark(dark);
     localStorage.setItem(THEME_LS, dark ? '1' : '0');
     if (!email) return;
     this.http.patch(`${API_AUTH}/dark-mode`, { email, darkMode: dark }).subscribe({
       error: () => {
-        /* silencioso */
       },
     });
   }
 
-  /** Invitado: solo sessionStorage. Con sesión: localStorage + sesión + BD. */
   toggle(): void {
     const next = !this.isDark();
     this.applyDark(next);
@@ -78,22 +69,17 @@ export class ThemeService {
       const s = JSON.parse(raw!) as { email?: string };
       if (s.email) email = String(s.email);
     } catch {
-      /* ignore */
+      
     }
     if (!email) return;
 
     this.http.patch(`${API_AUTH}/dark-mode`, { email, darkMode: next }).subscribe({
       error: () => {
-        /* silencioso */
+        
       },
     });
   }
 
-  /**
-   * Cerrar sesión o dejar de tener sesión: sin usuario, el tema se trata como “invitado”.
-   * Conserva el modo actual (claro/oscuro) para que no haya un salto brusco al ir a /login o /presentacion.
-   * El espejo local de sesión (THEME_LS) se limpia; la preferencia temporal queda en sessionStorage.
-   */
   onLogout(): void {
     const keepDark = this.isDark();
     sessionStorage.setItem(GUEST_THEME_SS, keepDark ? '1' : '0');

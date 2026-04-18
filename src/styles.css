@@ -81,7 +81,6 @@ body {
     @apply mb-1.5 block text-xs font-medium uppercase tracking-wide text-neutral-strong dark:text-slate-200;
   }
 
-  /** Títulos de bloque en formularios largos (setup, etc.) */
   .rb-setup-section-title {
     @apply text-sm font-semibold text-secondary dark:text-blue-300;
   }
@@ -150,7 +149,6 @@ body {
     @apply border-t border-gray-200 dark:border-dark-border;
   }
 
-  /** Contenedor blanco fijo para PNG de marca / iconos que no adaptan color (estándar #4) */
   .rb-logo-chip {
     @apply inline-flex shrink-0 items-center justify-center rounded-lg bg-white p-1.5 shadow-sm ring-1 ring-black/5 dark:ring-white/10;
   }
