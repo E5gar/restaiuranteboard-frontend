@@ -105,7 +105,10 @@ export class RegistroClienteComponent {
     this.cargando = true;
     this.http
       .post('https://restaiuranteboard-backend.onrender.com/api/auth/enviar-codigo-registro', {
+        fullName: this.usuario.fullName.trim(),
+        dni: this.usuario.dni,
         email: this.usuario.email,
+        phone: this.usuario.phone,
       })
       .subscribe({
         next: () => {

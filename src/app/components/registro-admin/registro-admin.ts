@@ -107,7 +107,10 @@ export class RegistroAdminComponent {
     this.cargando = true;
     this.http
       .post('https://restaiuranteboard-backend.onrender.com/api/auth/enviar-codigo-registro', {
+        fullName: this.usuario.fullName.trim(),
+        dni: this.usuario.dni,
         email: this.usuario.email,
+        phone: this.usuario.phone,
       })
       .subscribe({
         next: () => {
@@ -117,7 +120,8 @@ export class RegistroAdminComponent {
         },
         error: (err) => {
           this.cargando = false;
-          this.abrirModal('Error', err.error?.message || 'Error al enviar código', true);
+          const msg = err.error?.message || 'Error al enviar código';
+          this.abrirModal(String(msg).includes('Ya existe') ? 'Datos duplicados' : 'Error', msg, true);
         },
       });
   }
