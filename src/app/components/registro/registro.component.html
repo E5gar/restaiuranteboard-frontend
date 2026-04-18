@@ -4,11 +4,10 @@
   ></div>
 </div>
 
-<div *ngIf="isAdminMode === true" class="rb-page-center relative">
-  <div
-    class="rb-shell-lg rb-card mx-auto flex max-h-[min(900px,90vh)] w-full flex-col overflow-hidden md:max-h-none md:flex-row"
-  >
-    <div class="md:w-1/3 bg-secondary px-4 py-8 text-white sm:px-8 sm:py-10">
+<div *ngIf="isAdminMode === true" class="rb-page-center relative items-start">
+  <div class="rb-container !py-0">
+    <div class="rb-card mx-auto flex w-full flex-col overflow-x-hidden xl:flex-row xl:overflow-hidden">
+    <div class="w-full bg-secondary px-4 py-8 text-center text-white sm:px-8 sm:py-10 sm:text-left xl:w-1/3">
       <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">Bienvenido</h2>
       <p class="mt-3 text-sm leading-relaxed text-white/90 lg:text-base">
         Estás configurando el acceso del <strong>Administrador Principal</strong>. Esta cuenta
@@ -16,11 +15,12 @@
       </p>
     </div>
     <ng-container *ngTemplateOutlet="formularioTemplate"></ng-container>
+    </div>
   </div>
 </div>
 
-<div *ngIf="isAdminMode === false" class="rb-page-center relative">
-  <div class="rb-shell-sm rb-card overflow-hidden">
+<div *ngIf="isAdminMode === false" class="rb-page-center relative items-start">
+  <div class="rb-shell-sm rb-card overflow-x-hidden">
     <div class="bg-primary px-4 py-6 text-center text-white sm:px-8 sm:py-7">
       <div class="mx-auto mb-3 flex h-12 items-center justify-center sm:h-16">
         <img
@@ -39,7 +39,7 @@
 </div>
 
 <ng-template #formularioTemplate>
-  <div class="w-full p-4 sm:p-6 md:p-9" [ngClass]="{ 'md:w-2/3 md:overflow-y-auto': isAdminMode }">
+  <div class="w-full min-h-0 p-4 sm:p-6 md:p-9" [ngClass]="{ 'xl:w-2/3 xl:min-h-0 xl:overflow-y-auto': isAdminMode }">
     <form (ngSubmit)="enviarCodigo()" *ngIf="paso === 1" class="space-y-4">
       <h3 class="rb-heading-accent border-b border-gray-100 pb-3 dark:border-dark-border" *ngIf="isAdminMode">
         Registro de Administrador
@@ -189,7 +189,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-1 px-0.5 py-1 text-[10px] text-neutral-muted">
+      <div class="grid grid-cols-2 gap-1 px-0.5 py-1 text-xs text-neutral-muted">
         <span [class.text-success]="usuario.password.length >= 8">● 8+ Caracteres</span>
         <span [class.text-success]="/[A-Z]/.test(usuario.password)">● Mayúscula</span>
         <span [class.text-success]="/[a-z]/.test(usuario.password)">● Minúscula</span>
