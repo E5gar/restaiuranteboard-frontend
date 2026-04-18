@@ -13,14 +13,14 @@
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
       <a
         routerLink="/dashboard"
-        class="rb-card rb-card-pad group transition hover:border-secondary/30 hover:shadow-md"
+        class="rb-card rb-card-pad group transition hover:border-secondary/30 hover:shadow-md dark:hover:border-blue-400/40 dark:hover:shadow-none"
       >
         <div
           class="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-secondary/10 transition group-hover:scale-[1.02]"
         >
           <img src="/iconos/dashboard.png" alt="" width="36" height="36" class="h-9 w-9 object-contain" />
         </div>
-        <h2 class="text-lg font-semibold text-gray-900">Dashboard y KPIs</h2>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-dark-text-strong">Dashboard y KPIs</h2>
         <p class="rb-kicker mt-2">
           Visualiza métricas, gráficas de ventas y proyecciones de inteligencia artificial.
         </p>
@@ -28,14 +28,14 @@
 
       <a
         routerLink="/crear-personal"
-        class="rb-card rb-card-pad group transition hover:border-secondary/30 hover:shadow-md"
+        class="rb-card rb-card-pad group transition hover:border-secondary/30 hover:shadow-md dark:hover:border-blue-400/40 dark:hover:shadow-none"
       >
         <div
           class="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 transition group-hover:scale-[1.02]"
         >
           <img src="/iconos/usuarios.png" alt="" width="36" height="36" class="h-9 w-9 object-contain" />
         </div>
-        <h2 class="text-lg font-semibold text-gray-900">Crear Cuenta para Personal</h2>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-dark-text-strong">Crear Cuenta para Personal</h2>
         <p class="rb-kicker mt-2">
           Da de alta a nuevos cajeros, cocineros y repartidores en el sistema.
         </p>
@@ -50,7 +50,7 @@
         >
           <img src="/iconos/plato.png" alt="" width="36" height="36" class="h-9 w-9 object-contain" />
         </div>
-        <h2 class="text-lg font-semibold text-gray-900">Ingredientes y Productos</h2>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-dark-text-strong">Ingredientes y Productos</h2>
         <p class="rb-kicker mt-2">
           Añade insumos al inventario y define recetas para los platos del catálogo.
         </p>
@@ -59,14 +59,14 @@
       <a
         [routerLink]="['/setup']"
         [queryParams]="{ editar: '1' }"
-        class="rb-card rb-card-pad group transition hover:border-secondary/30 hover:shadow-md"
+        class="rb-card rb-card-pad group transition hover:border-secondary/30 hover:shadow-md dark:hover:border-blue-400/40 dark:hover:shadow-none"
       >
         <div
           class="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-success/10 transition group-hover:scale-[1.02]"
         >
           <img src="/iconos/engranajes.png" alt="" width="36" height="36" class="h-9 w-9 object-contain" />
         </div>
-        <h2 class="text-lg font-semibold text-gray-900">Información del Negocio</h2>
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-dark-text-strong">Información del Negocio</h2>
         <p class="rb-kicker mt-2">
           Actualiza el logo, términos, teléfono o datos de correo SMTP.
         </p>

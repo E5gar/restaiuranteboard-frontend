@@ -2,15 +2,17 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HealthService } from './services/health.service';
 import { RouterOutlet } from '@angular/router';
+import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet],
+  imports: [CommonModule, RouterOutlet, ThemeToggleComponent],
   template: `
     <router-outlet></router-outlet>
+    <app-theme-toggle />
     <div *ngIf="entradaInvalidaModal" class="rb-modal-backdrop">
-      <div class="rb-modal max-w-sm border-gray-200">
+      <div class="rb-modal max-w-sm border-gray-200 dark:border-dark-border">
         <div class="rb-modal-icon !mb-6">
           <img
             src="/iconos/advertencia-amarillo.png"
@@ -20,7 +22,9 @@ import { RouterOutlet } from '@angular/router';
             class="h-12 w-12 object-contain"
           />
         </div>
-        <h3 class="mb-8 text-lg font-semibold text-gray-900 sm:text-xl">Esta entrada no es válida</h3>
+        <h3 class="mb-8 text-lg font-semibold text-gray-900 sm:text-xl dark:text-dark-text-strong">
+          Esta entrada no es válida
+        </h3>
         <div class="flex justify-center">
           <button type="button" (click)="cerrarEntradaInvalida()" class="rb-btn-secondary">Aceptar</button>
         </div>

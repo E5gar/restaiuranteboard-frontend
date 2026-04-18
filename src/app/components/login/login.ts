@@ -7,6 +7,7 @@ import { catchError, of } from 'rxjs';
 import { errorEmailHistoriaUsuario } from '../../utils/form-validators';
 import { AuthService } from '../../services/auth.service';
 import { ConfigService } from '../../services/config.service';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-login',
@@ -33,6 +34,7 @@ export class LoginComponent implements OnInit {
     private router: Router,
     private auth: AuthService,
     private configService: ConfigService,
+    private theme: ThemeService,
   ) {}
 
   ngOnInit() {
@@ -74,6 +76,7 @@ export class LoginComponent implements OnInit {
         next: (user: any) => {
           this.cargando = false;
           this.auth.setSession(user);
+          this.theme.applyFromLogin(user.darkMode);
 
           if (user.firstLogin) {
             this.router.navigate(['/confirmar-cuenta'], { queryParams: { email: user.email } });

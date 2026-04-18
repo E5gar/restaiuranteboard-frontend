@@ -6,6 +6,7 @@ export type AuthSession = {
   email?: string;
   role?: string;
   firstLogin?: boolean;
+  darkMode?: boolean;
   [key: string]: unknown;
 };
 
@@ -13,6 +14,12 @@ export type AuthSession = {
 export class AuthService {
   setSession(user: AuthSession): void {
     sessionStorage.setItem(AUTH_KEY, JSON.stringify(user));
+  }
+
+  patchSession(partial: Partial<AuthSession>): void {
+    const cur = this.getSession();
+    if (!cur) return;
+    this.setSession({ ...cur, ...partial });
   }
 
   getSession(): AuthSession | null {

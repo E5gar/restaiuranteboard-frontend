@@ -1,7 +1,7 @@
 <div class="rb-page">
   <div class="rb-container">
     <section class="rb-card overflow-hidden">
-      <div class="bg-secondary px-4 py-8 text-white sm:px-6 sm:py-10 lg:px-10">
+      <div class="bg-secondary px-4 py-8 text-white dark:bg-slate-800 sm:px-6 sm:py-10 lg:px-10">
         <div class="grid grid-cols-1 gap-6 gap-y-8 md:grid-cols-2 md:items-center md:gap-8 lg:gap-10">
           <div>
             <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">Restaiuranteboard</h1>
@@ -18,7 +18,7 @@
             </div>
           </div>
           <div class="mx-auto flex w-full max-w-sm items-center justify-center">
-            <div class="aspect-square w-32 shrink-0 rounded-2xl bg-gray-100 sm:w-40 lg:w-48">
+            <div class="aspect-square w-32 shrink-0 rounded-2xl bg-gray-100 dark:bg-white sm:w-40 lg:w-48">
               <img
                 src="/iconos/primer-logo-base.png"
                 alt=""
@@ -33,40 +33,48 @@
     <section class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       <article class="rb-card p-5">
         <div class="mb-3 flex items-center gap-3">
-          <img src="/iconos/candado.png" alt="" width="28" height="28" class="h-7 w-7 object-contain" />
-          <h2 class="text-base font-semibold text-gray-900">Accesos por rol</h2>
+          <span class="rb-logo-chip !p-1">
+            <img src="/iconos/candado.png" alt="" width="28" height="28" class="h-7 w-7 object-contain" />
+          </span>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-dark-text-strong">Accesos por rol</h2>
         </div>
-        <p class="text-sm text-neutral-strong lg:text-base">
+        <p class="text-sm text-neutral-strong lg:text-base dark:text-dark-text-muted">
           Login para cliente, administrador, cajero, cocinero y repartidor con validaciones de seguridad y recuperación de clave.
         </p>
       </article>
 
       <article class="rb-card p-5">
         <div class="mb-3 flex items-center gap-3">
-          <img src="/iconos/correo.png" alt="" width="28" height="28" class="h-7 w-7 object-contain" />
-          <h2 class="text-base font-semibold text-gray-900">Flujos con correo</h2>
+          <span class="rb-logo-chip !p-1">
+            <img src="/iconos/correo.png" alt="" width="28" height="28" class="h-7 w-7 object-contain" />
+          </span>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-dark-text-strong">Flujos con correo</h2>
         </div>
-        <p class="text-sm text-neutral-strong lg:text-base">
+        <p class="text-sm text-neutral-strong lg:text-base dark:text-dark-text-muted">
           Confirmación por código en registro, activación de personal y recuperación de contraseña usando SMTP configurado.
         </p>
       </article>
 
       <article class="rb-card p-5">
         <div class="mb-3 flex items-center gap-3">
-          <img src="/iconos/carrito-compras.png" alt="" width="28" height="28" class="h-7 w-7 object-contain" />
-          <h2 class="text-base font-semibold text-gray-900">Venta y operación</h2>
+          <span class="rb-logo-chip !p-1">
+            <img src="/iconos/carrito-compras.png" alt="" width="28" height="28" class="h-7 w-7 object-contain" />
+          </span>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-dark-text-strong">Venta y operación</h2>
         </div>
-        <p class="text-sm text-neutral-strong lg:text-base">
+        <p class="text-sm text-neutral-strong lg:text-base dark:text-dark-text-muted">
           Menú para clientes, validación de pagos en caja, avance de órdenes en cocina y seguimiento para entrega.
         </p>
       </article>
 
       <article class="rb-card p-5">
         <div class="mb-3 flex items-center gap-3">
-          <img src="/iconos/documento.png" alt="" width="28" height="28" class="h-7 w-7 object-contain" />
-          <h2 class="text-base font-semibold text-gray-900">Gestión del negocio</h2>
+          <span class="rb-logo-chip !p-1">
+            <img src="/iconos/documento.png" alt="" width="28" height="28" class="h-7 w-7 object-contain" />
+          </span>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-dark-text-strong">Gestión del negocio</h2>
         </div>
-        <p class="text-sm text-neutral-strong lg:text-base">
+        <p class="text-sm text-neutral-strong lg:text-base dark:text-dark-text-muted">
           Setup inicial con nombre, logo, términos y medios de pago; además de administración de ingredientes y productos.
         </p>
       </article>
@@ -75,27 +83,27 @@
     <section class="mt-8 rb-card p-6 sm:p-8">
       <h3 class="rb-heading-accent">Cobertura de Historias de Usuario</h3>
       <div class="mt-4 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
-        <div class="rounded-xl border border-gray-200 p-4">
-          <h4 class="text-sm font-semibold text-gray-900">Login y cuentas</h4>
-          <p class="mt-2 text-sm text-neutral-strong">
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-dark-border dark:bg-slate-900/50">
+          <h4 class="text-sm font-semibold text-gray-900 dark:text-dark-text-strong">Login y cuentas</h4>
+          <p class="mt-2 text-sm text-neutral-strong dark:text-dark-text-muted">
             Inicio de sesión robusto, registro con validaciones completas, términos y confirmación por código para cada tipo de usuario.
           </p>
         </div>
-        <div class="rounded-xl border border-gray-200 p-4">
-          <h4 class="text-sm font-semibold text-gray-900">Setup y administración</h4>
-          <p class="mt-2 text-sm text-neutral-strong">
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-dark-border dark:bg-slate-900/50">
+          <h4 class="text-sm font-semibold text-gray-900 dark:text-dark-text-strong">Setup y administración</h4>
+          <p class="mt-2 text-sm text-neutral-strong dark:text-dark-text-muted">
             Configuración SMTP + información del negocio + medios de pago, y alta de ingredientes/productos para el catálogo.
           </p>
         </div>
-        <div class="rounded-xl border border-gray-200 p-4">
-          <h4 class="text-sm font-semibold text-gray-900">Experiencia cliente</h4>
-          <p class="mt-2 text-sm text-neutral-strong">
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-dark-border dark:bg-slate-900/50">
+          <h4 class="text-sm font-semibold text-gray-900 dark:text-dark-text-strong">Experiencia cliente</h4>
+          <p class="mt-2 text-sm text-neutral-strong dark:text-dark-text-muted">
             Navegación de menú, recomendaciones por modelo de IA, carrito, checkout, trazabilidad, calificación de servicio y edición de datos.
           </p>
         </div>
-        <div class="rounded-xl border border-gray-200 p-4">
-          <h4 class="text-sm font-semibold text-gray-900">Operación interna</h4>
-          <p class="mt-2 text-sm text-neutral-strong">
+        <div class="rounded-xl border border-gray-200 p-4 dark:border-dark-border dark:bg-slate-900/50">
+          <h4 class="text-sm font-semibold text-gray-900 dark:text-dark-text-strong">Operación interna</h4>
+          <p class="mt-2 text-sm text-neutral-strong dark:text-dark-text-muted">
             Validación de pagos, gestión de cocina y delivery, dashboard y proyecciones con IA para decisiones de abastecimiento.
           </p>
         </div>

@@ -1,10 +1,10 @@
 <div class="rb-page flex min-h-screen flex-col pb-24 sm:pb-20">
-  <nav class="rb-nav bg-secondary text-white shadow-sm">
+  <nav class="rb-nav bg-secondary text-white shadow-sm dark:shadow-none">
     <h1 class="rb-nav-title text-white">Repartidor</h1>
     <app-logout-button variant="on-dark" />
   </nav>
 
-  <div class="flex-1 bg-gray-50/90">
+  <div class="flex-1 bg-gray-50/90 dark:bg-dark-bg">
     <div class="rb-container">
       <div
         class="rounded-2xl border border-success/20 bg-success px-4 py-4 text-center text-white shadow-sm sm:px-6 sm:py-5"
@@ -16,7 +16,7 @@
       <div class="mt-6 space-y-4">
         <div class="rb-card p-4 sm:p-5">
           <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <span class="font-mono text-sm font-semibold text-gray-900">#ORD-1234</span>
+            <span class="font-mono text-sm font-semibold text-gray-900 dark:text-dark-text-strong">#ORD-1234</span>
             <span
               class="inline-flex w-max rounded-full border border-success/25 bg-success/10 px-3 py-1 text-xs font-semibold text-success sm:text-sm"
               >Listo en cocina</span
@@ -28,23 +28,26 @@
     </div>
 
     <nav
-      class="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white px-3 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] sm:px-4"
+      class="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white px-3 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.04)] dark:border-dark-border dark:bg-dark-surface dark:shadow-none sm:px-4"
     >
-      <div class="mx-auto flex max-w-6xl justify-around gap-2 text-sm font-medium text-neutral-strong">
-        <button type="button" class="flex min-h-11 min-w-[4.5rem] flex-col items-center justify-center gap-1 rounded-lg px-2 text-secondary">
+      <div class="mx-auto flex max-w-6xl justify-around gap-2 text-sm font-medium text-neutral-strong dark:text-dark-text-muted">
+        <button
+          type="button"
+          class="flex min-h-11 min-w-[4.5rem] flex-col items-center justify-center gap-1 rounded-lg px-2 text-secondary dark:text-blue-400"
+        >
           <span aria-hidden="true" class="text-lg">&#128230;</span>
           <span>Órdenes</span>
         </button>
         <button
           type="button"
-          class="flex min-h-11 min-w-[4.5rem] flex-col items-center justify-center gap-1 rounded-lg px-2 transition hover:text-secondary"
+          class="flex min-h-11 min-w-[4.5rem] flex-col items-center justify-center gap-1 rounded-lg px-2 transition hover:text-secondary dark:hover:text-blue-400"
         >
           <span aria-hidden="true" class="text-lg">&#9995;</span>
           <span>Asumidos</span>
         </button>
         <button
           type="button"
-          class="flex min-h-11 min-w-[4.5rem] flex-col items-center justify-center gap-1 rounded-lg px-2 transition hover:text-secondary"
+          class="flex min-h-11 min-w-[4.5rem] flex-col items-center justify-center gap-1 rounded-lg px-2 transition hover:text-secondary dark:hover:text-blue-400"
         >
           <span aria-hidden="true" class="text-lg">&#128757;</span>
           <span>En Camino</span>

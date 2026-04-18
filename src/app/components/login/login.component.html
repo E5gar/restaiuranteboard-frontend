@@ -2,11 +2,13 @@
   <div class="rb-shell-sm rb-card rb-card-pad">
     <div class="mb-8 text-center">
       <div class="mb-4 flex justify-center">
-        <img
-          [src]="logoSrc"
-          [attr.alt]="logoEsDelNegocio ? 'Logo del negocio' : ''"
-          class="h-8 w-auto max-w-[200px] object-contain sm:h-12 sm:max-h-20 sm:max-w-[220px]"
-        />
+        <span class="rb-logo-chip max-w-full">
+          <img
+            [src]="logoSrc"
+            [attr.alt]="logoEsDelNegocio ? 'Logo del negocio' : ''"
+            class="h-8 w-auto max-w-[200px] object-contain sm:h-12 sm:max-h-20 sm:max-w-[220px]"
+          />
+        </span>
       </div>
       <h1 class="rb-heading">{{ tituloMarca }}</h1>
       <p class="rb-kicker mt-2">Bienvenido de nuevo, por favor inicia sesión.</p>
