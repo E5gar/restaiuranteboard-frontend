@@ -31,10 +31,10 @@ export class CheckoutComponent implements OnInit {
 
   archivo: File | null = null;
   previewUrl: string | null = null;
-  errorArchivo = '';
 
   enviando = false;
-  errorEnvio = '';
+
+  modal = { visible: false, tipo: 'error' as 'error' | 'success', titulo: '', mensaje: '' };
 
   readonly dragActivo = signal(false);
 
@@ -86,16 +86,15 @@ export class CheckoutComponent implements OnInit {
   }
 
   private validarYAsignar(f: File): void {
-    this.errorArchivo = '';
     this.liberarPreview();
     const type = (f.type || '').toLowerCase();
     const okMime = MIME_OK.some((m) => type === m || (m === 'image/jpg' && type === 'image/jpeg'));
     if (!okMime) {
-      this.errorArchivo = 'Solo se permiten imágenes en formato JPG o PNG.';
+      this.abrirModal('error', 'Formato no admitido', 'Solo se permiten imágenes en formato JPG o PNG.');
       return;
     }
     if (f.size > MAX_BYTES) {
-      this.errorArchivo = 'La imagen no debe pesar más de 3MB.';
+      this.abrirModal('error', 'Archivo demasiado grande', 'La imagen no debe pesar más de 3MB.');
       return;
     }
     this.archivo = f;
@@ -112,7 +111,14 @@ export class CheckoutComponent implements OnInit {
   quitarArchivo(): void {
     this.archivo = null;
     this.liberarPreview();
-    this.errorArchivo = '';
+  }
+
+  abrirModal(tipo: 'error' | 'success', titulo: string, mensaje: string): void {
+    this.modal = { visible: true, tipo, titulo, mensaje };
+  }
+
+  cerrarModal(): void {
+    this.modal.visible = false;
   }
 
   formatoMoneda(v: number): string {
@@ -124,9 +130,8 @@ export class CheckoutComponent implements OnInit {
   }
 
   confirmarPedido(): void {
-    this.errorEnvio = '';
     if (!this.archivo) {
-      this.errorEnvio = 'Adjunta el comprobante de pago.';
+      this.abrirModal('error', 'Comprobante requerido', 'Adjunta el comprobante de pago.');
       return;
     }
     const uid = this.auth.getSession()?.userId;
@@ -146,7 +151,11 @@ export class CheckoutComponent implements OnInit {
       },
       error: (err) => {
         this.enviando = false;
-        this.errorEnvio = err.error?.message || 'No se pudo enviar el pedido. Intenta de nuevo.';
+        this.abrirModal(
+          'error',
+          'No se pudo enviar el pedido',
+          err.error?.message || 'No se pudo enviar el pedido. Intenta de nuevo.',
+        );
       },
     });
   }

@@ -1,11 +1,13 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
-import { EMPTY, switchMap } from 'rxjs';
+import { EMPTY, interval, of, switchMap } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
-import { CartService, MAX_UNIDADES_POR_PRODUCTO } from '../../services/cart.service';
+import { CartService, MAX_UNIDADES_POR_PRODUCTO, type VerificarPreciosResponseDto } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 
 export interface CatOpcion {
@@ -34,6 +36,7 @@ export class MenuClienteComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   readonly cart = inject(CartService);
 
   private readonly apiCatalogo = 'https://restaiuranteboard-backend.onrender.com/api/catalogo';
@@ -57,22 +60,26 @@ export class MenuClienteComponent implements OnInit {
 
   precioDbMin = signal(0);
   precioDbMax = signal(0);
+  precioSliderMax = signal(0);
   precioFiltroMin = signal(0);
   precioFiltroMax = signal(0);
+
+  agregandoProductId = signal<string | null>(null);
+
+  private origenModalPrecios: 'pago' | 'background' | null = null;
 
   carritoAbierto = signal(false);
   modalProducto = signal<MenuProducto | null>(null);
   indiceCarrusel = signal(0);
 
-  /** Modal tras verificar precios antes de ir a checkout (cambios respecto al catálogo actual). */
   modalPreciosCheckout = signal<{
     detalle: { nombre: string; precioAnterior: number; precioNuevo: number }[];
     totalAnterior: number;
     totalNuevo: number;
   } | null>(null);
 
-  /** Productos retirados del carrito (disponibilidad) antes de pagar. */
   modalPreCheckoutDisponibilidad = signal<string[] | null>(null);
+  modalDisponibilidadMenu = signal<string[] | null>(null);
   modalCarritoVacio = signal(false);
 
   get productosFiltrados(): MenuProducto[] {
@@ -102,7 +109,61 @@ export class MenuClienteComponent implements OnInit {
     const s = this.auth.getSession();
     if (s?.role === 'CLIENTE' && s.userId) {
       this.cart.cargarDesdeServidor(s.userId).subscribe();
+      this.iniciarVigilanciaCarrito(s.userId);
     }
+  }
+
+  private iniciarVigilanciaCarrito(userId: string): void {
+    interval(48000)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter(() => this.esClienteConCarrito() && this.cart.items().length > 0),
+        switchMap(() =>
+          this.cart.cargarDesdeServidor(userId).pipe(
+            switchMap((meta) => {
+              if (meta.removedItems.length > 0) {
+                this.modalDisponibilidadMenu.set(meta.removedItems);
+              }
+              if (this.cart.items().length === 0) {
+                return of<VerificarPreciosResponseDto | null>(null);
+              }
+              return this.cart.verificarPreciosCheckout();
+            }),
+          ),
+        ),
+      )
+      .subscribe((r) => {
+        if (r?.preciosCambiaron) {
+          this.abrirModalPreciosCambio(r, 'background');
+        }
+      });
+  }
+
+  private abrirModalPreciosCambio(r: VerificarPreciosResponseDto, origen: 'pago' | 'background'): void {
+    this.origenModalPrecios = origen;
+    this.modalPreciosCheckout.set({
+      detalle: r.detalleCambios ?? [],
+      totalAnterior: r.totalAnterior,
+      totalNuevo: r.totalNuevo,
+    });
+  }
+
+  sliderTrackStyle(): { [key: string]: string } {
+    const min = this.precioDbMin();
+    const max = this.precioSliderMax();
+    const val = this.precioFiltroMax();
+    if (max <= min) {
+      return { background: '#e5e7eb' };
+    }
+    const pct = ((val - min) / (max - min)) * 100;
+    const rest = document.documentElement.classList.contains('dark') ? '#334155' : '#e5e7eb';
+    return {
+      background: `linear-gradient(to right, #ff7a00 ${pct}%, ${rest} ${pct}%)`,
+    };
+  }
+
+  cerrarModalDisponibilidadMenu(): void {
+    this.modalDisponibilidadMenu.set(null);
   }
 
   esClienteConCarrito(): boolean {
@@ -126,11 +187,13 @@ export class MenuClienteComponent implements OnInit {
           const mx = Math.max(...prices);
           this.precioDbMin.set(mn);
           this.precioDbMax.set(mx);
+          this.precioSliderMax.set(mx + 2);
           this.precioFiltroMin.set(mn);
           this.precioFiltroMax.set(mx);
         } else {
           this.precioDbMin.set(0);
           this.precioDbMax.set(0);
+          this.precioSliderMax.set(2);
           this.precioFiltroMin.set(0);
           this.precioFiltroMax.set(0);
         }
@@ -180,9 +243,10 @@ export class MenuClienteComponent implements OnInit {
 
   private ajustarRangoPrecio(minRaw: number, maxRaw: number): void {
     const lo = this.precioDbMin();
-    const hi = this.precioDbMax();
-    let a = Math.min(Math.max(minRaw, lo), hi);
-    let b = Math.min(Math.max(maxRaw, lo), hi);
+    const hiDb = this.precioDbMax();
+    const hiSlider = this.precioSliderMax();
+    let a = Math.min(Math.max(minRaw, lo), hiDb);
+    let b = Math.min(Math.max(maxRaw, lo), hiSlider);
     if (a > b) {
       b = a;
     }
@@ -223,11 +287,23 @@ export class MenuClienteComponent implements OnInit {
     this.carritoAbierto.set(false);
   }
 
-  agregarAlCarrito(p: MenuProducto): void {
+  agregarAlCarrito(p: MenuProducto, cerrarModalDetalle = false): void {
     if (!this.esClienteConCarrito()) {
       return;
     }
-    this.cart.agregarUno({ id: p.id }).subscribe({ error: () => {} });
+    if (this.agregandoProductId()) {
+      return;
+    }
+    this.agregandoProductId.set(p.id);
+    this.cart.agregarUno({ id: p.id }).subscribe({
+      next: () => {
+        this.agregandoProductId.set(null);
+        if (cerrarModalDetalle) {
+          this.cerrarDetalle();
+        }
+      },
+      error: () => this.agregandoProductId.set(null),
+    });
   }
 
   onIncrementarLinea(productId: string): void {
@@ -251,7 +327,6 @@ export class MenuClienteComponent implements OnInit {
     this.cart.quitar(productId).subscribe({ error: () => {} });
   }
 
-  /** Flujo completo hacia /checkout: sesión, sincronización, disponibilidad y precios. */
   continuarAlPago(): void {
     if (!this.auth.isLoggedIn()) {
       void this.router.navigate(['/login'], { queryParams: { returnUrl: '/checkout' } });
@@ -281,11 +356,7 @@ export class MenuClienteComponent implements OnInit {
     ).subscribe({
       next: (r) => {
         if (r.preciosCambiaron) {
-          this.modalPreciosCheckout.set({
-            detalle: r.detalleCambios ?? [],
-            totalAnterior: r.totalAnterior,
-            totalNuevo: r.totalNuevo,
-          });
+          this.abrirModalPreciosCambio(r, 'pago');
           return;
         }
         void this.router.navigate(['/checkout']);
@@ -303,11 +374,7 @@ export class MenuClienteComponent implements OnInit {
     this.cart.verificarPreciosCheckout().subscribe({
       next: (r) => {
         if (r.preciosCambiaron) {
-          this.modalPreciosCheckout.set({
-            detalle: r.detalleCambios ?? [],
-            totalAnterior: r.totalAnterior,
-            totalNuevo: r.totalNuevo,
-          });
+          this.abrirModalPreciosCambio(r, 'pago');
         } else {
           void this.router.navigate(['/checkout']);
         }
@@ -321,8 +388,12 @@ export class MenuClienteComponent implements OnInit {
   }
 
   cerrarModalPreciosCheckout(): void {
+    const irCheckout = this.origenModalPrecios === 'pago';
+    this.origenModalPrecios = null;
     this.modalPreciosCheckout.set(null);
-    void this.router.navigate(['/checkout']);
+    if (irCheckout) {
+      void this.router.navigate(['/checkout']);
+    }
   }
 
   nombresCambioPrecio(): string {

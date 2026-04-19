@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 
-/** Placeholder hasta implementar el seguimiento real (HU futura). */
 @Component({
   selector: 'app-seguimiento-pedido',
   standalone: true,

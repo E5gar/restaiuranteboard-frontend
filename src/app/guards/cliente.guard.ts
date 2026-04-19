@@ -2,7 +2,6 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
-/** Solo usuarios autenticados con rol CLIENTE (p. ej. checkout). */
 export const clienteGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);

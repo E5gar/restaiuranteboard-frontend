@@ -30,7 +30,6 @@ export class LoginComponent implements OnInit {
   modal = { visible: false, titulo: '', mensaje: '', esError: false };
   redirectAlCerrarModal = false;
 
-  /** Productos retirados del carrito al iniciar sesión (disponibilidad). */
   modalDisponibilidad = { visible: false, items: [] as string[] };
 
   constructor(
@@ -152,7 +151,6 @@ export class LoginComponent implements OnInit {
     this.irTrasLoginClientePreferente();
   }
 
-  /** Tras login: si hay returnUrl (p. ej. checkout) y el usuario es cliente, navega allí. */
   private irTrasLoginClientePreferente(): void {
     const s = this.auth.getSession();
     if (!s?.role) {

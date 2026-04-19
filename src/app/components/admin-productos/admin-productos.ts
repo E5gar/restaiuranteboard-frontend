@@ -39,7 +39,7 @@ export class AdminProductosComponent implements OnInit {
 
   private readonly apiCatalogo = 'https://restaiuranteboard-backend.onrender.com/api/catalogo';
 
-  pestanaActiva = 'ingredientes';
+  pestanaActiva = 'ingredientes'; 
   cargando = false;
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '' };
 
@@ -51,7 +51,6 @@ export class AdminProductosComponent implements OnInit {
     price: 0,
     imageBase64: '',
   };
-  /** Texto en inputs para evitar notación científica (e) en type="number". */
   ingredienteStockText = '0';
   ingredienteCostoText = '0';
 
@@ -71,7 +70,6 @@ export class AdminProductosComponent implements OnInit {
   cantidadRecetaText = '1';
 
   busquedaReceta = '';
-  /** 'ALL' o valor de categoría de insumo */
   filtroCategoriaReceta: string = 'ALL';
 
   busquedaAlmacen = '';
@@ -86,7 +84,6 @@ export class AdminProductosComponent implements OnInit {
   abastecerCostoText = '';
   abastecerRazonText = '';
 
-  /** Pedido en curso: solo mensaje y botón «De acuerdo». */
   modalOrdenBloqueo = { visible: false, mensaje: '' };
   modalConfirmarProducto = { visible: false, productoId: '' };
   modalAdvertenciaIngrediente = { visible: false, insumoId: 0, productos: [] as string[] };
@@ -662,7 +659,6 @@ export class AdminProductosComponent implements OnInit {
     });
   }
 
-  /** Unidad del insumo resaltado en la receta (para reglas de decimales en cantidad). */
   get unidadInsumoSeleccionado(): string {
     if (!this.ingredienteSeleccionadoId) return 'UNIDADES';
     const i = this.ingredientes.find((x) => x.id == this.ingredienteSeleccionadoId);
@@ -744,9 +740,6 @@ export class AdminProductosComponent implements OnInit {
     return String(Math.round(n));
   }
 
-  /**
-   * Parse número positivo o cero; máximo `maxDecimals` decimales; sin e/E.
-   */
   private parseNumeroFlexible(
     raw: string,
     opts: { maxDecimals: number; integerOnly: boolean; min?: number },
@@ -809,14 +802,14 @@ export class AdminProductosComponent implements OnInit {
 
     this.nuevoIngrediente.stockQuantity = stock;
     this.nuevoIngrediente.price = costo;
-
+    
     this.cargando = true;
     this.http
       .post(`${this.apiCatalogo}/ingredientes`, this.nuevoIngrediente)
       .subscribe({
-        next: () => {
-          this.cargando = false;
-          this.abrirModal('exito', 'Guardado', 'Ingrediente registrado en el inventario.');
+      next: () => {
+        this.cargando = false;
+        this.abrirModal('exito', 'Guardado', 'Ingrediente registrado en el inventario.');
           this.nuevoIngrediente = {
             name: '',
             unit: 'UNIDADES',
@@ -827,14 +820,14 @@ export class AdminProductosComponent implements OnInit {
           };
           this.ingredienteStockText = '0';
           this.ingredienteCostoText = '0';
-          this.cargarDatos();
-        },
+        this.cargarDatos();
+      },
         error: (err) => {
-          this.cargando = false;
+        this.cargando = false;
           const msg = err.error?.message || 'No se pudo guardar el ingrediente.';
           this.abrirModal('error', msg.includes('ya existe') ? 'Insumo duplicado' : 'Error', msg);
         },
-      });
+    });
   }
 
   agregarInsumoAReceta() {
@@ -866,16 +859,16 @@ export class AdminProductosComponent implements OnInit {
     const index = this.recetaActual.findIndex((r) => r.ingredientId === insumo.id);
     if (index >= 0) {
       this.recetaActual[index].quantity += qty;
-    } else {
-      this.recetaActual.push({
-        ingredientId: insumo.id,
-        name: insumo.name,
+      } else {
+        this.recetaActual.push({
+          ingredientId: insumo.id,
+          name: insumo.name,
         quantity: qty,
         unit: insumo.unit,
-      });
-    }
+        });
+      }
     this.cantidadRecetaText = '1';
-    this.ingredienteSeleccionadoId = '';
+      this.ingredienteSeleccionadoId = '';
   }
 
   quitarInsumo(index: number) {

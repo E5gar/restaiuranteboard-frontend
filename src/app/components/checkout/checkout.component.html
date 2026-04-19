@@ -137,7 +137,6 @@
           <span>Toca para elegir o arrastra una imagen (JPG / PNG, máx. 3MB)</span>
         </button>
       </div>
-      <p *ngIf="errorArchivo" class="mt-2 text-sm font-medium text-danger dark:text-red-300">{{ errorArchivo }}</p>
     </div>
 
     <div *ngIf="previewUrl" class="mb-6 rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-dark-border dark:bg-slate-900/50">
@@ -148,8 +147,6 @@
       <button type="button" (click)="quitarArchivo()" class="rb-btn-neutral mt-3 w-full text-sm sm:w-auto">Quitar imagen</button>
     </div>
 
-    <p *ngIf="errorEnvio" class="mb-4 text-sm font-medium text-danger dark:text-red-300">{{ errorEnvio }}</p>
-
     <button
       type="button"
       (click)="confirmarPedido()"
@@ -158,5 +155,36 @@
     >
       {{ enviando ? 'Enviando…' : 'Confirmar y Enviar Pedido' }}
     </button>
+  </div>
+
+  <div *ngIf="modal.visible" class="rb-modal-backdrop z-[80]">
+    <div class="rb-modal max-w-sm !p-5 text-center sm:!p-8" (click)="$event.stopPropagation()">
+      <div class="rb-modal-icon !mb-6 !text-3xl">
+        <img
+          [src]="modal.tipo === 'error' ? '/iconos/error-rojo.png' : '/iconos/correcto-check-verde.png'"
+          [attr.alt]="modal.tipo === 'error' ? 'Error' : 'Éxito'"
+          width="48"
+          height="48"
+          class="h-12 w-12 object-contain"
+        />
+      </div>
+      <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">{{ modal.titulo }}</h3>
+      <p
+        class="mb-8 text-sm lg:text-base"
+        [ngClass]="modal.tipo === 'error' ? 'font-medium text-danger dark:text-red-200' : 'text-neutral-strong dark:text-dark-text-muted'"
+      >
+        {{ modal.mensaje }}
+      </p>
+      <div class="flex justify-center">
+        <button
+          type="button"
+          (click)="cerrarModal()"
+          class="w-full sm:w-max"
+          [ngClass]="modal.tipo === 'error' ? 'rb-btn-danger' : 'rb-btn-secondary'"
+        >
+          Entendido
+        </button>
+      </div>
+    </div>
   </div>
 </div>

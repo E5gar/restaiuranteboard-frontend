@@ -16,7 +16,6 @@ export interface CartLine {
 
 export interface CarritoResponseDto {
   items: CartLine[];
-  /** Ítems retirados del carrito en el servidor (producto borrado o no disponible). */
   removedItems?: string[];
 }
 
@@ -57,7 +56,6 @@ export class CartService {
     return line.unitPrice * line.quantity;
   }
 
-  /** Sustituye el estado local con la respuesta del backend (precios/nombres en tiempo real). */
   applyCarritoResponse(resp: CarritoResponseDto | null | undefined): void {
     const items = resp?.items;
     if (!items || !Array.isArray(items)) {
@@ -74,7 +72,6 @@ export class CartService {
     this.lines.set(mapped);
   }
 
-  /** Tras login exitoso: hidrata desde el payload del endpoint /login. */
   applyFromLoginPayload(user: { role?: string; cart?: CarritoResponseDto } | null | undefined): void {
     if (!user || user.role !== 'CLIENTE') {
       this.lines.set([]);

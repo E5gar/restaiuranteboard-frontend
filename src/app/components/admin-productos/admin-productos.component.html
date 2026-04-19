@@ -14,8 +14,8 @@
             >
             <app-logout-button variant="on-dark" />
           </div>
-        </div>
-
+      </div>
+      
         <div class="-mx-1 flex gap-1 overflow-x-auto border-b border-white/20 pb-0 px-1 text-sm sm:mx-0 sm:px-0">
           <button
             type="button"
@@ -27,8 +27,8 @@
             "
             class="min-h-11 shrink-0 whitespace-nowrap px-4 pb-3 pt-1 transition"
           >
-            1. Ingredientes (Insumos)
-          </button>
+          1. Ingredientes (Insumos)
+        </button>
           <button
             type="button"
             (click)="cambiarPestana('productos')"
@@ -39,10 +39,10 @@
             "
             class="min-h-11 shrink-0 whitespace-nowrap px-4 pb-3 pt-1 transition"
           >
-            2. Platos y Bebidas
-          </button>
-        </div>
+          2. Platos y Bebidas
+        </button>
       </div>
+    </div>
 
       <div *ngIf="pestanaActiva === 'ingredientes'" class="grid grid-cols-1 gap-4 p-4 sm:gap-6 sm:p-6 lg:grid-cols-2 lg:gap-8 lg:p-8">
         <div class="rb-section-muted h-fit !shadow-none">
@@ -89,11 +89,11 @@
                 name="iu"
                 class="rb-input rb-focus-secondary text-neutral-strong dark:text-slate-200"
               >
-                <option value="UNIDADES">Unidades (U)</option>
-                <option value="GR">Gramos (gr)</option>
-                <option value="ML">Mililitros (ml)</option>
-              </select>
-            </div>
+              <option value="UNIDADES">Unidades (U)</option>
+              <option value="GR">Gramos (gr)</option>
+              <option value="ML">Mililitros (ml)</option>
+            </select>
+          </div>
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
               <div>
@@ -120,9 +120,9 @@
                   autocomplete="off"
                 />
               </div>
-            </div>
+          </div>
 
-            <div>
+          <div>
               <label class="rb-label">Foto del insumo (obligatoria, 1 foto)</label>
               <input
                 type="file"
@@ -136,19 +136,19 @@
               >
                 <img [src]="nuevoIngrediente.imageBase64" alt="" class="h-full w-full rounded-lg object-cover" />
               </div>
-            </div>
+          </div>
 
             <button type="submit" [disabled]="cargando" class="rb-btn-secondary w-full sm:w-max">
               <span
                 *ngIf="cargando"
                 class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
               ></span>
-              Guardar Ingrediente
-            </button>
-          </form>
-        </div>
+            Guardar Ingrediente
+          </button>
+        </form>
+      </div>
 
-        <div>
+      <div>
           <h3 class="mb-4 text-lg font-semibold text-gray-900 sm:text-xl dark:text-dark-text-strong">
             Insumos Registrados en Almacén
           </h3>
@@ -343,7 +343,7 @@
                   class="rb-input rb-focus-primary"
                   autocomplete="off"
                 />
-              </div>
+    </div>
 
               <div>
                 <label class="rb-label !normal-case">Descripción</label>
@@ -354,7 +354,7 @@
                 ></textarea>
               </div>
 
-              <div>
+        <div>
                 <label class="rb-label">Fotos del Plato (Puedes seleccionar varias)</label>
                 <input
                   type="file"
@@ -739,9 +739,9 @@
         >
           Eliminar insumo
         </button>
-      </div>
-    </div>
-  </div>
+              </div>
+            </div>
+          </div>
 
   <div *ngIf="modalEditarIngrediente.visible" class="rb-modal-backdrop z-[62]">
     <div
@@ -971,8 +971,8 @@
                 </button>
               </div>
             </div>
-          </div>
         </div>
+      </div>
 
         <div
           class="min-w-0 rounded-2xl border border-primary/15 bg-primary/5 p-4 dark:border-primary/30 dark:bg-primary/10 sm:p-5"
@@ -1099,7 +1099,7 @@
           </div>
         </div>
       </div>
-
+      
       <div class="mt-6 flex flex-col gap-2 border-t border-gray-200 pt-4 dark:border-dark-border sm:flex-row sm:justify-end">
         <button
           type="button"
@@ -1242,8 +1242,8 @@
           class="w-full sm:w-max"
           [ngClass]="modal.tipo === 'error' ? 'rb-btn-danger' : 'rb-btn-secondary'"
         >
-          Entendido
-        </button>
+        Entendido
+      </button>
       </div>
     </div>
   </div>
