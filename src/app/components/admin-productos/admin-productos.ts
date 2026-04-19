@@ -86,6 +86,47 @@ export class AdminProductosComponent implements OnInit {
   abastecerCostoText = '';
   abastecerRazonText = '';
 
+  /** Pedido en curso: solo mensaje y botón «De acuerdo». */
+  modalOrdenBloqueo = { visible: false, mensaje: '' };
+  modalConfirmarProducto = { visible: false, productoId: '' };
+  modalAdvertenciaIngrediente = { visible: false, insumoId: 0, productos: [] as string[] };
+  modalConfirmarIngrediente = { visible: false, insumoId: 0 };
+
+  modalEditarIngrediente = { visible: false };
+  editIngredienteId: number | null = null;
+  editIngrediente: any = {
+    name: '',
+    unit: 'UNIDADES',
+    stockQuantity: 0,
+    category: 'Verduras',
+    price: 0,
+    imageBase64: '',
+  };
+  editIngredienteStockText = '0';
+  editIngredienteCostoText = '0';
+  unidadOriginalEdicion = '';
+  modalCambioUnidadIngrediente = { visible: false, productos: [] as string[] };
+
+  modalEditarProducto = { visible: false };
+  editandoProductoId: string | null = null;
+  edicionProductoRestringida = false;
+  editProducto: any = {
+    name: '',
+    price: 0.1,
+    category: 'Entrada',
+    description: '',
+    imagesBase64: [] as string[],
+  };
+  editProductoPrecioText = '0.10';
+  editRecetaActual: { ingredientId: number; name: string; quantity: number; unit: string }[] = [];
+  editIngredienteSeleccionadoId: number | string = '';
+  editCantidadRecetaText = '1';
+  editBusquedaReceta = '';
+  editFiltroCategoriaReceta: string = 'ALL';
+
+  readonly msgTooltipEdicionBloqueada =
+    'No puedes modificar el precio ni la receta de este producto mientras existan órdenes en curso para asegurar la consistencia en cocina y caja.';
+
   productos: any[] = [];
   private readonly tiposImagenPermitidos = ['image/jpeg', 'image/jpg', 'image/png'];
   private readonly maxBytesImagen = 5 * 1024 * 1024;
@@ -129,6 +170,358 @@ export class AdminProductosComponent implements OnInit {
     if (this.nuevoIngrediente.unit === 'UNIDADES') {
       this.ingredienteStockText = this.sinDecimalesTexto(this.ingredienteStockText);
     }
+  }
+
+  onCambioUnidadEditIngrediente() {
+    if (this.editIngrediente.unit === 'UNIDADES') {
+      this.editIngredienteStockText = this.sinDecimalesTexto(this.editIngredienteStockText);
+    }
+  }
+
+  get insumosFiltradosRecetaEdit(): any[] {
+    const q = (this.editBusquedaReceta || '').trim().toLowerCase();
+    return this.ingredientes.filter((i) => {
+      if (this.editFiltroCategoriaReceta !== 'ALL' && i.category !== this.editFiltroCategoriaReceta) {
+        return false;
+      }
+      if (!q) return true;
+      return String(i.name || '')
+        .toLowerCase()
+        .includes(q);
+    });
+  }
+
+  get unidadInsumoSeleccionadoEdit(): string {
+    if (!this.editIngredienteSeleccionadoId) return 'UNIDADES';
+    const i = this.ingredientes.find((x) => x.id == this.editIngredienteSeleccionadoId);
+    return (i?.unit as string) || 'UNIDADES';
+  }
+
+  abrirEditarIngrediente(ing: any, ev?: Event) {
+    ev?.stopPropagation();
+    this.editIngredienteId = ing.id;
+    this.editIngrediente = {
+      name: ing.name ?? '',
+      unit: ing.unit ?? 'UNIDADES',
+      stockQuantity: ing.stockQuantity ?? 0,
+      category: ing.category ?? 'Verduras',
+      price: ing.price ?? 0,
+      imageBase64: ing.imageBase64 ?? '',
+    };
+    this.editIngredienteStockText = String(ing.stockQuantity ?? 0);
+    this.editIngredienteCostoText = String(ing.price ?? 0);
+    this.unidadOriginalEdicion = (ing.unit ?? 'UNIDADES').trim();
+    this.modalEditarIngrediente = { visible: true };
+  }
+
+  cerrarModalEditarIngrediente() {
+    this.modalEditarIngrediente = { visible: false };
+    this.editIngredienteId = null;
+    this.modalCambioUnidadIngrediente = { visible: false, productos: [] };
+  }
+
+  onEditSingleFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      const error = this.errorArchivoImagen(file);
+      if (error) {
+        this.abrirModal('error', 'Archivo inválido', error);
+        input.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => (this.editIngrediente.imageBase64 = reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  }
+
+  guardarEdicionIngrediente(confirmarCambioUnidad = false) {
+    if (this.editIngredienteId == null) return;
+    if (!this.editIngrediente.name?.trim()) {
+      return this.abrirModal('error', 'Datos inválidos', 'El insumo necesita nombre.');
+    }
+    const foto = (this.editIngrediente.imageBase64 || '').trim();
+    if (!foto) {
+      return this.abrirModal('error', 'Foto obligatoria', 'Debes mantener o reemplazar la foto del insumo.');
+    }
+
+    const unit = this.editIngrediente.unit;
+    const maxDec = unit === 'UNIDADES' ? 0 : 2;
+    const stock = this.parseNumeroFlexible(this.editIngredienteStockText, {
+      maxDecimals: maxDec,
+      integerOnly: unit === 'UNIDADES',
+    });
+    if (stock === null) {
+      return this.abrirModal(
+        'error',
+        'Stock inválido',
+        unit === 'UNIDADES'
+          ? 'Stock: solo números enteros positivos o cero, sin decimales.'
+          : 'Stock: números positivos o cero, máximo dos decimales.',
+      );
+    }
+
+    const costo = this.parseNumeroFlexible(this.editIngredienteCostoText, {
+      maxDecimals: 2,
+      integerOnly: false,
+      min: 0,
+    });
+    if (costo === null) {
+      return this.abrirModal(
+        'error',
+        'Costo inválido',
+        'Costo unitario: no negativo, máximo dos decimales.',
+      );
+    }
+
+    this.editIngrediente.stockQuantity = stock;
+    this.editIngrediente.price = costo;
+
+    const payload = {
+      name: this.editIngrediente.name.trim(),
+      category: this.editIngrediente.category,
+      unit: this.editIngrediente.unit,
+      stockQuantity: stock,
+      price: costo,
+      imageBase64: foto,
+      confirmarCambioUnidad: confirmarCambioUnidad,
+    };
+
+    this.cargando = true;
+    this.http
+      .put(`${this.apiCatalogo}/ingredientes/${this.editIngredienteId}`, payload)
+      .subscribe({
+        next: () => {
+          this.cargando = false;
+          this.cerrarModalEditarIngrediente();
+          this.abrirModal('exito', 'Guardado', 'Insumo actualizado correctamente.');
+          this.cargarDatos();
+        },
+        error: (err) => {
+          this.cargando = false;
+          if (err.status === 409 && err.error?.code === 'UNIT_CHANGE_WARNING') {
+            this.modalCambioUnidadIngrediente = {
+              visible: true,
+              productos: (err.error?.productos as string[]) ?? [],
+            };
+            return;
+          }
+          const msg = err.error?.message || 'No se pudo actualizar el insumo.';
+          this.abrirModal(
+            'error',
+            msg.includes('ya existe') ? 'Nombre duplicado' : 'Error',
+            msg,
+          );
+        },
+      });
+  }
+
+  cerrarModalCambioUnidadIngrediente() {
+    this.modalCambioUnidadIngrediente = { visible: false, productos: [] };
+  }
+
+  confirmarGuardarTrasCambioUnidad() {
+    this.cerrarModalCambioUnidadIngrediente();
+    this.guardarEdicionIngrediente(true);
+  }
+
+  abrirEditarProducto(prod: any, ev?: Event) {
+    ev?.stopPropagation();
+    this.cargando = true;
+    this.http.get<any>(`${this.apiCatalogo}/productos/${prod.id}/edicion`).subscribe({
+      next: (r) => {
+        this.cargando = false;
+        const p = r.producto;
+        this.editandoProductoId = p.id;
+        this.edicionProductoRestringida = r.edicionRestringidaPorOrden === true;
+        this.editProducto = {
+          name: p.name ?? '',
+          price: p.price ?? 0.1,
+          category: p.category ?? 'Entrada',
+          description: p.description ?? '',
+          imagesBase64: [...(p.imagesBase64 || [])],
+        };
+        this.editProductoPrecioText = Number(p.price ?? 0.1).toFixed(2);
+        this.editRecetaActual = (r.receta || []).map((line: any) => ({
+          ingredientId: line.ingredientId,
+          name: line.name,
+          quantity: line.quantity,
+          unit: line.unit,
+        }));
+        this.editIngredienteSeleccionadoId = '';
+        this.editCantidadRecetaText = '1';
+        this.editBusquedaReceta = '';
+        this.editFiltroCategoriaReceta = 'ALL';
+        this.modalEditarProducto = { visible: true };
+      },
+      error: () => {
+        this.cargando = false;
+        this.abrirModal('error', 'Error', 'No se pudo cargar el producto para editar.');
+      },
+    });
+  }
+
+  cerrarModalEditarProducto() {
+    this.modalEditarProducto = { visible: false };
+    this.editandoProductoId = null;
+    this.edicionProductoRestringida = false;
+  }
+
+  onEditMultipleFilesProducto(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
+    if (!files?.length) return;
+    for (const file of Array.from(files)) {
+      const error = this.errorArchivoImagen(file);
+      if (error) {
+        this.abrirModal('error', 'Archivo inválido', error);
+        input.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.editProducto.imagesBase64.push(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  eliminarImagenProductoEdit(index: number) {
+    this.editProducto.imagesBase64.splice(index, 1);
+  }
+
+  seleccionarInsumoParaRecetaEdit(id: number) {
+    this.editIngredienteSeleccionadoId = id;
+  }
+
+  agregarInsumoARecetaEdit() {
+    if (this.edicionProductoRestringida) return;
+    if (!this.editIngredienteSeleccionadoId) {
+      this.abrirModal('error', 'Insumo', 'Selecciona un insumo de la lista.');
+      return;
+    }
+    const insumo = this.ingredientes.find((i) => i.id == this.editIngredienteSeleccionadoId);
+    if (!insumo) return;
+
+    const unit = insumo.unit as string;
+    const maxDec = unit === 'UNIDADES' ? 0 : 2;
+    const qty = this.parseNumeroFlexible(this.editCantidadRecetaText, {
+      maxDecimals: maxDec,
+      integerOnly: unit === 'UNIDADES',
+      min: 0,
+    });
+    if (qty === null || qty <= 0) {
+      return this.abrirModal(
+        'error',
+        'Cantidad inválida',
+        unit === 'UNIDADES'
+          ? 'Cantidad: número entero positivo, sin decimales.'
+          : 'Cantidad: número positivo, máximo dos decimales.',
+      );
+    }
+
+    const index = this.editRecetaActual.findIndex((r) => r.ingredientId === insumo.id);
+    if (index >= 0) {
+      this.editRecetaActual[index].quantity += qty;
+    } else {
+      this.editRecetaActual.push({
+        ingredientId: insumo.id,
+        name: insumo.name,
+        quantity: qty,
+        unit: insumo.unit,
+      });
+    }
+    this.editCantidadRecetaText = '1';
+    this.editIngredienteSeleccionadoId = '';
+  }
+
+  quitarInsumoEdit(index: number) {
+    if (this.edicionProductoRestringida) return;
+    this.editRecetaActual.splice(index, 1);
+  }
+
+  guardarEdicionProducto() {
+    if (!this.editandoProductoId) return;
+
+    if (this.edicionProductoRestringida) {
+      if (!this.editProducto.imagesBase64?.length) {
+        return this.abrirModal('error', 'Imágenes', 'Debe existir al menos una imagen del producto.');
+      }
+      this.cargando = true;
+      this.http
+        .put(`${this.apiCatalogo}/productos/${this.editandoProductoId}`, {
+          producto: {
+            description: this.editProducto.description ?? '',
+            imagesBase64: this.editProducto.imagesBase64,
+          },
+          receta: [],
+        })
+        .subscribe({
+          next: () => {
+            this.cargando = false;
+            this.cerrarModalEditarProducto();
+            this.abrirModal('exito', 'Guardado', 'Producto actualizado (descripción e imágenes).');
+            this.cargarDatos();
+          },
+          error: (err) => {
+            this.cargando = false;
+            this.abrirModal('error', 'Error', err.error?.message || 'No se pudo guardar.');
+          },
+        });
+      return;
+    }
+
+    if (!this.editProducto.name?.trim()) {
+      return this.abrirModal('error', 'Datos inválidos', 'Indica el nombre del producto.');
+    }
+    const precio = this.parseNumeroFlexible(this.editProductoPrecioText, {
+      maxDecimals: 2,
+      integerOnly: false,
+      min: 0.1,
+    });
+    if (precio === null) {
+      return this.abrirModal(
+        'error',
+        'Precio inválido',
+        'Precio de venta: mínimo 0.10, máximo dos decimales.',
+      );
+    }
+    this.editProducto.price = precio;
+
+    if (this.editRecetaActual.length === 0) {
+      return this.abrirModal('error', 'Receta', 'La receta debe incluir al menos un insumo.');
+    }
+    if (!this.editProducto.imagesBase64?.length) {
+      return this.abrirModal('error', 'Imágenes', 'Debes incluir al menos una imagen.');
+    }
+
+    const payload = {
+      producto: this.editProducto,
+      receta: this.editRecetaActual.map((r) => ({
+        ingredientId: r.ingredientId,
+        quantity: r.quantity,
+      })),
+    };
+
+    this.cargando = true;
+    this.http.put(`${this.apiCatalogo}/productos/${this.editandoProductoId}`, payload).subscribe({
+      next: () => {
+        this.cargando = false;
+        this.cerrarModalEditarProducto();
+        this.abrirModal('exito', 'Guardado', 'Producto y receta actualizados.');
+        this.cargarDatos();
+      },
+      error: (err) => {
+        this.cargando = false;
+        const msg = err.error?.message || 'No se pudo guardar el producto.';
+        this.abrirModal(
+          'error',
+          msg.includes('ya existe') ? 'Nombre duplicado' : 'Error',
+          msg,
+        );
+      },
+    });
   }
 
   get insumosFiltradosReceta(): any[] {
@@ -376,6 +769,14 @@ export class AdminProductosComponent implements OnInit {
     if (!this.nuevoIngrediente.name?.trim()) {
       return this.abrirModal('error', 'Datos Inválidos', 'El ingrediente necesita nombre.');
     }
+    const foto = (this.nuevoIngrediente.imageBase64 || '').trim();
+    if (!foto) {
+      return this.abrirModal(
+        'error',
+        'Foto obligatoria',
+        'Debes subir una foto del insumo para registrarlo en almacén.',
+      );
+    }
 
     const unit = this.nuevoIngrediente.unit;
     const maxDec = unit === 'UNIDADES' ? 0 : 2;
@@ -551,15 +952,134 @@ export class AdminProductosComponent implements OnInit {
       });
   }
 
-  eliminarProducto(idMongo: string) {
-    if (confirm('¿Estás seguro de eliminar este producto del catálogo?')) {
-      this.http
-        .delete(`${this.apiCatalogo}/productos/${idMongo}`)
-        .subscribe({
-          next: () => this.cargarDatos(),
-          error: () => this.abrirModal('error', 'Error', 'No se pudo eliminar.'),
-        });
-    }
+  solicitarEliminarProducto(idMongo: string) {
+    this.cargando = true;
+    this.http.get<any>(`${this.apiCatalogo}/productos/${idMongo}/eliminar-precheck`).subscribe({
+      next: (r) => {
+        this.cargando = false;
+        if (!r?.allowed) {
+          this.modalOrdenBloqueo = {
+            visible: true,
+            mensaje:
+              r?.message ||
+              'No es posible eliminar este producto porque aún está en proceso de ser entregado.',
+          };
+          return;
+        }
+        this.modalConfirmarProducto = { visible: true, productoId: idMongo };
+      },
+      error: () => {
+        this.cargando = false;
+        this.abrirModal('error', 'Error', 'No se pudo validar la eliminación del producto.');
+      },
+    });
+  }
+
+  cerrarModalConfirmarProducto() {
+    this.modalConfirmarProducto = { visible: false, productoId: '' };
+  }
+
+  ejecutarEliminarProducto() {
+    const id = this.modalConfirmarProducto.productoId;
+    if (!id) return;
+    this.cerrarModalConfirmarProducto();
+    this.cargando = true;
+    this.http.delete(`${this.apiCatalogo}/productos/${id}`).subscribe({
+      next: () => {
+        this.cargando = false;
+        this.abrirModal('exito', 'Producto eliminado', 'El producto ya no aparecerá en el menú ni en la gestión de cocina.');
+        this.cargarDatos();
+      },
+      error: (err) => {
+        this.cargando = false;
+        const msg = err.error?.message;
+        if (err.status === 409 && msg) {
+          this.modalOrdenBloqueo = { visible: true, mensaje: msg };
+        } else {
+          this.abrirModal('error', 'Error', msg || 'No se pudo eliminar el producto.');
+        }
+      },
+    });
+  }
+
+  solicitarEliminarIngrediente(id: number, ev?: Event) {
+    ev?.stopPropagation();
+    this.cargando = true;
+    this.http.get<any>(`${this.apiCatalogo}/ingredientes/${id}/eliminar-precheck`).subscribe({
+      next: (r) => {
+        this.cargando = false;
+        if (!r?.allowed) {
+          this.modalOrdenBloqueo = {
+            visible: true,
+            mensaje:
+              r?.message ||
+              'No es posible eliminar este insumo porque hay pedidos pendientes vinculados.',
+          };
+          return;
+        }
+        if (r.requiereAdvertenciaRecetas) {
+          this.modalAdvertenciaIngrediente = {
+            visible: true,
+            insumoId: id,
+            productos: (r.productosAfectados as string[]) ?? [],
+          };
+          return;
+        }
+        this.modalConfirmarIngrediente = { visible: true, insumoId: id };
+      },
+      error: () => {
+        this.cargando = false;
+        this.abrirModal('error', 'Error', 'No se pudo validar la eliminación del insumo.');
+      },
+    });
+  }
+
+  cerrarModalAdvertenciaIngrediente() {
+    this.modalAdvertenciaIngrediente = { visible: false, insumoId: 0, productos: [] };
+  }
+
+  ejecutarEliminarTrasAdvertenciaIngrediente() {
+    const id = this.modalAdvertenciaIngrediente.insumoId;
+    this.cerrarModalAdvertenciaIngrediente();
+    this.ejecutarEliminarIngredienteApi(id);
+  }
+
+  cerrarModalConfirmarIngrediente() {
+    this.modalConfirmarIngrediente = { visible: false, insumoId: 0 };
+  }
+
+  ejecutarEliminarIngredienteSimple() {
+    const id = this.modalConfirmarIngrediente.insumoId;
+    this.cerrarModalConfirmarIngrediente();
+    this.ejecutarEliminarIngredienteApi(id);
+  }
+
+  private ejecutarEliminarIngredienteApi(id: number) {
+    if (!id) return;
+    this.cargando = true;
+    this.http.delete(`${this.apiCatalogo}/ingredientes/${id}`).subscribe({
+      next: () => {
+        this.cargando = false;
+        this.abrirModal('exito', 'Insumo eliminado', 'El insumo ya no aparecerá en almacén ni en recetas.');
+        if (this.ingredienteSeleccionadoAlmacenId === id) {
+          this.ingredienteSeleccionadoAlmacenId = '';
+        }
+        this.cargarDatos();
+      },
+      error: (err) => {
+        this.cargando = false;
+        const msg = err.error?.message;
+        if (err.status === 409 && msg) {
+          this.modalOrdenBloqueo = { visible: true, mensaje: msg };
+        } else {
+          this.abrirModal('error', 'Error', msg || 'No se pudo eliminar el insumo.');
+        }
+      },
+    });
+  }
+
+  cerrarModalOrdenBloqueo() {
+    this.modalOrdenBloqueo = { visible: false, mensaje: '' };
   }
 
   abrirModal(tipo: string, titulo: string, mensaje: string) {
