@@ -2,7 +2,8 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { EMPTY, switchMap } from 'rxjs';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { CartService, MAX_UNIDADES_POR_PRODUCTO } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
@@ -32,6 +33,7 @@ export interface MenuProducto {
 export class MenuClienteComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   readonly cart = inject(CartService);
 
   private readonly apiCatalogo = 'https://restaiuranteboard-backend.onrender.com/api/catalogo';
@@ -62,12 +64,16 @@ export class MenuClienteComponent implements OnInit {
   modalProducto = signal<MenuProducto | null>(null);
   indiceCarrusel = signal(0);
 
-  /** Modal tras verificar precios en checkout (cambios respecto al catálogo actual). */
+  /** Modal tras verificar precios antes de ir a checkout (cambios respecto al catálogo actual). */
   modalPreciosCheckout = signal<{
     detalle: { nombre: string; precioAnterior: number; precioNuevo: number }[];
     totalAnterior: number;
     totalNuevo: number;
   } | null>(null);
+
+  /** Productos retirados del carrito (disponibilidad) antes de pagar. */
+  modalPreCheckoutDisponibilidad = signal<string[] | null>(null);
+  modalCarritoVacio = signal(false);
 
   get productosFiltrados(): MenuProducto[] {
     const lista = this.productos();
@@ -245,8 +251,53 @@ export class MenuClienteComponent implements OnInit {
     this.cart.quitar(productId).subscribe({ error: () => {} });
   }
 
-  intentarCheckout(): void {
-    if (!this.esClienteConCarrito() || this.cart.items().length === 0) {
+  /** Flujo completo hacia /checkout: sesión, sincronización, disponibilidad y precios. */
+  continuarAlPago(): void {
+    if (!this.auth.isLoggedIn()) {
+      void this.router.navigate(['/login'], { queryParams: { returnUrl: '/checkout' } });
+      return;
+    }
+    if (!this.esClienteConCarrito()) {
+      void this.router.navigate(['/login'], { queryParams: { returnUrl: '/checkout' } });
+      return;
+    }
+    const uid = this.auth.getSession()?.userId;
+    if (!uid) {
+      void this.router.navigate(['/login'], { queryParams: { returnUrl: '/checkout' } });
+      return;
+    }
+    this.cart.cargarDesdeServidor(uid).pipe(
+      switchMap((meta) => {
+        if (meta.removedItems.length > 0) {
+          this.modalPreCheckoutDisponibilidad.set(meta.removedItems);
+          return EMPTY;
+        }
+        if (this.cart.items().length === 0) {
+          this.modalCarritoVacio.set(true);
+          return EMPTY;
+        }
+        return this.cart.verificarPreciosCheckout();
+      }),
+    ).subscribe({
+      next: (r) => {
+        if (r.preciosCambiaron) {
+          this.modalPreciosCheckout.set({
+            detalle: r.detalleCambios ?? [],
+            totalAnterior: r.totalAnterior,
+            totalNuevo: r.totalNuevo,
+          });
+          return;
+        }
+        void this.router.navigate(['/checkout']);
+      },
+      error: () => {},
+    });
+  }
+
+  continuarTrasDisponibilidadPreCheckout(): void {
+    this.modalPreCheckoutDisponibilidad.set(null);
+    if (this.cart.items().length === 0) {
+      this.modalCarritoVacio.set(true);
       return;
     }
     this.cart.verificarPreciosCheckout().subscribe({
@@ -257,14 +308,21 @@ export class MenuClienteComponent implements OnInit {
             totalAnterior: r.totalAnterior,
             totalNuevo: r.totalNuevo,
           });
+        } else {
+          void this.router.navigate(['/checkout']);
         }
       },
       error: () => {},
     });
   }
 
+  cerrarModalCarritoVacio(): void {
+    this.modalCarritoVacio.set(false);
+  }
+
   cerrarModalPreciosCheckout(): void {
     this.modalPreciosCheckout.set(null);
+    void this.router.navigate(['/checkout']);
   }
 
   nombresCambioPrecio(): string {

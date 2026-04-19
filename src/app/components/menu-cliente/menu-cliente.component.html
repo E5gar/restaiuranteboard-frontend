@@ -384,7 +384,7 @@
       <button
         *ngIf="esClienteConCarrito()"
         type="button"
-        (click)="intentarCheckout()"
+        (click)="continuarAlPago()"
         [disabled]="cart.items().length === 0 || cart.sincronizando()"
         class="rb-btn-primary mt-4 w-full min-h-11 disabled:pointer-events-none disabled:opacity-45"
       >
@@ -394,13 +394,56 @@
   </aside>
 </div>
 
+<!-- Disponibilidad antes de checkout -->
+<div
+  *ngIf="modalPreCheckoutDisponibilidad() as lista"
+  class="rb-modal-backdrop z-[66] items-start overflow-y-auto py-8 sm:items-center sm:py-10"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="rb-modal max-w-lg text-left shadow-lg dark:shadow-none" (click)="$event.stopPropagation()">
+    <div
+      class="rb-modal-icon !mb-5 !bg-white !text-3xl !ring-2 !ring-gray-200 dark:!bg-white dark:!ring-dark-border"
+    >
+      <img src="/iconos/advertencia-amarillo.png" alt="" width="48" height="48" class="h-12 w-12 object-contain" />
+    </div>
+    <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">Actualización de disponibilidad</h3>
+    <p class="mb-3 text-sm text-neutral-strong dark:text-dark-text-muted">
+      Algunos productos ya no están disponibles y se retiraron de tu carrito:
+    </p>
+    <ul
+      class="mb-6 max-h-40 list-inside list-disc overflow-y-auto rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-sm text-gray-900 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-100"
+    >
+      <li *ngFor="let nombre of lista">{{ nombre }}</li>
+    </ul>
+    <div class="flex justify-center sm:justify-end">
+      <button type="button" (click)="continuarTrasDisponibilidadPreCheckout()" class="rb-btn-primary w-full sm:w-max">
+        Entendido
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Carrito vacío -->
+<div
+  *ngIf="modalCarritoVacio()"
+  class="rb-modal-backdrop z-[66] items-start overflow-y-auto py-8 sm:items-center sm:py-10"
+  role="dialog"
+  aria-modal="true"
+>
+  <div class="rb-modal max-w-md text-center shadow-lg dark:shadow-none" (click)="$event.stopPropagation()">
+    <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">Carrito vacío</h3>
+    <p class="mb-6 text-sm text-neutral-strong dark:text-dark-text-muted">Agrega productos antes de continuar al pago.</p>
+    <button type="button" (click)="cerrarModalCarritoVacio()" class="rb-btn-primary w-full sm:w-max">De acuerdo</button>
+  </div>
+</div>
+
 <!-- Modal: precios actualizados al intentar pagar -->
 <div
   *ngIf="modalPreciosCheckout() as mp"
   class="rb-modal-backdrop z-[65] items-start overflow-y-auto py-8 sm:items-center sm:py-10"
   role="dialog"
   aria-modal="true"
-  (click)="cerrarModalPreciosCheckout()"
 >
   <div
     class="rb-modal max-w-lg text-left shadow-lg dark:shadow-none"

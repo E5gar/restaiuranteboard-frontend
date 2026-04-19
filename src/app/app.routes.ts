@@ -11,6 +11,9 @@ import { PanelCajaComponent } from './components/panel-caja/panel-caja';
 import { PanelCocinaComponent } from './components/panel-cocina/panel-cocina';
 import { PanelRepartidorComponent } from './components/panel-repartidor/panel-repartidor';
 import { AdminProductosComponent } from './components/admin-productos/admin-productos';
+import { CheckoutComponent } from './components/checkout/checkout';
+import { PedidoEnviadoComponent } from './components/pedido-enviado/pedido-enviado';
+import { SeguimientoPedidoComponent } from './components/seguimiento-pedido/seguimiento-pedido';
 import { InicioRedirectComponent } from './components/inicio-redirect/inicio-redirect';
 import { PresentacionComponent } from './components/presentacion/presentacion';
 import { RetenidoComponent } from './components/retenido/retenido';
@@ -20,6 +23,7 @@ import { adminGuard } from './guards/admin.guard';
 import { configRequiredGuard } from './guards/config-required.guard';
 import { setupFlowGuard } from './guards/setup-flow.guard';
 import { ipBlockGuard } from './guards/ip-block.guard';
+import { clienteGuard } from './guards/cliente.guard';
 
 export const routes: Routes = [
   { path: 'retenido', component: RetenidoComponent },
@@ -44,6 +48,21 @@ export const routes: Routes = [
   },
   { path: 'confirmar-cuenta', component: ConfirmarCuentaComponent, canActivate: [ipBlockGuard, configRequiredGuard, authGuard] },
   { path: 'menu', component: MenuClienteComponent, canActivate: [ipBlockGuard, configRequiredGuard, authGuard] },
+  {
+    path: 'checkout',
+    component: CheckoutComponent,
+    canActivate: [ipBlockGuard, configRequiredGuard, clienteGuard],
+  },
+  {
+    path: 'pedido-enviado',
+    component: PedidoEnviadoComponent,
+    canActivate: [ipBlockGuard, configRequiredGuard, clienteGuard],
+  },
+  {
+    path: 'seguimiento-pedido',
+    component: SeguimientoPedidoComponent,
+    canActivate: [ipBlockGuard, configRequiredGuard, authGuard],
+  },
   {
     path: 'admin-productos',
     component: AdminProductosComponent,

@@ -16,6 +16,8 @@ export interface CartLine {
 
 export interface CarritoResponseDto {
   items: CartLine[];
+  /** Ítems retirados del carrito en el servidor (producto borrado o no disponible). */
+  removedItems?: string[];
 }
 
 export interface ProductoCarritoInput {
@@ -98,18 +100,18 @@ export class CartService {
     return s.userId;
   }
 
-  cargarDesdeServidor(userId: string): Observable<void> {
+  cargarDesdeServidor(userId: string): Observable<{ removedItems: string[] }> {
     if (!userId) {
       this.limpiarLocal();
-      return of(void 0);
+      return of({ removedItems: [] });
     }
     this.sincronizando.set(true);
     return this.http.get<CarritoResponseDto>(`${API_CARRITO}`, { params: { userId } }).pipe(
       tap((r) => this.applyCarritoResponse(r)),
-      map(() => void 0),
+      map((r) => ({ removedItems: r.removedItems ?? [] })),
       catchError(() => {
         this.limpiarLocal();
-        return of(void 0);
+        return of({ removedItems: [] });
       }),
       finalize(() => this.sincronizando.set(false)),
     );

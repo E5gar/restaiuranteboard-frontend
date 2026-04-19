@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { errorEmailHistoriaUsuario } from '../../utils/form-validators';
 import { AuthService } from '../../services/auth.service';
@@ -36,6 +36,7 @@ export class LoginComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private auth: AuthService,
     private cart: CartService,
     private configService: ConfigService,
@@ -100,7 +101,7 @@ export class LoginComponent implements OnInit {
             return;
           }
 
-          this.navegarTrasLogin(user.role);
+          this.irTrasLoginClientePreferente();
         },
 
         error: (err) => {
@@ -148,10 +149,21 @@ export class LoginComponent implements OnInit {
 
   cerrarModalDisponibilidad() {
     this.modalDisponibilidad.visible = false;
+    this.irTrasLoginClientePreferente();
+  }
+
+  /** Tras login: si hay returnUrl (p. ej. checkout) y el usuario es cliente, navega allí. */
+  private irTrasLoginClientePreferente(): void {
     const s = this.auth.getSession();
-    if (s?.role) {
-      this.navegarTrasLogin(s.role);
+    if (!s?.role) {
+      return;
     }
+    const ret = this.route.snapshot.queryParamMap.get('returnUrl')?.trim();
+    if (ret && ret.startsWith('/') && !ret.startsWith('//') && s.role === 'CLIENTE') {
+      void this.router.navigateByUrl(ret);
+      return;
+    }
+    this.navegarTrasLogin(s.role);
   }
 
   private navegarTrasLogin(role: string) {
