@@ -4,8 +4,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
-import { EMPTY, interval, of, switchMap } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { interval, Observable, switchMap } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { CartService, MAX_UNIDADES_POR_PRODUCTO, type VerificarPreciosResponseDto } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
@@ -82,6 +82,9 @@ export class MenuClienteComponent implements OnInit {
   modalDisponibilidadMenu = signal<string[] | null>(null);
   modalCarritoVacio = signal(false);
 
+  private pendingPreciosTrasDisponibilidadMenu: VerificarPreciosResponseDto | null = null;
+  private pendingPreciosTrasDisponibilidadPreCheckout: VerificarPreciosResponseDto | null = null;
+
   get productosFiltrados(): MenuProducto[] {
     const lista = this.productos();
     const q = (this.busqueda || '').trim().toLowerCase();
@@ -117,26 +120,43 @@ export class MenuClienteComponent implements OnInit {
     interval(48000)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        filter(() => this.esClienteConCarrito() && this.cart.items().length > 0),
-        switchMap(() =>
-          this.cart.cargarDesdeServidor(userId).pipe(
-            switchMap((meta) => {
-              if (meta.removedItems.length > 0) {
-                this.modalDisponibilidadMenu.set(meta.removedItems);
-              }
-              if (this.cart.items().length === 0) {
-                return of<VerificarPreciosResponseDto | null>(null);
-              }
-              return this.cart.verificarPreciosCheckout();
-            }),
-          ),
-        ),
+        filter(() => this.esClienteConCarrito()),
+        switchMap(() => {
+          this.cargarProductos(true);
+          return this.ejecutarSincronizacionCarritoEnMenu(userId);
+        }),
       )
-      .subscribe((r) => {
-        if (r?.preciosCambiaron) {
+      .subscribe();
+  }
+
+  private ejecutarSincronizacionCarritoEnMenu(userId: string): Observable<void> {
+    if (this.cart.items().length === 0) {
+      return this.cart.cargarDesdeServidor(userId).pipe(
+        tap((meta) => {
+          if (meta.removedItems.length > 0) {
+            this.modalDisponibilidadMenu.set(meta.removedItems);
+          }
+        }),
+        map(() => void 0),
+      );
+    }
+    return this.cart.verificarPreciosCheckout().pipe(
+      switchMap((r) =>
+        this.cart.cargarDesdeServidor(userId).pipe(map((meta) => ({ r, meta }))),
+      ),
+      tap(({ r, meta }) => {
+        const rem = [...new Set([...(r.carritoActualizado?.removedItems ?? []), ...meta.removedItems])];
+        if (rem.length > 0) {
+          this.modalDisponibilidadMenu.set(rem);
+          if (r.preciosCambiaron) {
+            this.pendingPreciosTrasDisponibilidadMenu = r;
+          }
+        } else if (r.preciosCambiaron) {
           this.abrirModalPreciosCambio(r, 'background');
         }
-      });
+      }),
+      map(() => void 0),
+    );
   }
 
   private abrirModalPreciosCambio(r: VerificarPreciosResponseDto, origen: 'pago' | 'background'): void {
@@ -164,15 +184,22 @@ export class MenuClienteComponent implements OnInit {
 
   cerrarModalDisponibilidadMenu(): void {
     this.modalDisponibilidadMenu.set(null);
+    const pending = this.pendingPreciosTrasDisponibilidadMenu;
+    this.pendingPreciosTrasDisponibilidadMenu = null;
+    if (pending?.preciosCambiaron) {
+      this.abrirModalPreciosCambio(pending, 'background');
+    }
   }
 
   esClienteConCarrito(): boolean {
     return this.cart.puedeSincronizar();
   }
 
-  cargarProductos(): void {
-    this.cargando = true;
-    this.errorCarga = false;
+  cargarProductos(silent = false): void {
+    if (!silent) {
+      this.cargando = true;
+      this.errorCarga = false;
+    }
     this.http.get<MenuProducto[]>(`${this.apiCatalogo}/productos`).subscribe({
       next: (data) => {
         const rows = (data || []).map((p) => ({
@@ -181,6 +208,7 @@ export class MenuClienteComponent implements OnInit {
           description: p.description ?? '',
         }));
         this.productos.set(rows);
+        this.sincronizarModalProductoTrasCatalogo();
         const prices = rows.map((p) => Number(p.price)).filter((n) => !Number.isNaN(n));
         if (prices.length > 0) {
           const mn = Math.min(...prices);
@@ -188,22 +216,45 @@ export class MenuClienteComponent implements OnInit {
           this.precioDbMin.set(mn);
           this.precioDbMax.set(mx);
           this.precioSliderMax.set(mx + 2);
-          this.precioFiltroMin.set(mn);
-          this.precioFiltroMax.set(mx);
+          if (!silent) {
+            this.precioFiltroMin.set(mn);
+            this.precioFiltroMax.set(mx);
+          } else {
+            this.ajustarRangoPrecio(this.precioFiltroMin(), this.precioFiltroMax());
+          }
         } else {
           this.precioDbMin.set(0);
           this.precioDbMax.set(0);
           this.precioSliderMax.set(2);
-          this.precioFiltroMin.set(0);
-          this.precioFiltroMax.set(0);
+          if (!silent) {
+            this.precioFiltroMin.set(0);
+            this.precioFiltroMax.set(0);
+          }
         }
-        this.cargando = false;
+        if (!silent) {
+          this.cargando = false;
+        }
       },
       error: () => {
-        this.errorCarga = true;
-        this.cargando = false;
+        if (!silent) {
+          this.errorCarga = true;
+          this.cargando = false;
+        }
       },
     });
+  }
+
+  private sincronizarModalProductoTrasCatalogo(): void {
+    const abierto = this.modalProducto();
+    if (!abierto) {
+      return;
+    }
+    const actualizado = this.productos().find((p) => p.id === abierto.id);
+    if (actualizado) {
+      this.modalProducto.set(actualizado);
+    } else {
+      this.modalProducto.set(null);
+    }
   }
 
   imgIconoProducto(categoria: string): string {
@@ -341,46 +392,48 @@ export class MenuClienteComponent implements OnInit {
       void this.router.navigate(['/login'], { queryParams: { returnUrl: '/checkout' } });
       return;
     }
-    this.cart.cargarDesdeServidor(uid).pipe(
-      switchMap((meta) => {
-        if (meta.removedItems.length > 0) {
-          this.modalPreCheckoutDisponibilidad.set(meta.removedItems);
-          return EMPTY;
-        }
-        if (this.cart.items().length === 0) {
-          this.modalCarritoVacio.set(true);
-          return EMPTY;
-        }
-        return this.cart.verificarPreciosCheckout();
-      }),
-    ).subscribe({
-      next: (r) => {
-        if (r.preciosCambiaron) {
-          this.abrirModalPreciosCambio(r, 'pago');
-          return;
-        }
-        void this.router.navigate(['/checkout']);
-      },
-      error: () => {},
-    });
+    this.cart
+      .verificarPreciosCheckout()
+      .pipe(
+        switchMap((r) => this.cart.cargarDesdeServidor(uid).pipe(map((meta) => ({ r, meta })))),
+      )
+      .subscribe({
+        next: ({ r, meta }) => {
+          const rem = [...new Set([...(r.carritoActualizado?.removedItems ?? []), ...meta.removedItems])];
+          if (rem.length > 0) {
+            this.modalPreCheckoutDisponibilidad.set(rem);
+            if (r.preciosCambiaron) {
+              this.pendingPreciosTrasDisponibilidadPreCheckout = r;
+            }
+            return;
+          }
+          if (r.preciosCambiaron) {
+            this.abrirModalPreciosCambio(r, 'pago');
+            return;
+          }
+          if (this.cart.items().length === 0) {
+            this.modalCarritoVacio.set(true);
+            return;
+          }
+          void this.router.navigate(['/checkout']);
+        },
+        error: () => {},
+      });
   }
 
   continuarTrasDisponibilidadPreCheckout(): void {
     this.modalPreCheckoutDisponibilidad.set(null);
+    const pending = this.pendingPreciosTrasDisponibilidadPreCheckout;
+    this.pendingPreciosTrasDisponibilidadPreCheckout = null;
+    if (pending?.preciosCambiaron) {
+      this.abrirModalPreciosCambio(pending, 'pago');
+      return;
+    }
     if (this.cart.items().length === 0) {
       this.modalCarritoVacio.set(true);
       return;
     }
-    this.cart.verificarPreciosCheckout().subscribe({
-      next: (r) => {
-        if (r.preciosCambiaron) {
-          this.abrirModalPreciosCambio(r, 'pago');
-        } else {
-          void this.router.navigate(['/checkout']);
-        }
-      },
-      error: () => {},
-    });
+    void this.router.navigate(['/checkout']);
   }
 
   cerrarModalCarritoVacio(): void {

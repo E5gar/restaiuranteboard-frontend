@@ -6,7 +6,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { errorEmailHistoriaUsuario } from '../../utils/form-validators';
 import { AuthService } from '../../services/auth.service';
-import { CartService } from '../../services/cart.service';
+import { CartService, type VerificarPreciosResponseDto } from '../../services/cart.service';
 import { ConfigService } from '../../services/config.service';
 import { ThemeService } from '../../services/theme.service';
 
@@ -31,6 +31,14 @@ export class LoginComponent implements OnInit {
   redirectAlCerrarModal = false;
 
   modalDisponibilidad = { visible: false, items: [] as string[] };
+
+  modalPreciosLogin: {
+    detalle: { nombre: string; precioAnterior: number; precioNuevo: number }[];
+    totalAnterior: number;
+    totalNuevo: number;
+  } | null = null;
+
+  private pendingVerifyTrasDisponibilidadLogin: VerificarPreciosResponseDto | null = null;
 
   constructor(
     private http: HttpClient,
@@ -87,20 +95,70 @@ export class LoginComponent implements OnInit {
           sessionStorage.removeItem('rb_guest_dark');
           this.auth.setSession({ ...user, darkMode: dark });
           this.theme.persistLoginTheme(dark, String(user.email || ''));
-          this.cart.applyFromLoginPayload(user);
 
           if (user.firstLogin) {
-            this.router.navigate(['/confirmar-cuenta'], { queryParams: { email: user.email } });
+            this.cart.applyFromLoginPayload(user);
+            void this.router.navigate(['/confirmar-cuenta'], { queryParams: { email: user.email } });
             return;
           }
 
-          const removed: string[] = Array.isArray(user.removedItems) ? user.removedItems : [];
-          if (user.role === 'CLIENTE' && removed.length > 0) {
-            this.modalDisponibilidad = { visible: true, items: removed };
+          const snap = this.cart.readPersistedSnapshot();
+          if (user.userId && snap && snap.userId !== user.userId) {
+            this.cart.clearPriceSnapshot();
+          }
+
+          const continuarTrasCarrito = (verifyResp: VerificarPreciosResponseDto | null) => {
+            const removed: string[] = Array.isArray(user.removedItems) ? user.removedItems : [];
+            if (user.role === 'CLIENTE' && removed.length > 0) {
+              this.modalDisponibilidad = { visible: true, items: removed };
+              if (verifyResp?.preciosCambiaron) {
+                this.pendingVerifyTrasDisponibilidadLogin = verifyResp;
+              }
+              return;
+            }
+            if (verifyResp?.preciosCambiaron) {
+              this.modalPreciosLogin = {
+                detalle: verifyResp.detalleCambios ?? [],
+                totalAnterior: verifyResp.totalAnterior,
+                totalNuevo: verifyResp.totalNuevo,
+              };
+              return;
+            }
+            this.irTrasLoginClientePreferente();
+          };
+
+          const snapOk =
+            user.role === 'CLIENTE' &&
+            user.userId &&
+            snap &&
+            snap.userId === user.userId &&
+            snap.lines.length > 0;
+
+          if (snapOk) {
+            this.cart
+              .verificarPreciosCheckout({
+                lineasCliente: snap.lines.map((l) => ({
+                  productId: l.productId,
+                  precioUnitario: l.unitPrice,
+                  cantidad: l.quantity,
+                })),
+                totalCliente: snap.lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0),
+              })
+              .subscribe({
+                next: (r) => {
+                  this.cart.applyFromLoginPayload(user);
+                  continuarTrasCarrito(r);
+                },
+                error: () => {
+                  this.cart.applyFromLoginPayload(user);
+                  continuarTrasCarrito(null);
+                },
+              });
             return;
           }
 
-          this.irTrasLoginClientePreferente();
+          this.cart.applyFromLoginPayload(user);
+          continuarTrasCarrito(null);
         },
 
         error: (err) => {
@@ -148,7 +206,34 @@ export class LoginComponent implements OnInit {
 
   cerrarModalDisponibilidad() {
     this.modalDisponibilidad.visible = false;
+    const pending = this.pendingVerifyTrasDisponibilidadLogin;
+    this.pendingVerifyTrasDisponibilidadLogin = null;
+    if (pending?.preciosCambiaron) {
+      this.modalPreciosLogin = {
+        detalle: pending.detalleCambios ?? [],
+        totalAnterior: pending.totalAnterior,
+        totalNuevo: pending.totalNuevo,
+      };
+      return;
+    }
     this.irTrasLoginClientePreferente();
+  }
+
+  cerrarModalPreciosLogin(): void {
+    this.modalPreciosLogin = null;
+    this.irTrasLoginClientePreferente();
+  }
+
+  formatoMoneda(v: number): string {
+    return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(v);
+  }
+
+  nombresCambioPrecioLogin(): string {
+    const m = this.modalPreciosLogin;
+    if (!m?.detalle?.length) {
+      return '';
+    }
+    return m.detalle.map((d) => d.nombre).join(', ');
   }
 
   private irTrasLoginClientePreferente(): void {

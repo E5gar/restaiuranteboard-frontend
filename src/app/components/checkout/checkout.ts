@@ -147,6 +147,7 @@ export class CheckoutComponent implements OnInit {
       next: () => {
         this.enviando = false;
         this.cart.limpiarLocal();
+        this.cart.clearPriceSnapshot();
         void this.router.navigate(['/pedido-enviado']);
       },
       error: (err) => {

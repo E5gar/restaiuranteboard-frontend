@@ -1,6 +1,6 @@
 <div class="rb-page">
   <nav
-    class="rb-nav flex flex-col items-stretch gap-3 bg-primary text-white shadow-sm dark:shadow-none sm:flex-row sm:items-center sm:justify-between"
+    class="rb-nav sticky top-0 z-50 flex flex-col items-stretch gap-3 bg-primary text-white shadow-sm dark:shadow-none sm:flex-row sm:items-center sm:justify-between"
   >
     <h1 class="rb-nav-title text-white">Restaiuranteboard</h1>
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
@@ -32,16 +32,15 @@
       class="relative mb-6 overflow-hidden rounded-2xl border border-secondary/20 bg-gray-50/50 p-4 dark:border-dark-border dark:bg-dark-surface sm:mb-8 sm:p-6 lg:p-8"
     >
       <div class="absolute left-0 top-0 h-full w-0.5 bg-secondary/35 dark:bg-blue-400/40" aria-hidden="true"></div>
-      <h2 class="rb-heading-accent mb-1 flex flex-wrap items-center gap-2">
+      <h2 class="mb-1 flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight text-secondary sm:text-3xl lg:text-4xl dark:text-blue-400">
         <span class="rb-logo-chip !p-1">
-          <img src="/iconos/destellos-recomendaciones.png" alt="" width="24" height="24" class="h-6 w-6 shrink-0 object-contain sm:h-7 sm:w-7" />
+          <img src="/iconos/destellos-recomendaciones.png" alt="" width="24" height="24" class="h-8 w-8 shrink-0 object-contain sm:h-10 sm:w-10" />
         </span>
         Nuestro menú
       </h2>
-      <p class="rb-kicker">Busca, filtra por categoría y ajusta tu presupuesto.</p>
+      <p class="text-sm text-neutral-strong lg:text-base dark:text-dark-text-muted">Busca, filtra por categoría y ajusta tu presupuesto.</p>
     </div>
 
-    <!-- HU 09: Buscador y filtros -->
     <div class="mb-6 space-y-4 sm:mb-8">
       <div>
         <label class="rb-label !normal-case !mb-1" for="busq-menu">Buscar</label>
@@ -74,7 +73,7 @@
                 ? 'border-primary bg-primary text-white dark:ring-2 dark:ring-orange-400/35'
                 : 'border-gray-200 bg-white text-neutral-strong hover:bg-gray-50 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text-muted dark:hover:bg-slate-800'
             "
-            class="inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition sm:gap-2 sm:px-4 sm:text-sm"
+            class="inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition sm:gap-2 sm:px-4"
           >
             Todas
           </button>
@@ -87,7 +86,7 @@
                 ? 'border-primary bg-primary text-white dark:ring-2 dark:ring-orange-400/35'
                 : 'border-gray-200 bg-white text-neutral-strong hover:bg-gray-50 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text-muted dark:hover:bg-slate-800'
             "
-            class="inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+            class="inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-2 py-2 text-sm font-semibold transition sm:gap-2 sm:px-3"
           >
             <span class="rb-logo-chip !p-1">
               <img [src]="c.img" alt="" width="22" height="22" class="h-5 w-5 object-contain sm:h-6 sm:w-6" />
@@ -164,7 +163,6 @@
       </div>
     </div>
 
-    <!-- Estados carga / error -->
     <div *ngIf="cargando" class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       <div *ngFor="let _ of [1, 2, 3, 4, 5]" class="rb-card overflow-hidden">
         <div class="aspect-square w-full animate-pulse bg-gray-100 dark:bg-slate-900"></div>
@@ -183,7 +181,6 @@
       No pudimos cargar el menú. Intenta de nuevo más tarde.
     </p>
 
-    <!-- HU 07 + 10: Cuadrícula -->
     <div
       *ngIf="!cargando && !errorCarga"
       class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
@@ -244,7 +241,6 @@
   </div>
 </div>
 
-<!-- Modal detalle HU 07 -->
 <div
   *ngIf="modalProducto() as p"
   class="rb-modal-backdrop z-[60] items-start overflow-y-auto py-8 sm:items-center sm:py-10"
@@ -317,7 +313,6 @@
   </div>
 </div>
 
-<!-- Panel carrito HU 10 -->
 <div
   *ngIf="carritoAbierto()"
   class="fixed inset-0 z-[55]"
@@ -422,7 +417,6 @@
   </aside>
 </div>
 
-<!-- Disponibilidad antes de checkout -->
 <div
   *ngIf="modalPreCheckoutDisponibilidad() as lista"
   class="rb-modal-backdrop z-[66] items-start overflow-y-auto py-8 sm:items-center sm:py-10"
@@ -452,7 +446,6 @@
   </div>
 </div>
 
-<!-- Carrito vacío -->
 <div
   *ngIf="modalCarritoVacio()"
   class="rb-modal-backdrop z-[66] items-start overflow-y-auto py-8 sm:items-center sm:py-10"

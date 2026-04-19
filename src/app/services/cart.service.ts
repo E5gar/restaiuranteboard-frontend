@@ -36,6 +36,13 @@ export interface VerificarPreciosResponseDto {
 
 const API_CARRITO = 'https://restaiuranteboard-backend.onrender.com/api/carrito';
 
+const SNAPSHOT_PRECIOS_KEY = 'rb_cart_precios_snapshot';
+
+export type PersistedCartSnapshot = {
+  userId: string;
+  lines: CartLine[];
+};
+
 @Injectable({ providedIn: 'root' })
 export class CartService {
   private readonly http = inject(HttpClient);
@@ -60,6 +67,7 @@ export class CartService {
     const items = resp?.items;
     if (!items || !Array.isArray(items)) {
       this.lines.set([]);
+      this.persistPriceSnapshot();
       return;
     }
     const mapped = items.map((x: CartLine) => ({
@@ -70,11 +78,13 @@ export class CartService {
       thumbSrc: String(x.thumbSrc ?? 'assets/no-image.png'),
     }));
     this.lines.set(mapped);
+    this.persistPriceSnapshot();
   }
 
   applyFromLoginPayload(user: { role?: string; cart?: CarritoResponseDto } | null | undefined): void {
     if (!user || user.role !== 'CLIENTE') {
       this.lines.set([]);
+      this.clearPriceSnapshot();
       return;
     }
     this.applyCarritoResponse(user.cart ?? { items: [] });
@@ -82,6 +92,44 @@ export class CartService {
 
   limpiarLocal(): void {
     this.lines.set([]);
+  }
+
+  readPersistedSnapshot(): PersistedCartSnapshot | null {
+    try {
+      const raw = localStorage.getItem(SNAPSHOT_PRECIOS_KEY);
+      if (!raw) return null;
+      const o = JSON.parse(raw) as PersistedCartSnapshot;
+      if (!o?.userId || !Array.isArray(o.lines)) return null;
+      return o;
+    } catch {
+      return null;
+    }
+  }
+
+  clearPriceSnapshot(): void {
+    try {
+      localStorage.removeItem(SNAPSHOT_PRECIOS_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private persistPriceSnapshot(): void {
+    try {
+      const s = this.auth.getSession();
+      if (s?.role !== 'CLIENTE' || !s.userId) {
+        return;
+      }
+      const lines = this.lines();
+      if (lines.length === 0) {
+        localStorage.removeItem(SNAPSHOT_PRECIOS_KEY);
+        return;
+      }
+      const payload: PersistedCartSnapshot = { userId: s.userId, lines: lines.map((l) => ({ ...l })) };
+      localStorage.setItem(SNAPSHOT_PRECIOS_KEY, JSON.stringify(payload));
+    } catch {
+      /* ignore */
+    }
   }
 
   puedeSincronizar(): boolean {
@@ -176,14 +224,19 @@ export class CartService {
     );
   }
 
-  verificarPreciosCheckout(): Observable<VerificarPreciosResponseDto> {
+  verificarPreciosCheckout(opts?: {
+    lineasCliente?: { productId: string; precioUnitario: number; cantidad: number }[];
+    totalCliente?: number;
+  }): Observable<VerificarPreciosResponseDto> {
     const uid = this.requireClienteUserId();
-    const lineasCliente = this.lines().map((l) => ({
-      productId: l.productId,
-      precioUnitario: l.unitPrice,
-      cantidad: l.quantity,
-    }));
-    const totalCliente = this.totalOrden();
+    const lineasCliente =
+      opts?.lineasCliente ??
+      this.lines().map((l) => ({
+        productId: l.productId,
+        precioUnitario: l.unitPrice,
+        cantidad: l.quantity,
+      }));
+    const totalCliente = opts?.totalCliente ?? this.totalOrden();
     return this.http
       .post<VerificarPreciosResponseDto>(`${API_CARRITO}/verificar-precios`, {
         userId: uid,
