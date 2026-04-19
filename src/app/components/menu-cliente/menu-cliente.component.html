@@ -339,8 +339,9 @@
               <div class="inline-flex items-center rounded-lg border border-gray-200 bg-white dark:border-dark-border dark:bg-slate-800">
                 <button
                   type="button"
-                  (click)="cart.decrementar(line.productId)"
-                  class="min-h-9 min-w-9 rounded-l-lg px-2 text-lg font-semibold leading-none text-primary hover:bg-gray-50 dark:hover:bg-slate-700"
+                  (click)="onDecrementarLinea(line.productId)"
+                  [disabled]="cart.sincronizando()"
+                  class="min-h-9 min-w-9 rounded-l-lg px-2 text-lg font-semibold leading-none text-primary hover:bg-gray-50 disabled:opacity-45 dark:hover:bg-slate-700"
                   aria-label="Reducir cantidad"
                 >
                   −
@@ -348,8 +349,8 @@
                 <span class="min-w-[2rem] text-center text-sm font-semibold">{{ line.quantity }}</span>
                 <button
                   type="button"
-                  (click)="cart.incrementar(line.productId)"
-                  [disabled]="line.quantity >= maxPorProducto"
+                  (click)="onIncrementarLinea(line.productId)"
+                  [disabled]="line.quantity >= maxPorProducto || cart.sincronizando()"
                   class="min-h-9 min-w-9 rounded-r-lg px-2 text-lg font-semibold leading-none text-primary hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-slate-700"
                   aria-label="Aumentar cantidad"
                 >
@@ -358,8 +359,9 @@
               </div>
               <button
                 type="button"
-                (click)="cart.quitar(line.productId)"
-                class="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-danger/30 bg-white text-danger hover:bg-red-50 dark:border-red-900/50 dark:bg-slate-800 dark:hover:bg-red-950/40"
+                (click)="onQuitarLinea(line.productId)"
+                [disabled]="cart.sincronizando()"
+                class="inline-flex min-h-9 min-w-9 items-center justify-center rounded-lg border border-danger/30 bg-white text-danger hover:bg-red-50 disabled:opacity-45 dark:border-red-900/50 dark:bg-slate-800 dark:hover:bg-red-950/40"
                 aria-label="Quitar del carrito"
               >
                 <img src="/iconos/tacho.png" alt="" width="18" height="18" class="h-5 w-5 object-contain" />
@@ -379,6 +381,61 @@
         <span class="text-sm font-medium text-neutral-strong dark:text-dark-text-muted">Total</span>
         <span class="text-xl font-bold tracking-tight text-primary dark:text-orange-300">{{ formatoMoneda(cart.totalOrden()) }}</span>
       </div>
+      <button
+        *ngIf="esClienteConCarrito()"
+        type="button"
+        (click)="intentarCheckout()"
+        [disabled]="cart.items().length === 0 || cart.sincronizando()"
+        class="rb-btn-primary mt-4 w-full min-h-11 disabled:pointer-events-none disabled:opacity-45"
+      >
+        Continuar al pago
+      </button>
     </div>
   </aside>
+</div>
+
+<!-- Modal: precios actualizados al intentar pagar -->
+<div
+  *ngIf="modalPreciosCheckout() as mp"
+  class="rb-modal-backdrop z-[65] items-start overflow-y-auto py-8 sm:items-center sm:py-10"
+  role="dialog"
+  aria-modal="true"
+  (click)="cerrarModalPreciosCheckout()"
+>
+  <div
+    class="rb-modal max-w-lg text-left shadow-lg dark:shadow-none"
+    (click)="$event.stopPropagation()"
+  >
+    <div
+      class="rb-modal-icon !mb-5 !bg-white !text-3xl !ring-2 !ring-gray-200 dark:!bg-white dark:!ring-dark-border"
+    >
+      <img src="/iconos/advertencia-amarillo.png" alt="" width="48" height="48" class="h-12 w-12 object-contain" />
+    </div>
+    <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">Precios actualizados</h3>
+    <p class="mb-3 text-sm text-neutral-strong dark:text-dark-text-muted">
+      El precio de algunos productos ha cambiado<span *ngIf="nombresCambioPrecio()">: {{ nombresCambioPrecio() }}</span
+      >.
+    </p>
+    <ul
+      *ngIf="mp.detalle.length > 0"
+      class="mb-4 max-h-40 list-inside list-disc overflow-y-auto rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-sm text-gray-900 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-100"
+    >
+      <li *ngFor="let d of mp.detalle">
+        {{ d.nombre }}: {{ formatoMoneda(d.precioAnterior) }} → {{ formatoMoneda(d.precioNuevo) }}
+      </li>
+    </ul>
+    <div class="mb-6 rounded-xl border border-gray-200 bg-gray-50/90 px-4 py-3 text-sm dark:border-dark-border dark:bg-slate-900/60">
+      <p class="flex flex-wrap justify-between gap-2 text-neutral-strong dark:text-dark-text-muted">
+        <span>Total anterior</span>
+        <span class="font-semibold text-gray-900 dark:text-dark-text-strong">{{ formatoMoneda(mp.totalAnterior) }}</span>
+      </p>
+      <p class="mt-2 flex flex-wrap justify-between gap-2 font-semibold text-primary dark:text-orange-300">
+        <span>Total nuevo</span>
+        <span>{{ formatoMoneda(mp.totalNuevo) }}</span>
+      </p>
+    </div>
+    <div class="flex justify-center sm:justify-end">
+      <button type="button" (click)="cerrarModalPreciosCheckout()" class="rb-btn-primary w-full sm:w-max">Entendido</button>
+    </div>
+  </div>
 </div>

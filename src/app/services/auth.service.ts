@@ -4,6 +4,7 @@ const AUTH_KEY = 'rb_auth';
 
 export type AuthSession = {
   email?: string;
+  userId?: string;
   role?: string;
   firstLogin?: boolean;
   darkMode?: boolean;

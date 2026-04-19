@@ -2,6 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { CartService } from '../../services/cart.service';
 import { ThemeService } from '../../services/theme.service';
 
 @Component({
@@ -32,11 +33,13 @@ export class LogoutButtonComponent {
 
   constructor(
     private auth: AuthService,
+    private cart: CartService,
     private router: Router,
     private theme: ThemeService,
   ) {}
 
   cerrarSesion(): void {
+    this.cart.limpiarLocal();
     this.auth.clearSession();
     this.theme.onLogout();
     void this.router.navigate(['/presentacion']);

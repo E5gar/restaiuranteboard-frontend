@@ -6,6 +6,7 @@ import { Router, RouterModule } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { errorEmailHistoriaUsuario } from '../../utils/form-validators';
 import { AuthService } from '../../services/auth.service';
+import { CartService } from '../../services/cart.service';
 import { ConfigService } from '../../services/config.service';
 import { ThemeService } from '../../services/theme.service';
 
@@ -29,10 +30,14 @@ export class LoginComponent implements OnInit {
   modal = { visible: false, titulo: '', mensaje: '', esError: false };
   redirectAlCerrarModal = false;
 
+  /** Productos retirados del carrito al iniciar sesión (disponibilidad). */
+  modalDisponibilidad = { visible: false, items: [] as string[] };
+
   constructor(
     private http: HttpClient,
     private router: Router,
     private auth: AuthService,
+    private cart: CartService,
     private configService: ConfigService,
     private theme: ThemeService,
   ) {}
@@ -82,29 +87,20 @@ export class LoginComponent implements OnInit {
           sessionStorage.removeItem('rb_guest_dark');
           this.auth.setSession({ ...user, darkMode: dark });
           this.theme.persistLoginTheme(dark, String(user.email || ''));
+          this.cart.applyFromLoginPayload(user);
 
           if (user.firstLogin) {
             this.router.navigate(['/confirmar-cuenta'], { queryParams: { email: user.email } });
             return;
           }
 
-          switch (user.role) {
-            case 'ADMIN':
-              this.router.navigate(['/gestion-administrador']);
-              break;
-            case 'CLIENTE':
-              this.router.navigate(['/menu']);
-              break;
-            case 'CAJERO':
-              this.router.navigate(['/caja']);
-              break;
-            case 'COCINERO':
-              this.router.navigate(['/cocina']);
-              break;
-            case 'REPARTIDOR':
-              this.router.navigate(['/entregas']);
-              break;
+          const removed: string[] = Array.isArray(user.removedItems) ? user.removedItems : [];
+          if (user.role === 'CLIENTE' && removed.length > 0) {
+            this.modalDisponibilidad = { visible: true, items: removed };
+            return;
           }
+
+          this.navegarTrasLogin(user.role);
         },
 
         error: (err) => {
@@ -147,6 +143,36 @@ export class LoginComponent implements OnInit {
     if (this.redirectAlCerrarModal) {
       this.redirectAlCerrarModal = false;
       void this.router.navigate(['/retenido']);
+    }
+  }
+
+  cerrarModalDisponibilidad() {
+    this.modalDisponibilidad.visible = false;
+    const s = this.auth.getSession();
+    if (s?.role) {
+      this.navegarTrasLogin(s.role);
+    }
+  }
+
+  private navegarTrasLogin(role: string) {
+    switch (role) {
+      case 'ADMIN':
+        void this.router.navigate(['/gestion-administrador']);
+        break;
+      case 'CLIENTE':
+        void this.router.navigate(['/menu']);
+        break;
+      case 'CAJERO':
+        void this.router.navigate(['/caja']);
+        break;
+      case 'COCINERO':
+        void this.router.navigate(['/cocina']);
+        break;
+      case 'REPARTIDOR':
+        void this.router.navigate(['/entregas']);
+        break;
+      default:
+        break;
     }
   }
 }

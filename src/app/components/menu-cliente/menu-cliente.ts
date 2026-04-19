@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { CartService, MAX_UNIDADES_POR_PRODUCTO } from '../../services/cart.service';
+import { AuthService } from '../../services/auth.service';
 
 export interface CatOpcion {
   value: string;
@@ -30,6 +31,7 @@ export interface MenuProducto {
 })
 export class MenuClienteComponent implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
   readonly cart = inject(CartService);
 
   private readonly apiCatalogo = 'https://restaiuranteboard-backend.onrender.com/api/catalogo';
@@ -60,6 +62,13 @@ export class MenuClienteComponent implements OnInit {
   modalProducto = signal<MenuProducto | null>(null);
   indiceCarrusel = signal(0);
 
+  /** Modal tras verificar precios en checkout (cambios respecto al catálogo actual). */
+  modalPreciosCheckout = signal<{
+    detalle: { nombre: string; precioAnterior: number; precioNuevo: number }[];
+    totalAnterior: number;
+    totalNuevo: number;
+  } | null>(null);
+
   get productosFiltrados(): MenuProducto[] {
     const lista = this.productos();
     const q = (this.busqueda || '').trim().toLowerCase();
@@ -84,6 +93,14 @@ export class MenuClienteComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarProductos();
+    const s = this.auth.getSession();
+    if (s?.role === 'CLIENTE' && s.userId) {
+      this.cart.cargarDesdeServidor(s.userId).subscribe();
+    }
+  }
+
+  esClienteConCarrito(): boolean {
+    return this.cart.puedeSincronizar();
   }
 
   cargarProductos(): void {
@@ -201,12 +218,61 @@ export class MenuClienteComponent implements OnInit {
   }
 
   agregarAlCarrito(p: MenuProducto): void {
-    this.cart.agregarUno({
-      id: p.id,
-      name: p.name,
-      price: p.price,
-      imagesBase64: p.imagesBase64,
+    if (!this.esClienteConCarrito()) {
+      return;
+    }
+    this.cart.agregarUno({ id: p.id }).subscribe({ error: () => {} });
+  }
+
+  onIncrementarLinea(productId: string): void {
+    if (!this.esClienteConCarrito()) {
+      return;
+    }
+    this.cart.incrementar(productId).subscribe({ error: () => {} });
+  }
+
+  onDecrementarLinea(productId: string): void {
+    if (!this.esClienteConCarrito()) {
+      return;
+    }
+    this.cart.decrementar(productId).subscribe({ error: () => {} });
+  }
+
+  onQuitarLinea(productId: string): void {
+    if (!this.esClienteConCarrito()) {
+      return;
+    }
+    this.cart.quitar(productId).subscribe({ error: () => {} });
+  }
+
+  intentarCheckout(): void {
+    if (!this.esClienteConCarrito() || this.cart.items().length === 0) {
+      return;
+    }
+    this.cart.verificarPreciosCheckout().subscribe({
+      next: (r) => {
+        if (r.preciosCambiaron) {
+          this.modalPreciosCheckout.set({
+            detalle: r.detalleCambios ?? [],
+            totalAnterior: r.totalAnterior,
+            totalNuevo: r.totalNuevo,
+          });
+        }
+      },
+      error: () => {},
     });
+  }
+
+  cerrarModalPreciosCheckout(): void {
+    this.modalPreciosCheckout.set(null);
+  }
+
+  nombresCambioPrecio(): string {
+    const m = this.modalPreciosCheckout();
+    if (!m?.detalle?.length) {
+      return '';
+    }
+    return m.detalle.map((d) => d.nombre).join(', ');
   }
 
   cantidadEnCarrito(productId: string): number {
