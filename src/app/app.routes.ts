@@ -26,6 +26,7 @@ import { ipBlockGuard } from './guards/ip-block.guard';
 import { clienteGuard } from './guards/cliente.guard';
 import { cajaGuard } from './guards/caja.guard';
 import { cocinaGuard } from './guards/cocina.guard';
+import { repartidorGuard } from './guards/repartidor.guard';
 
 export const routes: Routes = [
   { path: 'retenido', component: RetenidoComponent },
@@ -63,7 +64,7 @@ export const routes: Routes = [
   {
     path: 'seguimiento-pedido',
     component: SeguimientoPedidoComponent,
-    canActivate: [ipBlockGuard, configRequiredGuard, authGuard],
+    canActivate: [ipBlockGuard, configRequiredGuard, clienteGuard],
   },
   {
     path: 'admin-productos',
@@ -72,7 +73,7 @@ export const routes: Routes = [
   },
   { path: 'caja', component: PanelCajaComponent, canActivate: [ipBlockGuard, configRequiredGuard, cajaGuard] },
   { path: 'cocina', component: PanelCocinaComponent, canActivate: [ipBlockGuard, configRequiredGuard, cocinaGuard] },
-  { path: 'entregas', component: PanelRepartidorComponent, canActivate: [ipBlockGuard, configRequiredGuard, authGuard] },
+  { path: 'entregas', component: PanelRepartidorComponent, canActivate: [ipBlockGuard, configRequiredGuard, repartidorGuard] },
   { path: '', component: InicioRedirectComponent, canActivate: [ipBlockGuard], pathMatch: 'full' },
   { path: '**', redirectTo: '' },
 ];
