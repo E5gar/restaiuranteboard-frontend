@@ -48,6 +48,20 @@
           {{ estadoMsg() }}
         </div>
 
+        <div *ngIf="d.estado === 'ENTREGADO' && d.isRated" class="mt-4 flex items-center gap-2 rounded-xl border border-success/30 bg-emerald-50/80 px-4 py-3 text-sm font-semibold text-success dark:border-emerald-500/40 dark:bg-emerald-950/30 dark:text-emerald-200">
+          <img src="/iconos/correcto-check-verde.png" alt="" width="24" height="24" class="h-6 w-6 shrink-0 object-contain" />
+          Gracias por compartir tu calificación.
+        </div>
+
+        <div *ngIf="d.estado === 'ENTREGADO' && !d.isRated" class="mt-4">
+          <button type="button" (click)="abrirCalificacion()" class="rb-btn-primary h-12 w-full text-sm font-semibold sm:w-max">
+            <span class="inline-flex items-center justify-center gap-2">
+              <img src="/iconos/estrella-amarilla.png" alt="" width="22" height="22" class="h-5 w-5 object-contain" />
+              Calificar Servicio
+            </span>
+          </button>
+        </div>
+
         <div *ngIf="d.estado === 'EN_CAMINO' && d.repartidorNombre" class="mt-4 rounded-xl border border-secondary/20 bg-blue-50/70 px-4 py-3 text-sm dark:border-blue-400/30 dark:bg-blue-950/25">
           <p class="text-xs font-bold uppercase tracking-wide text-secondary dark:text-blue-300">Tu repartidor</p>
           <p class="mt-1 font-semibold text-gray-900 dark:text-dark-text-strong">{{ d.repartidorNombre }}</p>
@@ -76,5 +90,59 @@
         </details>
       </div>
     </ng-container>
+  </div>
+</div>
+
+<div *ngIf="modalCalif" class="rb-modal-backdrop z-[80]" (click)="cerrarCalificacion()">
+  <div
+    class="rb-modal w-full max-w-md !p-5 text-left sm:!p-8"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="rb-modal-icon !mb-4 flex justify-center !text-3xl">
+      <img src="/iconos/estrella-amarilla.png" alt="" width="48" height="48" class="h-12 w-12 object-contain" />
+    </div>
+    <h3 class="mb-4 text-center text-lg font-semibold text-gray-900 dark:text-dark-text-strong">
+      ¿Qué te ha parecido el servicio recibido?
+    </h3>
+    <div class="mb-2 flex items-center justify-center gap-1.5 sm:gap-2" role="group" aria-label="Calificación en estrellas">
+      <button
+        type="button"
+        *ngFor="let n of [1, 2, 3, 4, 5]"
+        (click)="setEstrella(n)"
+        class="h-12 w-12 shrink-0 touch-manipulation p-0 transition-transform active:scale-95"
+        [attr.aria-pressed]="estrellasSel >= n"
+      >
+        <img
+          [src]="n <= estrellasSel ? '/iconos/estrella-amarilla.png' : '/iconos/estrella-gris.png'"
+          alt=""
+          width="40"
+          height="40"
+          class="h-10 w-10 object-contain"
+        />
+      </button>
+    </div>
+    <p *ngIf="errorCalif" class="mb-3 text-center text-sm font-medium text-danger dark:text-red-300">{{ errorCalif }}</p>
+    <label class="mb-1.5 block text-sm font-semibold text-neutral-strong dark:text-dark-text-muted" for="comentario-calif">Comentario (opcional)</label>
+    <textarea
+      id="comentario-calif"
+      class="rb-input mb-4 min-h-[100px] w-full resize-y text-sm"
+      [value]="comentarioCalif"
+      (input)="comentarioCalif = $any($event.target).value"
+      [disabled]="enviandoCalif"
+      rows="3"
+    ></textarea>
+    <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+      <button type="button" (click)="cerrarCalificacion()" class="rb-btn-secondary order-2 h-12 w-full sm:order-1 sm:w-auto" [disabled]="enviandoCalif">Cerrar</button>
+      <button type="button" (click)="enviarCalificacion()" class="rb-btn-primary order-1 h-12 w-full sm:order-2 sm:w-auto" [disabled]="enviandoCalif">
+        <span *ngIf="!enviandoCalif" class="inline-flex items-center justify-center gap-2">
+          <img src="/iconos/estrella-amarilla.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+          Enviar Calificación
+        </span>
+        <span *ngIf="enviandoCalif" class="inline-flex items-center justify-center gap-2">
+          <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true"></span>
+          Enviando…
+        </span>
+      </button>
+    </div>
   </div>
 </div>

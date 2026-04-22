@@ -7,6 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { timer } from 'rxjs';
 
 const API_SEG = 'https://restaiuranteboard-backend.onrender.com/api/pedidos/seguimiento';
+const API_CAL = 'https://restaiuranteboard-backend.onrender.com/api/pedidos/calificacion';
 
 type Estado = 'VALIDANDO_PAGO' | 'PAGO_VALIDADO' | 'EN_COCINA' | 'PREPARADO' | 'EN_CAMINO' | 'ENTREGADO' | 'CANCELADO';
 
@@ -24,6 +25,7 @@ interface SeguimientoResp {
   total: string;
   cancelReason: string;
   repartidorNombre: string;
+  isRated: boolean;
   lineas: Linea[];
 }
 
@@ -41,6 +43,12 @@ export class SeguimientoPedidoComponent implements OnInit {
   readonly cargando = signal(true);
   readonly error = signal('');
   readonly animar = signal(false);
+
+  modalCalif = false;
+  estrellasSel = 0;
+  comentarioCalif = '';
+  enviandoCalif = false;
+  errorCalif = '';
 
   readonly pasos = [
     { key: 'VALIDANDO_PAGO', label1: 'Validando', label2: 'Pago', icon: '/iconos/documento.png' },
@@ -88,7 +96,7 @@ export class SeguimientoPedidoComponent implements OnInit {
     this.http.get<SeguimientoResp>(`${API_SEG}/actual`, { params: { userId: uid } }).subscribe({
       next: (r) => {
         const prev = this.data()?.estado;
-        this.data.set(r);
+        this.data.set({ ...r, isRated: r.isRated ?? false });
         this.cargando.set(false);
         this.error.set('');
         if (prev && prev !== r.estado) {
@@ -101,5 +109,53 @@ export class SeguimientoPedidoComponent implements OnInit {
         this.error.set(err.error?.message || 'No se pudo cargar el seguimiento.');
       },
     });
+  }
+
+  abrirCalificacion(): void {
+    this.estrellasSel = 0;
+    this.comentarioCalif = '';
+    this.errorCalif = '';
+    this.modalCalif = true;
+  }
+
+  cerrarCalificacion(): void {
+    if (this.enviandoCalif) return;
+    this.modalCalif = false;
+  }
+
+  setEstrella(n: number): void {
+    this.estrellasSel = n;
+    this.errorCalif = '';
+  }
+
+  enviarCalificacion(): void {
+    const uid = this.auth.getSession()?.userId;
+    const d = this.data();
+    if (!uid || !d) return;
+    if (this.estrellasSel < 1 || this.estrellasSel > 5) {
+      this.errorCalif = 'Selecciona entre 1 y 5 estrellas.';
+      return;
+    }
+    this.enviandoCalif = true;
+    this.errorCalif = '';
+    const c = this.comentarioCalif.trim();
+    this.http
+      .post<{ ok?: boolean }>(API_CAL, {
+        userId: uid,
+        orderId: d.orderId,
+        stars: this.estrellasSel,
+        comment: c.length > 0 ? c : null,
+      })
+      .subscribe({
+        next: () => {
+          this.enviandoCalif = false;
+          this.modalCalif = false;
+          this.data.set({ ...d, isRated: true });
+        },
+        error: (err) => {
+          this.enviandoCalif = false;
+          this.errorCalif = err.error?.message || 'No se pudo enviar la calificación.';
+        },
+      });
   }
 }
