@@ -20,7 +20,11 @@ export interface CatOpcion {
 export class AdminProductosComponent implements OnInit {
   readonly categoriasProducto: CatOpcion[] = [
     { value: 'Entrada', label: 'Entrada', img: '/iconos/categoria-entrada.png' },
-    { value: 'Plato Principal', label: 'Plato Principal', img: '/iconos/categoria-plato-principal.png' },
+    {
+      value: 'Plato Principal',
+      label: 'Plato Principal',
+      img: '/iconos/categoria-plato-principal.png',
+    },
     { value: 'Postres', label: 'Postres', img: '/iconos/categoria-postres.png' },
     { value: 'Bebidas', label: 'Bebidas', img: '/iconos/categoria-bebidas.png' },
   ];
@@ -39,7 +43,7 @@ export class AdminProductosComponent implements OnInit {
 
   private readonly apiCatalogo = 'https://restaiuranteboard-backend.onrender.com/api/catalogo';
 
-  pestanaActiva = 'ingredientes'; 
+  pestanaActiva = 'ingredientes';
   cargando = false;
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '' };
 
@@ -139,19 +143,15 @@ export class AdminProductosComponent implements OnInit {
   }
 
   cargarDatos() {
-    this.http
-      .get<any[]>(`${this.apiCatalogo}/ingredientes`)
-      .subscribe({
-        next: (data) => (this.ingredientes = data),
-        error: (err) => console.error('Error cargando ingredientes', err),
-      });
+    this.http.get<any[]>(`${this.apiCatalogo}/ingredientes`).subscribe({
+      next: (data) => (this.ingredientes = data),
+      error: (err) => console.error('Error cargando ingredientes', err),
+    });
 
-    this.http
-      .get<any[]>(`${this.apiCatalogo}/productos`)
-      .subscribe({
-        next: (data) => (this.productos = data),
-        error: (err) => console.error('Error cargando productos', err),
-      });
+    this.http.get<any[]>(`${this.apiCatalogo}/productos`).subscribe({
+      next: (data) => (this.productos = data),
+      error: (err) => console.error('Error cargando productos', err),
+    });
   }
 
   seleccionarCategoriaIngrediente(cat: string) {
@@ -176,15 +176,16 @@ export class AdminProductosComponent implements OnInit {
   }
 
   get insumosFiltradosRecetaEdit(): any[] {
-    const q = (this.editBusquedaReceta || '').trim().toLowerCase();
+    const q = this.normalizarTexto(this.editBusquedaReceta);
     return this.ingredientes.filter((i) => {
-      if (this.editFiltroCategoriaReceta !== 'ALL' && i.category !== this.editFiltroCategoriaReceta) {
+      if (
+        this.editFiltroCategoriaReceta !== 'ALL' &&
+        i.category !== this.editFiltroCategoriaReceta
+      ) {
         return false;
       }
       if (!q) return true;
-      return String(i.name || '')
-        .toLowerCase()
-        .includes(q);
+      return this.normalizarTexto(i.name).includes(q);
     });
   }
 
@@ -240,7 +241,11 @@ export class AdminProductosComponent implements OnInit {
     }
     const foto = (this.editIngrediente.imageBase64 || '').trim();
     if (!foto) {
-      return this.abrirModal('error', 'Foto obligatoria', 'Debes mantener o reemplazar la foto del insumo.');
+      return this.abrirModal(
+        'error',
+        'Foto obligatoria',
+        'Debes mantener o reemplazar la foto del insumo.',
+      );
     }
 
     const unit = this.editIngrediente.unit;
@@ -286,32 +291,26 @@ export class AdminProductosComponent implements OnInit {
     };
 
     this.cargando = true;
-    this.http
-      .put(`${this.apiCatalogo}/ingredientes/${this.editIngredienteId}`, payload)
-      .subscribe({
-        next: () => {
-          this.cargando = false;
-          this.cerrarModalEditarIngrediente();
-          this.abrirModal('exito', 'Guardado', 'Insumo actualizado correctamente.');
-          this.cargarDatos();
-        },
-        error: (err) => {
-          this.cargando = false;
-          if (err.status === 409 && err.error?.code === 'UNIT_CHANGE_WARNING') {
-            this.modalCambioUnidadIngrediente = {
-              visible: true,
-              productos: (err.error?.productos as string[]) ?? [],
-            };
-            return;
-          }
-          const msg = err.error?.message || 'No se pudo actualizar el insumo.';
-          this.abrirModal(
-            'error',
-            msg.includes('ya existe') ? 'Nombre duplicado' : 'Error',
-            msg,
-          );
-        },
-      });
+    this.http.put(`${this.apiCatalogo}/ingredientes/${this.editIngredienteId}`, payload).subscribe({
+      next: () => {
+        this.cargando = false;
+        this.cerrarModalEditarIngrediente();
+        this.abrirModal('exito', 'Guardado', 'Insumo actualizado correctamente.');
+        this.cargarDatos();
+      },
+      error: (err) => {
+        this.cargando = false;
+        if (err.status === 409 && err.error?.code === 'UNIT_CHANGE_WARNING') {
+          this.modalCambioUnidadIngrediente = {
+            visible: true,
+            productos: (err.error?.productos as string[]) ?? [],
+          };
+          return;
+        }
+        const msg = err.error?.message || 'No se pudo actualizar el insumo.';
+        this.abrirModal('error', msg.includes('ya existe') ? 'Nombre duplicado' : 'Error', msg);
+      },
+    });
   }
 
   cerrarModalCambioUnidadIngrediente() {
@@ -443,7 +442,11 @@ export class AdminProductosComponent implements OnInit {
 
     if (this.edicionProductoRestringida) {
       if (!this.editProducto.imagesBase64?.length) {
-        return this.abrirModal('error', 'Imágenes', 'Debe existir al menos una imagen del producto.');
+        return this.abrirModal(
+          'error',
+          'Imágenes',
+          'Debe existir al menos una imagen del producto.',
+        );
       }
       this.cargando = true;
       this.http
@@ -512,45 +515,46 @@ export class AdminProductosComponent implements OnInit {
       error: (err) => {
         this.cargando = false;
         const msg = err.error?.message || 'No se pudo guardar el producto.';
-        this.abrirModal(
-          'error',
-          msg.includes('ya existe') ? 'Nombre duplicado' : 'Error',
-          msg,
-        );
+        this.abrirModal('error', msg.includes('ya existe') ? 'Nombre duplicado' : 'Error', msg);
       },
     });
   }
 
+  private normalizarTexto(texto: string): string {
+    if (!texto) return '';
+    return texto
+      .normalize('NFD') // Descompone caracteres acentuados (ej: 'á' -> 'a' + '´')
+      .replace(/[\u0300-\u036f]/g, '') // Elimina los signos de acentuación
+      .toLowerCase();
+  }
+
   get insumosFiltradosReceta(): any[] {
-    const q = (this.busquedaReceta || '').trim().toLowerCase();
+    const q = this.normalizarTexto(this.busquedaReceta);
     return this.ingredientes.filter((i) => {
-      if (this.filtroCategoriaReceta !== 'ALL' && i.category !== this.filtroCategoriaReceta) return false;
+      if (this.filtroCategoriaReceta !== 'ALL' && i.category !== this.filtroCategoriaReceta)
+        return false;
       if (!q) return true;
-      return String(i.name || '')
-        .toLowerCase()
-        .includes(q);
+      return this.normalizarTexto(i.name).includes(q);
     });
   }
 
   get insumosFiltradosAlmacen(): any[] {
-    const q = (this.busquedaAlmacen || '').trim().toLowerCase();
+    const q = this.normalizarTexto(this.busquedaAlmacen);
     return this.ingredientes.filter((i) => {
-      if (this.filtroCategoriaAlmacen !== 'ALL' && i.category !== this.filtroCategoriaAlmacen) return false;
+      if (this.filtroCategoriaAlmacen !== 'ALL' && i.category !== this.filtroCategoriaAlmacen)
+        return false;
       if (!q) return true;
-      return String(i.name || '')
-        .toLowerCase()
-        .includes(q);
+      return this.normalizarTexto(i.name).includes(q);
     });
   }
 
   get productosFiltradosCatalogo(): any[] {
-    const q = (this.busquedaCatalogo || '').trim().toLowerCase();
+    const q = this.normalizarTexto(this.busquedaCatalogo);
     return this.productos.filter((p) => {
-      if (this.filtroCategoriaCatalogo !== 'ALL' && p.category !== this.filtroCategoriaCatalogo) return false;
+      if (this.filtroCategoriaCatalogo !== 'ALL' && p.category !== this.filtroCategoriaCatalogo)
+        return false;
       if (!q) return true;
-      return String(p.name || '')
-        .toLowerCase()
-        .includes(q);
+      return this.normalizarTexto(p.name).includes(q);
     });
   }
 
@@ -802,31 +806,29 @@ export class AdminProductosComponent implements OnInit {
 
     this.nuevoIngrediente.stockQuantity = stock;
     this.nuevoIngrediente.price = costo;
-    
+
     this.cargando = true;
-    this.http
-      .post(`${this.apiCatalogo}/ingredientes`, this.nuevoIngrediente)
-      .subscribe({
+    this.http.post(`${this.apiCatalogo}/ingredientes`, this.nuevoIngrediente).subscribe({
       next: () => {
         this.cargando = false;
         this.abrirModal('exito', 'Guardado', 'Ingrediente registrado en el inventario.');
-          this.nuevoIngrediente = {
-            name: '',
-            unit: 'UNIDADES',
-            stockQuantity: 0,
-            category: 'Verduras',
-            price: 0,
-            imageBase64: '',
-          };
-          this.ingredienteStockText = '0';
-          this.ingredienteCostoText = '0';
+        this.nuevoIngrediente = {
+          name: '',
+          unit: 'UNIDADES',
+          stockQuantity: 0,
+          category: 'Verduras',
+          price: 0,
+          imageBase64: '',
+        };
+        this.ingredienteStockText = '0';
+        this.ingredienteCostoText = '0';
         this.cargarDatos();
       },
-        error: (err) => {
+      error: (err) => {
         this.cargando = false;
-          const msg = err.error?.message || 'No se pudo guardar el ingrediente.';
-          this.abrirModal('error', msg.includes('ya existe') ? 'Insumo duplicado' : 'Error', msg);
-        },
+        const msg = err.error?.message || 'No se pudo guardar el ingrediente.';
+        this.abrirModal('error', msg.includes('ya existe') ? 'Insumo duplicado' : 'Error', msg);
+      },
     });
   }
 
@@ -859,16 +861,16 @@ export class AdminProductosComponent implements OnInit {
     const index = this.recetaActual.findIndex((r) => r.ingredientId === insumo.id);
     if (index >= 0) {
       this.recetaActual[index].quantity += qty;
-      } else {
-        this.recetaActual.push({
-          ingredientId: insumo.id,
-          name: insumo.name,
+    } else {
+      this.recetaActual.push({
+        ingredientId: insumo.id,
+        name: insumo.name,
         quantity: qty,
         unit: insumo.unit,
-        });
-      }
+      });
+    }
     this.cantidadRecetaText = '1';
-      this.ingredienteSeleccionadoId = '';
+    this.ingredienteSeleccionadoId = '';
   }
 
   quitarInsumo(index: number) {
@@ -911,38 +913,33 @@ export class AdminProductosComponent implements OnInit {
       receta: this.recetaActual,
     };
 
-    this.http.post(`${this.apiCatalogo}/productos`, payload)
-      .subscribe({
-        next: () => {
-          this.cargando = false;
-          this.abrirModal(
-            'exito',
-            'Plato Creado',
-            'Producto guardado en el catálogo y receta vinculada.',
-          );
-          this.nuevoProducto = {
-            name: '',
-            price: 0.1,
-            category: 'Entrada',
-            description: '',
-            imagesBase64: [],
-          };
-          this.productoPrecioText = '0.10';
-          this.recetaActual = [];
-          this.busquedaReceta = '';
-          this.filtroCategoriaReceta = 'ALL';
-          this.cargarDatos();
-        },
-        error: (err) => {
-          this.cargando = false;
-          const msg = err.error?.message || 'No se pudo guardar el producto.';
-          this.abrirModal(
-            'error',
-            msg.includes('ya existe') ? 'Receta duplicada' : 'Error',
-            msg,
-          );
-        },
-      });
+    this.http.post(`${this.apiCatalogo}/productos`, payload).subscribe({
+      next: () => {
+        this.cargando = false;
+        this.abrirModal(
+          'exito',
+          'Producto creado',
+          'Producto guardado en el catálogo y receta vinculada.',
+        );
+        this.nuevoProducto = {
+          name: '',
+          price: 0.1,
+          category: 'Entrada',
+          description: '',
+          imagesBase64: [],
+        };
+        this.productoPrecioText = '0.10';
+        this.recetaActual = [];
+        this.busquedaReceta = '';
+        this.filtroCategoriaReceta = 'ALL';
+        this.cargarDatos();
+      },
+      error: (err) => {
+        this.cargando = false;
+        const msg = err.error?.message || 'No se pudo guardar el producto.';
+        this.abrirModal('error', msg.includes('ya existe') ? 'Receta duplicada' : 'Error', msg);
+      },
+    });
   }
 
   solicitarEliminarProducto(idMongo: string) {
@@ -980,7 +977,11 @@ export class AdminProductosComponent implements OnInit {
     this.http.delete(`${this.apiCatalogo}/productos/${id}`).subscribe({
       next: () => {
         this.cargando = false;
-        this.abrirModal('exito', 'Producto eliminado', 'El producto ya no aparecerá en el menú ni en la gestión de cocina.');
+        this.abrirModal(
+          'exito',
+          'Producto eliminado',
+          'El producto ya no aparecerá en el menú ni en la gestión de cocina.',
+        );
         this.cargarDatos();
       },
       error: (err) => {
@@ -1053,7 +1054,11 @@ export class AdminProductosComponent implements OnInit {
     this.http.delete(`${this.apiCatalogo}/ingredientes/${id}`).subscribe({
       next: () => {
         this.cargando = false;
-        this.abrirModal('exito', 'Insumo eliminado', 'El insumo ya no aparecerá en almacén ni en recetas.');
+        this.abrirModal(
+          'exito',
+          'Insumo eliminado',
+          'El insumo ya no aparecerá en almacén ni en recetas.',
+        );
         if (this.ingredienteSeleccionadoAlmacenId === id) {
           this.ingredienteSeleccionadoAlmacenId = '';
         }
