@@ -1094,7 +1094,7 @@ export class AdminProductosComponent implements OnInit {
       val = val.replace(/[^0-9.]/g, '');
 
       const parts = val.split('.');
-      if (parts.length > 2) {
+      if (parts.length > 3) {
         val = parts[0] + '.' + parts.slice(1).join('').replace(/\./g, '');
       }
 
