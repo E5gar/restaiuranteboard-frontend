@@ -25,6 +25,7 @@ import { setupFlowGuard } from './guards/setup-flow.guard';
 import { ipBlockGuard } from './guards/ip-block.guard';
 import { clienteGuard } from './guards/cliente.guard';
 import { cajaGuard } from './guards/caja.guard';
+import { cocinaGuard } from './guards/cocina.guard';
 
 export const routes: Routes = [
   { path: 'retenido', component: RetenidoComponent },
@@ -70,7 +71,7 @@ export const routes: Routes = [
     canActivate: [ipBlockGuard, configRequiredGuard, authGuard, adminGuard],
   },
   { path: 'caja', component: PanelCajaComponent, canActivate: [ipBlockGuard, configRequiredGuard, cajaGuard] },
-  { path: 'cocina', component: PanelCocinaComponent, canActivate: [ipBlockGuard, configRequiredGuard, authGuard] },
+  { path: 'cocina', component: PanelCocinaComponent, canActivate: [ipBlockGuard, configRequiredGuard, cocinaGuard] },
   { path: 'entregas', component: PanelRepartidorComponent, canActivate: [ipBlockGuard, configRequiredGuard, authGuard] },
   { path: '', component: InicioRedirectComponent, canActivate: [ipBlockGuard], pathMatch: 'full' },
   { path: '**', redirectTo: '' },
