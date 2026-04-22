@@ -260,7 +260,7 @@ export class AdminProductosComponent implements OnInit {
     }
 
     const costo = this.parseNumeroFlexible(this.editIngredienteCostoText, {
-      maxDecimals: 2,
+      maxDecimals: 3,
       integerOnly: false,
       min: 0,
     });
@@ -268,7 +268,7 @@ export class AdminProductosComponent implements OnInit {
       return this.abrirModal(
         'error',
         'Costo inválido',
-        'Costo unitario: no negativo, máximo dos decimales.',
+        'Costo unitario: no negativo, máximo tres decimales.',
       );
     }
 
@@ -619,7 +619,7 @@ export class AdminProductosComponent implements OnInit {
     const ct = (this.abastecerCostoText || '').trim();
     if (ct) {
       const c = this.parseNumeroFlexible(ct, {
-        maxDecimals: 2,
+        maxDecimals: 3,
         integerOnly: false,
         min: 0,
       });
@@ -627,7 +627,7 @@ export class AdminProductosComponent implements OnInit {
         return this.abrirModal(
           'error',
           'Costo inválido',
-          'Costo unitario opcional: no negativo, máximo dos decimales.',
+          'Costo unitario opcional: no negativo, máximo tres decimales.',
         );
       }
       unitCost = c;
@@ -788,7 +788,7 @@ export class AdminProductosComponent implements OnInit {
     }
 
     const costo = this.parseNumeroFlexible(this.ingredienteCostoText, {
-      maxDecimals: 2,
+      maxDecimals: 3,
       integerOnly: false,
       min: 0,
     });
@@ -796,7 +796,7 @@ export class AdminProductosComponent implements OnInit {
       return this.abrirModal(
         'error',
         'Costo inválido',
-        'Costo unitario: no negativo, máximo dos decimales, sin notación científica.',
+        'Costo unitario: no negativo, máximo tres decimales, sin notación científica.',
       );
     }
 
@@ -1094,7 +1094,7 @@ export class AdminProductosComponent implements OnInit {
       val = val.replace(/[^0-9.]/g, '');
 
       const parts = val.split('.');
-      if (parts.length > 3) {
+      if (parts.length > 2) {
         val = parts[0] + '.' + parts.slice(1).join('').replace(/\./g, '');
       }
 
