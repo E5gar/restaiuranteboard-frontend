@@ -1081,4 +1081,30 @@ export class AdminProductosComponent implements OnInit {
   cerrarModal() {
     this.modal.visible = false;
   }
+
+  filtrarDecimalPositivo(event: Event, maxDecimals: number): string {
+    const input = event.target as HTMLInputElement;
+    let val = input.value;
+
+    val = val.replace(',', '.');
+
+    if (maxDecimals === 0) {
+      val = val.replace(/\D/g, '');
+    } else {
+      val = val.replace(/[^0-9.]/g, '');
+
+      const parts = val.split('.');
+      if (parts.length > 2) {
+        val = parts[0] + '.' + parts.slice(1).join('').replace(/\./g, '');
+      }
+
+      if (val.includes('.')) {
+        const split = val.split('.');
+        val = split[0] + '.' + split[1].substring(0, maxDecimals);
+      }
+    }
+
+    input.value = val;
+    return val;
+  }
 }
