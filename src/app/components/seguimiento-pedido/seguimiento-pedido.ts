@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
@@ -29,6 +29,11 @@ interface SeguimientoResp {
   lineas: Linea[];
 }
 
+interface SeguimientoListasResp {
+  pendientes: SeguimientoResp[];
+  finalizados: SeguimientoResp[];
+}
+
 @Component({
   selector: 'app-seguimiento-pedido',
   standalone: true,
@@ -39,7 +44,19 @@ export class SeguimientoPedidoComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
 
-  readonly data = signal<SeguimientoResp | null>(null);
+  readonly listas = signal<SeguimientoListasResp | null>(null);
+  readonly pestana = signal<'pendientes' | 'finalizados'>('pendientes');
+  readonly seleccionId = signal<string | null>(null);
+
+  readonly data = computed(() => {
+    const L = this.listas();
+    const id = this.seleccionId();
+    const tab = this.pestana();
+    if (!L || !id) return null;
+    const arr = tab === 'pendientes' ? L.pendientes : L.finalizados;
+    return arr.find((o) => o.orderId === id) ?? null;
+  });
+
   readonly cargando = signal(true);
   readonly error = signal('');
   readonly animar = signal(false);
@@ -69,6 +86,33 @@ export class SeguimientoPedidoComponent implements OnInit {
     return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(n);
   }
 
+  formatoFechaPedido(iso: string): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso.slice(0, 16);
+    return new Intl.DateTimeFormat('es-PE', { dateStyle: 'short', timeStyle: 'short' }).format(d);
+  }
+
+  pedidosPestana(): SeguimientoResp[] {
+    const L = this.listas();
+    if (!L) return [];
+    return this.pestana() === 'pendientes' ? L.pendientes : L.finalizados;
+  }
+
+  setPestana(p: 'pendientes' | 'finalizados'): void {
+    this.pestana.set(p);
+    const L = this.listas();
+    if (!L) return;
+    const arr = p === 'pendientes' ? L.pendientes : L.finalizados;
+    const cur = this.seleccionId();
+    if (cur && arr.some((o) => o.orderId === cur)) return;
+    this.seleccionId.set(arr[0]?.orderId ?? null);
+  }
+
+  seleccionar(o: SeguimientoResp): void {
+    this.seleccionId.set(o.orderId);
+  }
+
   idxEstado(): number {
     const s = this.data()?.estado;
     if (!s || s === 'CANCELADO') return -1;
@@ -86,6 +130,44 @@ export class SeguimientoPedidoComponent implements OnInit {
     return 'Tu pedido fue cancelado por validación de pago.';
   }
 
+  private normalizarListas(r: SeguimientoListasResp): SeguimientoListasResp {
+    return {
+      pendientes: (r.pendientes ?? []).map((o) => ({ ...o, isRated: o.isRated ?? false })),
+      finalizados: (r.finalizados ?? []).map((o) => ({ ...o, isRated: o.isRated ?? false })),
+    };
+  }
+
+  private aplicarListas(norm: SeguimientoListasResp, prevId: string | null, prevEstado: Estado | undefined): void {
+    if (norm.pendientes.length === 0 && norm.finalizados.length === 0) {
+      this.listas.set(norm);
+      this.seleccionId.set(null);
+      this.error.set('No tienes pedidos registrados.');
+      return;
+    }
+    this.error.set('');
+    this.listas.set(norm);
+    const inPend = prevId ? norm.pendientes.find((o) => o.orderId === prevId) : undefined;
+    const inFin = prevId ? norm.finalizados.find((o) => o.orderId === prevId) : undefined;
+    if (inPend) {
+      this.pestana.set('pendientes');
+      this.seleccionId.set(prevId);
+    } else if (inFin) {
+      this.pestana.set('finalizados');
+      this.seleccionId.set(prevId);
+    } else if (norm.pendientes.length > 0) {
+      this.pestana.set('pendientes');
+      this.seleccionId.set(norm.pendientes[0].orderId);
+    } else {
+      this.pestana.set('finalizados');
+      this.seleccionId.set(norm.finalizados[0].orderId);
+    }
+    const nuevo = this.data()?.estado;
+    if (prevEstado && nuevo && prevEstado !== nuevo) {
+      this.animar.set(true);
+      setTimeout(() => this.animar.set(false), 1000);
+    }
+  }
+
   private cargar(): void {
     const uid = this.auth.getSession()?.userId;
     if (!uid) {
@@ -93,16 +175,13 @@ export class SeguimientoPedidoComponent implements OnInit {
       this.error.set('Debes iniciar sesión para ver el seguimiento.');
       return;
     }
-    this.http.get<SeguimientoResp>(`${API_SEG}/actual`, { params: { userId: uid } }).subscribe({
+    const prevEstado = this.data()?.estado;
+    const prevId = this.seleccionId();
+    this.http.get<SeguimientoListasResp>(`${API_SEG}/listas`, { params: { userId: uid } }).subscribe({
       next: (r) => {
-        const prev = this.data()?.estado;
-        this.data.set({ ...r, isRated: r.isRated ?? false });
+        const norm = this.normalizarListas(r);
         this.cargando.set(false);
-        this.error.set('');
-        if (prev && prev !== r.estado) {
-          this.animar.set(true);
-          setTimeout(() => this.animar.set(false), 1000);
-        }
+        this.aplicarListas(norm, prevId, prevEstado);
       },
       error: (err) => {
         this.cargando.set(false);
@@ -139,10 +218,11 @@ export class SeguimientoPedidoComponent implements OnInit {
     this.enviandoCalif = true;
     this.errorCalif = '';
     const c = this.comentarioCalif.trim();
+    const oid = d.orderId;
     this.http
       .post<{ ok?: boolean }>(API_CAL, {
         userId: uid,
-        orderId: d.orderId,
+        orderId: oid,
         stars: this.estrellasSel,
         comment: c.length > 0 ? c : null,
       })
@@ -150,7 +230,13 @@ export class SeguimientoPedidoComponent implements OnInit {
         next: () => {
           this.enviandoCalif = false;
           this.modalCalif = false;
-          this.data.set({ ...d, isRated: true });
+          this.listas.update((L) => {
+            if (!L) return L;
+            return {
+              pendientes: L.pendientes.map((o) => (o.orderId === oid ? { ...o, isRated: true } : o)),
+              finalizados: L.finalizados.map((o) => (o.orderId === oid ? { ...o, isRated: true } : o)),
+            };
+          });
         },
         error: (err) => {
           this.enviandoCalif = false;
