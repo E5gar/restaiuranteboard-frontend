@@ -9,6 +9,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { CartService, MAX_UNIDADES_POR_PRODUCTO, type VerificarPreciosResponseDto } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { UserInteractionsService } from '../../services/user-interactions.service';
 
 export interface CatOpcion {
   value: string;
@@ -37,6 +38,7 @@ export class MenuClienteComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly interactions = inject(UserInteractionsService);
   readonly cart = inject(CartService);
 
   private readonly apiCatalogo = 'https://restaiuranteboard-backend.onrender.com/api/catalogo';
@@ -81,6 +83,9 @@ export class MenuClienteComponent implements OnInit {
   modalPreCheckoutDisponibilidad = signal<string[] | null>(null);
   modalDisponibilidadMenu = signal<string[] | null>(null);
   modalCarritoVacio = signal(false);
+  private detalleAbiertoAtMs = 0;
+  private detalleProductId: string | null = null;
+  private detalleAgregoCarrito = false;
 
   private pendingPreciosTrasDisponibilidadMenu: VerificarPreciosResponseDto | null = null;
   private pendingPreciosTrasDisponibilidadPreCheckout: VerificarPreciosResponseDto | null = null;
@@ -306,17 +311,31 @@ export class MenuClienteComponent implements OnInit {
   }
 
   abrirDetalle(p: MenuProducto): void {
+    this.detalleAbiertoAtMs = Date.now();
+    this.detalleProductId = p.id;
+    this.detalleAgregoCarrito = false;
+    this.interactions.track(p.id, 'VIEW_DETAIL');
     this.modalProducto.set(p);
     this.indiceCarrusel.set(0);
   }
 
   cerrarDetalle(): void {
+    if (this.detalleProductId) {
+      const dwell = Math.max(0, Math.round((Date.now() - this.detalleAbiertoAtMs) / 1000));
+      if (!this.detalleAgregoCarrito) {
+        this.interactions.track(this.detalleProductId, 'CLOSE_DETAIL_WITHOUT_ADD', dwell);
+      }
+    }
+    this.detalleAbiertoAtMs = 0;
+    this.detalleProductId = null;
+    this.detalleAgregoCarrito = false;
     this.modalProducto.set(null);
   }
 
   carruselAnterior(): void {
     const p = this.modalProducto();
     if (!p) return;
+    this.interactions.track(p.id, 'IMAGE_SWIPE');
     const imgs = this.imagenesModal(p);
     const i = this.indiceCarrusel();
     this.indiceCarrusel.set((i - 1 + imgs.length) % imgs.length);
@@ -325,6 +344,7 @@ export class MenuClienteComponent implements OnInit {
   carruselSiguiente(): void {
     const p = this.modalProducto();
     if (!p) return;
+    this.interactions.track(p.id, 'IMAGE_SWIPE');
     const imgs = this.imagenesModal(p);
     const i = this.indiceCarrusel();
     this.indiceCarrusel.set((i + 1) % imgs.length);
@@ -348,6 +368,7 @@ export class MenuClienteComponent implements OnInit {
     this.agregandoProductId.set(p.id);
     this.cart.agregarUno({ id: p.id }).subscribe({
       next: () => {
+        this.detalleAgregoCarrito = true;
         this.agregandoProductId.set(null);
         if (cerrarModalDetalle) {
           this.cerrarDetalle();
