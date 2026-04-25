@@ -182,18 +182,37 @@ export class MenuClienteComponent implements OnInit {
     });
   }
 
-  sliderTrackStyle(): { [key: string]: string } {
-    const min = this.precioDbMin();
-    const max = this.precioSliderMax();
-    const val = this.precioFiltroMax();
-    if (max <= min) {
-      return { background: '#e5e7eb' };
-    }
-    const pct = ((val - min) / (max - min)) * 100;
-    const rest = document.documentElement.classList.contains('dark') ? '#334155' : '#e5e7eb';
+  dualSliderTrackStyle(): { [key: string]: string } {
+    const minDb = this.precioDbMin();
+    const maxSlider = this.precioSliderMax();
+    const range = maxSlider - minDb;
+
+    if (range <= 0) return { left: '0%', width: '100%' };
+
+    const minF = this.precioFiltroMin();
+    const maxF = this.precioFiltroMax();
+
+    const leftPct = Math.max(0, ((minF - minDb) / range) * 100);
+    const widthPct = Math.max(0, ((maxF - minF) / range) * 100);
+
     return {
-      background: `linear-gradient(to right, #ff7a00 ${pct}%, ${rest} ${pct}%)`,
+      left: `${leftPct}%`,
+      width: `${widthPct}%`,
     };
+  }
+
+  onDualMinInput(val: string | number): void {
+    const n = typeof val === 'string' ? parseFloat(val) : val;
+    if (Number.isNaN(n)) return;
+    const maxF = this.precioFiltroMax();
+    this.precioFiltroMin.set(Math.min(n, maxF));
+  }
+
+  onDualMaxInput(val: string | number): void {
+    const n = typeof val === 'string' ? parseFloat(val) : val;
+    if (Number.isNaN(n)) return;
+    const minF = this.precioFiltroMin();
+    this.precioFiltroMax.set(Math.max(n, minF));
   }
 
   cerrarModalDisponibilidadMenu(): void {
@@ -215,7 +234,9 @@ export class MenuClienteComponent implements OnInit {
       this.errorCarga = false;
     }
 
+    const minFiltroPrevio = this.precioFiltroMin();
     const maxFiltroPrevio = this.precioFiltroMax();
+    const minDbPrevio = this.precioDbMin();
     const maxDbPrevio = this.precioDbMax();
 
     this.http.get<MenuProducto[]>(`${this.apiCatalogo}/productos`).subscribe({
@@ -228,6 +249,7 @@ export class MenuClienteComponent implements OnInit {
         this.productos.set(rows);
         this.sincronizarModalProductoTrasCatalogo();
         const prices = rows.map((p) => Number(p.price)).filter((n) => !Number.isNaN(n));
+        
         if (prices.length > 0) {
           const mn = Math.min(...prices);
           const mx = Math.max(...prices);
@@ -239,10 +261,17 @@ export class MenuClienteComponent implements OnInit {
             this.precioFiltroMin.set(mn);
             this.precioFiltroMax.set(mx);
           } else {
-            if (maxFiltroPrevio >= maxDbPrevio) {
-              this.precioFiltroMax.set(mx);
-            }
-            this.ajustarRangoPrecio(this.precioFiltroMin(), this.precioFiltroMax());
+            let nextMin = minFiltroPrevio;
+            let nextMax = maxFiltroPrevio;
+            
+            if (minFiltroPrevio <= minDbPrevio || minFiltroPrevio === 0) nextMin = mn;
+            if (maxFiltroPrevio >= maxDbPrevio || maxFiltroPrevio === 0) nextMax = mx;
+
+            if (nextMin > nextMax) nextMin = nextMax;
+            if (nextMax > mx + 2) nextMax = mx + 2;
+
+            this.precioFiltroMin.set(nextMin);
+            this.precioFiltroMax.set(nextMax);
           }
         } else {
           this.precioDbMin.set(0);
@@ -300,31 +329,6 @@ export class MenuClienteComponent implements OnInit {
 
   seleccionarCategoria(val: string | 'ALL'): void {
     this.filtroCategoria = val;
-  }
-
-  onPrecioMinInput(v: string | number): void {
-    const n = typeof v === 'string' ? parseFloat(v.replace(',', '.')) : v;
-    if (Number.isNaN(n)) return;
-    this.ajustarRangoPrecio(n, this.precioFiltroMax());
-  }
-
-  onPrecioMaxInput(v: string | number): void {
-    const n = typeof v === 'string' ? parseFloat(v.replace(',', '.')) : v;
-    if (Number.isNaN(n)) return;
-    this.ajustarRangoPrecio(this.precioFiltroMin(), n);
-  }
-
-  private ajustarRangoPrecio(minRaw: number, maxRaw: number): void {
-    const lo = this.precioDbMin();
-    const hiDb = this.precioDbMax();
-    const hiSlider = this.precioSliderMax();
-    let a = Math.min(Math.max(minRaw, lo), hiDb);
-    let b = Math.min(Math.max(maxRaw, lo), hiSlider);
-    if (a > b) {
-      b = a;
-    }
-    this.precioFiltroMin.set(a);
-    this.precioFiltroMax.set(b);
   }
 
   abrirDetalle(p: MenuProducto): void {

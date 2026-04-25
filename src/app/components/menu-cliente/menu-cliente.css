@@ -1,14 +1,23 @@
-.rb-range-presupuesto {
+.dual-slider {
   -webkit-appearance: none;
   appearance: none;
-  height: 0.5rem;
-  border-radius: 0.5rem;
   outline: none;
 }
 
-.rb-range-presupuesto::-webkit-slider-thumb {
+.dual-slider::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  background: transparent;
+}
+
+.dual-slider::-moz-range-track {
+  background: transparent;
+  border: none;
+}
+
+.dual-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
+  pointer-events: auto;
   height: 22px;
   width: 22px;
   border-radius: 9999px;
@@ -19,12 +28,13 @@
   transition: transform 0.1s ease-in-out;
 }
 
-.rb-range-presupuesto:active::-webkit-slider-thumb {
+.dual-slider:active::-webkit-slider-thumb {
   transform: scale(1.1);
   background: #fff7ed;
 }
 
-.rb-range-presupuesto::-moz-range-thumb {
+.dual-slider::-moz-range-thumb {
+  pointer-events: auto;
   height: 22px;
   width: 22px;
   border-radius: 9999px;
@@ -34,16 +44,16 @@
   cursor: pointer;
 }
 
-.dark .rb-range-presupuesto::-webkit-slider-thumb {
+.dark .dual-slider::-webkit-slider-thumb {
   background: #1e293b;
   border-color: #ff7a00;
 }
 
-.dark .rb-range-presupuesto:active::-webkit-slider-thumb {
+.dark .dual-slider:active::-webkit-slider-thumb {
   background: #334155;
 }
 
-.dark .rb-range-presupuesto::-moz-range-thumb {
+.dark .dual-slider::-moz-range-thumb {
   background: #1e293b;
   border-color: #ff7a00;
 }
