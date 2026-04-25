@@ -1,11 +1,11 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { Observable, of, switchMap } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
+import { filter, map, tap, catchError } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { CartService, MAX_UNIDADES_POR_PRODUCTO, type VerificarPreciosResponseDto } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
@@ -166,6 +166,10 @@ export class MenuClienteComponent implements OnInit {
         }
       }),
       map(() => void 0),
+      catchError((err) => {
+        console.error('Error sincronizando carrito en menu (WS)', err);
+        return of(void 0);
+      })
     );
   }
 
@@ -210,6 +214,10 @@ export class MenuClienteComponent implements OnInit {
       this.cargando = true;
       this.errorCarga = false;
     }
+
+    const maxFiltroPrevio = this.precioFiltroMax();
+    const maxDbPrevio = this.precioDbMax();
+
     this.http.get<MenuProducto[]>(`${this.apiCatalogo}/productos`).subscribe({
       next: (data) => {
         const rows = (data || []).map((p) => ({
@@ -226,10 +234,14 @@ export class MenuClienteComponent implements OnInit {
           this.precioDbMin.set(mn);
           this.precioDbMax.set(mx);
           this.precioSliderMax.set(mx + 2);
+          
           if (!silent) {
             this.precioFiltroMin.set(mn);
             this.precioFiltroMax.set(mx);
           } else {
+            if (maxFiltroPrevio >= maxDbPrevio) {
+              this.precioFiltroMax.set(mx);
+            }
             this.ajustarRangoPrecio(this.precioFiltroMin(), this.precioFiltroMax());
           }
         } else {
@@ -486,5 +498,4 @@ export class MenuClienteComponent implements OnInit {
   cantidadEnCarrito(productId: string): number {
     return this.cart.items().find((l) => l.productId === productId)?.quantity ?? 0;
   }
-
 }
