@@ -87,14 +87,7 @@
               </div>
             </div>
 
-            <p class="text-xs text-neutral-muted dark:text-dark-text-muted">
-              Modelo:
-              <strong class="text-gray-800 dark:text-slate-200">{{ slot.modelFileName || 'Sin archivo' }}</strong>
-            </p>
-            <p class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
-              Encoders:
-              <strong class="text-gray-800 dark:text-slate-200">{{ slot.encodersFileName || 'Sin archivo' }}</strong>
-            </p>
+            
             <p *ngIf="slot.slotNumber === 2" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
               Rules:
               <strong class="text-gray-800 dark:text-slate-200">{{ slot.rulesFileName || 'Sin archivo' }}</strong>
