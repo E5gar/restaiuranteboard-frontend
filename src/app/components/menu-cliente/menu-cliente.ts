@@ -4,12 +4,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
-import { interval, Observable, switchMap } from 'rxjs';
+import { Observable, switchMap } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { CartService, MAX_UNIDADES_POR_PRODUCTO, type VerificarPreciosResponseDto } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 import { UserInteractionsService } from '../../services/user-interactions.service';
+import { WebsocketService } from '../../services/websocket.service';
 
 export interface CatOpcion {
   value: string;
@@ -39,6 +40,7 @@ export class MenuClienteComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly interactions = inject(UserInteractionsService);
+  private readonly ws = inject(WebsocketService);
   readonly cart = inject(CartService);
 
   private readonly apiCatalogo = 'https://restaiuranteboard-backend.onrender.com/api/catalogo';
@@ -117,12 +119,13 @@ export class MenuClienteComponent implements OnInit {
     const s = this.auth.getSession();
     if (s?.role === 'CLIENTE' && s.userId) {
       this.cart.cargarDesdeServidor(s.userId).subscribe();
-      this.iniciarVigilanciaCarrito(s.userId);
+      this.iniciarEscuchaCambiosTiempoReal(s.userId);
     }
   }
 
-  private iniciarVigilanciaCarrito(userId: string): void {
-    interval(48000)
+  private iniciarEscuchaCambiosTiempoReal(userId: string): void {
+    this.ws
+      .subscribeToTopic('/topic/catalogo')
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         filter(() => this.esClienteConCarrito()),

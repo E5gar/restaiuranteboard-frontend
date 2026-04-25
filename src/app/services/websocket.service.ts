@@ -1,48 +1,49 @@
 import { Injectable } from '@angular/core';
 import { Client, Message } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { Subject, Observable } from 'rxjs';
+import { Observable, ReplaySubject } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class WebsocketService {
-  private stompClient: Client;
-  private connectionSubject = new Subject<boolean>();
+  private readonly stompClient: Client;
+  private readonly connectionSubject = new ReplaySubject<boolean>(1);
 
   constructor() {
     this.stompClient = new Client({
       webSocketFactory: () => new SockJS('https://restaiuranteboard-backend.onrender.com/ws-restaiurante'),
       reconnectDelay: 5000,
-      debug: (str) => {
-      }
+      debug: () => {},
     });
 
-    this.stompClient.onConnect = (frame) => {
+    this.stompClient.onConnect = () => {
       this.connectionSubject.next(true);
     };
 
-    this.stompClient.onStompError = (frame) => {
-      console.error('Broker reported error: ' + frame.headers['message']);
-    };
+    this.stompClient.onStompError = () => {};
 
     this.stompClient.activate();
   }
 
   subscribeToTopic(topic: string): Observable<string> {
-    const subject = new Subject<string>();
-    
-    if (this.stompClient.connected) {
-      this.stompClient.subscribe(topic, (message: Message) => {
-        subject.next(message.body);
+    return new Observable<string>((observer) => {
+      let stompSub: { unsubscribe: () => void } | null = null;
+      const connectSub = this.connectionSubject.subscribe((connected) => {
+        if (!connected || stompSub) return;
+        stompSub = this.stompClient.subscribe(topic, (message: Message) => {
+          observer.next(message.body);
+        });
       });
-    } else {
-      this.connectionSubject.subscribe((connected) => {
-        if (connected) {
-          this.stompClient.subscribe(topic, (message: Message) => {
-            subject.next(message.body);
-          });
+      if (this.stompClient.connected && !stompSub) {
+        stompSub = this.stompClient.subscribe(topic, (message: Message) => {
+          observer.next(message.body);
+        });
+      }
+      return () => {
+        connectSub.unsubscribe();
+        if (stompSub) {
+          stompSub.unsubscribe();
         }
-      });
-    }
-    return subject.asObservable();
+      };
+    });
   }
 }

@@ -1,12 +1,14 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
-import { timer } from 'rxjs';
+import { interval } from 'rxjs';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { AuthService } from '../../services/auth.service';
+import { WebsocketService } from '../../services/websocket.service';
 
 const API_REPARTIDOR = 'https://restaiuranteboard-backend.onrender.com/api/pedidos/repartidor';
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -53,6 +55,8 @@ interface RepartidorOrdenDetalle {
 export class PanelRepartidorComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly ws = inject(WebsocketService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly tab = signal<TabKey>('ordenes');
   readonly ahora = signal(Date.now());
@@ -76,11 +80,17 @@ export class PanelRepartidorComponent implements OnInit {
   readonly modal = signal<{ tipo: 'ok' | 'error'; titulo: string; mensaje: string } | null>(null);
 
   ngOnInit(): void {
-    timer(0, 30000).subscribe(() => {
+    this.cargarTablero();
+    interval(1000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
       this.ahora.set(Date.now());
-      this.cargarTablero();
       this.actualizarCountdowns();
     });
+    this.ws
+      .subscribeToTopic('/topic/repartidor')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cargarTablero());
   }
 
   get ordenesDisponibles(): RepartidorOrdenCard[] {

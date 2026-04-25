@@ -1,10 +1,12 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
-import { timer } from 'rxjs';
+import { interval } from 'rxjs';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { AuthService } from '../../services/auth.service';
+import { WebsocketService } from '../../services/websocket.service';
 
 const API_COCINA = 'https://restaiuranteboard-backend.onrender.com/api/pedidos/cocina';
 
@@ -41,6 +43,8 @@ interface CocinaOrdenCard {
 export class PanelCocinaComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly ws = inject(WebsocketService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly ordenes = signal<CocinaOrdenCard[]>([]);
   readonly cargando = signal(true);
@@ -54,10 +58,16 @@ export class PanelCocinaComponent implements OnInit {
   private readonly pendientesTimeout = new Map<string, ReturnType<typeof setTimeout>>();
 
   ngOnInit(): void {
-    timer(0, 5000).subscribe(() => {
+    this.cargarTableroSilencioso();
+    interval(1000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
       this.ahora.set(Date.now());
-      this.cargarTableroSilencioso();
     });
+    this.ws
+      .subscribeToTopic('/topic/cocina')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cargarTableroSilencioso());
   }
 
   get enCola(): CocinaOrdenCard[] {

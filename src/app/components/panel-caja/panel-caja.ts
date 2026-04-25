@@ -4,10 +4,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
-import { switchMap, timer } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { AuthService } from '../../services/auth.service';
+import { WebsocketService } from '../../services/websocket.service';
 
 const API_CAJA = 'https://restaiuranteboard-backend.onrender.com/api/pedidos/caja';
 
@@ -49,6 +49,7 @@ export interface CajaOrdenDetalle {
 export class PanelCajaComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly ws = inject(WebsocketService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly ordenes = signal<CajaOrdenListaItem[]>([]);
@@ -71,31 +72,11 @@ export class PanelCajaComponent implements OnInit {
   modalError = signal<{ titulo: string; mensaje: string } | null>(null);
 
   ngOnInit(): void {
-    timer(0, 8000)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        filter(() => !!this.auth.getSession()?.userId),
-        switchMap(() => {
-          const uid = this.auth.getSession()?.userId as string;
-          return this.http.get<CajaOrdenListaItem[]>(`${API_CAJA}/pendientes`, { params: { processorUserId: uid } });
-        }),
-      )
-      .subscribe({
-        next: (data) => {
-          this.ordenes.set(Array.isArray(data) ? data : []);
-          this.cargandoLista.set(false);
-          this.errorLista.set(false);
-          const abierto = this.detalleAbierto();
-          const sel = this.ordenSeleccionadaId();
-          if (abierto && sel) {
-            this.recargarDetalleSilencioso(sel);
-          }
-        },
-        error: () => {
-          this.cargandoLista.set(false);
-          this.errorLista.set(true);
-        },
-      });
+    this.refrescarLista();
+    this.ws
+      .subscribeToTopic('/topic/caja')
+      .pipe(takeUntilDestroyed(this.destroyRef), filter(() => !!this.auth.getSession()?.userId))
+      .subscribe(() => this.refrescarLista());
   }
 
   private refrescarLista(): void {

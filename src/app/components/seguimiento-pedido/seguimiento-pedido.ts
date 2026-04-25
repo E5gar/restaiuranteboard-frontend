@@ -1,10 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { AuthService } from '../../services/auth.service';
-import { timer } from 'rxjs';
+import { WebsocketService } from '../../services/websocket.service';
 
 const API_SEG = 'https://restaiuranteboard-backend.onrender.com/api/pedidos/seguimiento';
 const API_CAL = 'https://restaiuranteboard-backend.onrender.com/api/pedidos/calificacion';
@@ -43,6 +44,8 @@ interface SeguimientoListasResp {
 export class SeguimientoPedidoComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly ws = inject(WebsocketService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly listas = signal<SeguimientoListasResp | null>(null);
   readonly pestana = signal<'pendientes' | 'finalizados'>('pendientes');
@@ -77,7 +80,14 @@ export class SeguimientoPedidoComponent implements OnInit {
   ] as const;
 
   ngOnInit(): void {
-    timer(0, 15000).subscribe(() => this.cargar());
+    this.cargar();
+    const uid = this.auth.getSession()?.userId;
+    if (uid) {
+      this.ws
+        .subscribeToTopic('/topic/pedidos/' + uid)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.cargar());
+    }
   }
 
   formatoMoneda(v: string): string {
