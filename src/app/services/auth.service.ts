@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
+import { jwtDecode } from 'jwt-decode';
 
 const AUTH_KEY = 'rb_auth';
 
 export type AuthSession = {
+  token?: string;
   email?: string;
   userId?: string;
   role?: string;
@@ -34,11 +36,27 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return this.getSession() !== null;
+    const s = this.getSession();
+    if (!s?.token) return false;
+    if (this.isTokenExpired(s.token)) {
+      this.clearSession();
+      return false;
+    }
+    return true;
   }
 
   clearSession(): void {
     sessionStorage.removeItem(AUTH_KEY);
+  }
+
+  getToken(): string | null {
+    const s = this.getSession();
+    if (!s?.token) return null;
+    if (this.isTokenExpired(s.token)) {
+      this.clearSession();
+      return null;
+    }
+    return s.token;
   }
 
   getPostLoginPath(): string {
@@ -67,5 +85,15 @@ export class AuthService {
       return { email: String(s.email) };
     }
     return undefined;
+  }
+
+  private isTokenExpired(token: string): boolean {
+    try {
+      const decoded = jwtDecode<{ exp?: number }>(token);
+      if (!decoded.exp) return true;
+      return Date.now() >= decoded.exp * 1000;
+    } catch {
+      return true;
+    }
   }
 }
