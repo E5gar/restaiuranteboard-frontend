@@ -11,8 +11,12 @@ interface IaSlot {
   slotNumber: number;
   titulo: string;
   status: SlotEstado;
+  slotEnabled?: boolean;
   modelFileName?: string;
   encodersFileName?: string;
+  rulesFileName?: string;
+  frequencyFileName?: string;
+  configFileName?: string;
   uploadedAt?: string;
 }
 
@@ -31,6 +35,9 @@ export class AdminModelosIaComponent implements OnInit {
   slotsIa: IaSlot[] = [];
   archivoModeloIa: File | null = null;
   archivoEncodersIa: File | null = null;
+  archivoRulesSlot2: File | null = null;
+  archivoFrequencySlot2: File | null = null;
+  archivoConfigSlot2: File | null = null;
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '' };
 
   constructor(private http: HttpClient) {}
@@ -136,6 +143,78 @@ export class AdminModelosIaComponent implements OnInit {
     });
   }
 
+  actualizarSwitchSlot(slotNumber: number, enabled: boolean) {
+    this.guardandoIa = true;
+    this.http.patch<any>(`${this.apiIa}/slot/${slotNumber}/toggle`, { enabled }).subscribe({
+      next: (resp) => {
+        this.guardandoIa = false;
+        this.iaActiva = !!resp?.iaActiva;
+        this.slotsIa = Array.isArray(resp?.slots) ? resp.slots : [];
+      },
+      error: () => {
+        this.guardandoIa = false;
+        this.cargarConfiguracionIa();
+        this.abrirModal('error', 'IA', 'No se pudo actualizar el interruptor del slot.');
+      },
+    });
+  }
+
+  onArchivoRulesSlot2Selected(event: Event) {
+    this.archivoRulesSlot2 = this.validarJsonFile(event, 'rules.json');
+  }
+
+  onArchivoFrequencySlot2Selected(event: Event) {
+    this.archivoFrequencySlot2 = this.validarJsonFile(event, 'frequency.json');
+  }
+
+  onArchivoConfigSlot2Selected(event: Event) {
+    this.archivoConfigSlot2 = this.validarJsonFile(event, 'config.json');
+  }
+
+  async guardarPaqueteSlot2() {
+    if (!this.archivoRulesSlot2 || !this.archivoFrequencySlot2 || !this.archivoConfigSlot2) {
+      this.abrirModal(
+        'error',
+        'Archivos requeridos',
+        'Debes cargar rules.json, frequency.json y config.json para el Slot 2.',
+      );
+      return;
+    }
+    this.guardandoIa = true;
+    try {
+      const rulesFileBase64 = await this.fileToBase64(this.archivoRulesSlot2);
+      const frequencyFileBase64 = await this.fileToBase64(this.archivoFrequencySlot2);
+      const configFileBase64 = await this.fileToBase64(this.archivoConfigSlot2);
+      this.http
+        .post<any>(`${this.apiIa}/slot-2/upload`, {
+          rulesFileName: this.archivoRulesSlot2.name,
+          rulesFileBase64,
+          frequencyFileName: this.archivoFrequencySlot2.name,
+          frequencyFileBase64,
+          configFileName: this.archivoConfigSlot2.name,
+          configFileBase64,
+        })
+        .subscribe({
+          next: (resp) => {
+            this.guardandoIa = false;
+            this.iaActiva = !!resp?.iaActiva;
+            this.slotsIa = Array.isArray(resp?.slots) ? resp.slots : [];
+            this.archivoRulesSlot2 = null;
+            this.archivoFrequencySlot2 = null;
+            this.archivoConfigSlot2 = null;
+            this.abrirModal('exito', 'Slot 2', 'Paquete de venta cruzada cargado correctamente.');
+          },
+          error: (err) => {
+            this.guardandoIa = false;
+            this.abrirModal('error', 'Slot 2', err?.error?.message || 'No se pudo cargar el paquete.');
+          },
+        });
+    } catch {
+      this.guardandoIa = false;
+      this.abrirModal('error', 'Slot 2', 'No se pudo procesar el archivo seleccionado.');
+    }
+  }
+
   textoEstadoSlot(status: SlotEstado): string {
     if (status === 'ACTIVO') return 'ACTIVO';
     if (status === 'CARGANDO') return 'CARGANDO';
@@ -167,5 +246,17 @@ export class AdminModelosIaComponent implements OnInit {
       reader.onerror = () => reject(new Error('No se pudo leer archivo.'));
       reader.readAsDataURL(file);
     });
+  }
+
+  private validarJsonFile(event: Event, esperado: string): File | null {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (!file) return null;
+    if (!file.name.toLowerCase().endsWith('.json')) {
+      this.abrirModal('error', 'Archivo inválido', `El archivo ${esperado} debe ser .json.`);
+      input.value = '';
+      return null;
+    }
+    return file;
   }
 }

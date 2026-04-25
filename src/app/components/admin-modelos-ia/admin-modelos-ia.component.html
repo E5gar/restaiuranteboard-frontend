@@ -64,12 +64,27 @@
               <h4 class="text-sm font-semibold text-gray-900 sm:text-base dark:text-dark-text-strong">
                 {{ slot.titulo }}
               </h4>
-              <span
-                [ngClass]="claseEstadoSlot(slot.status)"
-                class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide"
-              >
-                {{ textoEstadoSlot(slot.status) }}
-              </span>
+              <div class="flex items-center gap-2">
+                <span
+                  [ngClass]="claseEstadoSlot(slot.status)"
+                  class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wide"
+                >
+                  {{ textoEstadoSlot(slot.status) }}
+                </span>
+                <label
+                  *ngIf="slot.slotNumber === 2"
+                  class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[10px] font-semibold dark:border-dark-border dark:bg-slate-900 dark:text-dark-text-muted"
+                >
+                  <span>On</span>
+                  <input
+                    type="checkbox"
+                    [ngModel]="slot.slotEnabled"
+                    (ngModelChange)="actualizarSwitchSlot(2, !!$event)"
+                    [disabled]="guardandoIa || cargandoIa"
+                    class="h-3.5 w-3.5 accent-secondary"
+                  />
+                </label>
+              </div>
             </div>
 
             <p class="text-xs text-neutral-muted dark:text-dark-text-muted">
@@ -79,6 +94,18 @@
             <p class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
               Encoders:
               <strong class="text-gray-800 dark:text-slate-200">{{ slot.encodersFileName || 'Sin archivo' }}</strong>
+            </p>
+            <p *ngIf="slot.slotNumber === 2" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+              Rules:
+              <strong class="text-gray-800 dark:text-slate-200">{{ slot.rulesFileName || 'Sin archivo' }}</strong>
+            </p>
+            <p *ngIf="slot.slotNumber === 2" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+              Frequency:
+              <strong class="text-gray-800 dark:text-slate-200">{{ slot.frequencyFileName || 'Sin archivo' }}</strong>
+            </p>
+            <p *ngIf="slot.slotNumber === 2" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+              Config:
+              <strong class="text-gray-800 dark:text-slate-200">{{ slot.configFileName || 'Sin archivo' }}</strong>
             </p>
             <p class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
               Última versión:
@@ -121,8 +148,54 @@
                 {{ guardandoIa ? 'Cargando...' : 'Subir versión al Slot 1' }}
               </button>
             </div>
+            <div *ngIf="slot.slotNumber === 2" class="mt-4 space-y-3">
+              <div>
+                <label class="rb-label !normal-case !mb-1">rules.json</label>
+                <input
+                  type="file"
+                  accept=".json"
+                  (change)="onArchivoRulesSlot2Selected($event)"
+                  class="rb-input py-2 text-sm"
+                />
+                <p *ngIf="archivoRulesSlot2" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+                  {{ archivoRulesSlot2.name }}
+                </p>
+              </div>
+              <div>
+                <label class="rb-label !normal-case !mb-1">frequency.json</label>
+                <input
+                  type="file"
+                  accept=".json"
+                  (change)="onArchivoFrequencySlot2Selected($event)"
+                  class="rb-input py-2 text-sm"
+                />
+                <p *ngIf="archivoFrequencySlot2" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+                  {{ archivoFrequencySlot2.name }}
+                </p>
+              </div>
+              <div>
+                <label class="rb-label !normal-case !mb-1">config.json</label>
+                <input
+                  type="file"
+                  accept=".json"
+                  (change)="onArchivoConfigSlot2Selected($event)"
+                  class="rb-input py-2 text-sm"
+                />
+                <p *ngIf="archivoConfigSlot2" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+                  {{ archivoConfigSlot2.name }}
+                </p>
+              </div>
+              <button
+                type="button"
+                (click)="guardarPaqueteSlot2()"
+                [disabled]="guardandoIa"
+                class="rb-btn-secondary w-full border-0 bg-secondary text-white dark:bg-blue-600"
+              >
+                {{ guardandoIa ? 'Cargando...' : 'Subir paquete Slot 2' }}
+              </button>
+            </div>
             <p
-              *ngIf="slot.slotNumber !== 1"
+              *ngIf="slot.slotNumber === 3"
               class="mt-4 rounded-lg border border-dashed border-gray-200 p-3 text-xs text-neutral-muted dark:border-dark-border dark:text-dark-text-muted"
             >
               Slot reservado para siguientes versiones del sistema de IA.
