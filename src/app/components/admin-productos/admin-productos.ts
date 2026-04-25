@@ -154,7 +154,6 @@ export class AdminProductosComponent implements OnInit {
 
   ngOnInit() {
     this.cargarDatos();
-    this.cargarConfiguracionIa();
   }
 
   cambiarPestana(pestana: string) {
