@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
-import { Observable, switchMap } from 'rxjs';
+import { Observable, of, switchMap } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { CartService, MAX_UNIDADES_POR_PRODUCTO, type VerificarPreciosResponseDto } from '../../services/cart.service';
@@ -117,20 +117,22 @@ export class MenuClienteComponent implements OnInit {
   ngOnInit(): void {
     this.cargarProductos();
     const s = this.auth.getSession();
+    this.iniciarEscuchaCambiosTiempoReal(s?.userId ?? null);
     if (s?.role === 'CLIENTE' && s.userId) {
       this.cart.cargarDesdeServidor(s.userId).subscribe();
-      this.iniciarEscuchaCambiosTiempoReal(s.userId);
     }
   }
 
-  private iniciarEscuchaCambiosTiempoReal(userId: string): void {
+  private iniciarEscuchaCambiosTiempoReal(userId: string | null): void {
     this.ws
       .subscribeToTopic('/topic/catalogo')
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        filter(() => this.esClienteConCarrito()),
         switchMap(() => {
           this.cargarProductos(true);
+          if (!userId || !this.esClienteConCarrito()) {
+            return of(void 0);
+          }
           return this.ejecutarSincronizacionCarritoEnMenu(userId);
         }),
       )
