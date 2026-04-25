@@ -48,6 +48,36 @@
     </div>
 
     <div class="mb-6 space-y-4 sm:mb-8">
+      <section
+        *ngIf="!cargando && !errorCarga && tieneRecomendaciones"
+        class="rounded-2xl border border-amber-300/70 bg-amber-50/70 p-4 dark:border-amber-500/40 dark:bg-amber-950/25 sm:p-5"
+      >
+        <h3 class="mb-3 flex items-center gap-2 text-base font-semibold text-amber-800 dark:text-amber-200 sm:text-lg">
+          <span class="rb-logo-chip !p-1">
+            <img
+              src="/iconos/destellos-recomendaciones.png"
+              alt=""
+              width="20"
+              height="20"
+              class="h-5 w-5 object-contain"
+            />
+          </span>
+          {{ recomendacionesTitulo() }}
+        </h3>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <article
+            *ngFor="let rec of recomendaciones()"
+            class="flex items-center gap-3 rounded-xl border border-amber-300/60 bg-white/90 p-3 dark:border-amber-500/40 dark:bg-slate-900/70"
+          >
+            <img [src]="primeraImagen(rec)" [alt]="rec.name" class="h-14 w-14 rounded-lg object-cover" />
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold text-gray-900 dark:text-dark-text-strong">{{ rec.name }}</p>
+              <p class="text-sm font-semibold text-primary dark:text-orange-300">{{ formatoMoneda(rec.price) }}</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <div>
         <label class="rb-label !normal-case !mb-1" for="busq-menu">Buscar</label>
         <div class="relative">
@@ -161,8 +191,20 @@
 
       <div
         *ngFor="let prod of productosFiltrados"
-        class="rb-card flex flex-col overflow-hidden transition hover:shadow-md dark:hover:shadow-none"
+        [ngClass]="
+          esRecomendado(prod.id)
+            ? 'ring-2 ring-amber-300/80 dark:ring-amber-500/45'
+            : ''
+        "
+        class="rb-card relative flex flex-col overflow-hidden transition hover:shadow-md dark:hover:shadow-none"
       >
+        <span
+          *ngIf="esRecomendado(prod.id)"
+          class="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-amber-100/95 px-2 py-1 text-[10px] font-bold text-amber-800 shadow-sm dark:bg-amber-500/20 dark:text-amber-100"
+        >
+          <img src="/iconos/destellos-recomendaciones.png" alt="" width="12" height="12" class="h-3 w-3 object-contain" />
+          Recomendado
+        </span>
         <div class="relative aspect-square w-full overflow-hidden bg-gray-100 dark:bg-slate-900">
           <img [src]="primeraImagen(prod)" [alt]="prod.name" class="h-full w-full object-cover" />
         </div>
