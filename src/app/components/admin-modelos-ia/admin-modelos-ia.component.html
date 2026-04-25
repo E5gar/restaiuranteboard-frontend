@@ -72,14 +72,14 @@
                   {{ textoEstadoSlot(slot.status) }}
                 </span>
                 <label
-                  *ngIf="slot.slotNumber === 2"
+                  *ngIf="slot.slotNumber === 1 || slot.slotNumber === 2"
                   class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[10px] font-semibold dark:border-dark-border dark:bg-slate-900 dark:text-dark-text-muted"
                 >
                   <span>On</span>
                   <input
                     type="checkbox"
                     [ngModel]="slot.slotEnabled"
-                    (ngModelChange)="actualizarSwitchSlot(2, !!$event)"
+                    (ngModelChange)="actualizarSwitchSlot(slot.slotNumber, !!$event)"
                     [disabled]="guardandoIa || cargandoIa"
                     class="h-3.5 w-3.5 accent-secondary"
                   />
