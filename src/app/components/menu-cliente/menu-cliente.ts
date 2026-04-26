@@ -35,6 +35,17 @@ interface MenuCatalogoResponse {
   highlightedProducts: MenuProducto[];
 }
 
+interface MenuBaseResponse {
+  productos: MenuProducto[];
+}
+
+interface MenuRecomendacionesResponse {
+  recommendedProductIds: string[];
+  showRecommendations: boolean;
+  recommendationsTitle: string;
+  highlightedProducts: MenuProducto[];
+}
+
 @Component({
   selector: 'app-menu-cliente',
   standalone: true,
@@ -259,7 +270,7 @@ export class MenuClienteComponent implements OnInit {
 
     const uid = this.auth.getSession()?.userId;
     const query = uid ? `?userId=${encodeURIComponent(uid)}` : '';
-    this.http.get<MenuCatalogoResponse>(`${this.apiCatalogo}/productos/menu${query}`).subscribe({
+    this.http.get<MenuBaseResponse>(`${this.apiCatalogo}/productos/menu/base`).subscribe({
       next: (data) => {
         const sourceRows = Array.isArray(data?.productos) ? data.productos : [];
         const rows = sourceRows.map((p) => ({
@@ -268,19 +279,9 @@ export class MenuClienteComponent implements OnInit {
           description: p.description ?? '',
         }));
         this.productos.set(rows);
-        const highlighted = Array.isArray(data?.highlightedProducts)
-          ? data.highlightedProducts
-          : [];
-        const normalizedRecommended = highlighted
-          .map((p) => ({
-            ...p,
-            imagesBase64: Array.isArray(p.imagesBase64) ? p.imagesBase64 : [],
-            description: p.description ?? '',
-          }))
-          .filter((p) => rows.some((row) => row.id === p.id));
-        this.recomendaciones.set(normalizedRecommended);
-        this.recomendacionesTitulo.set(data?.recommendationsTitle || 'Sugerencias para ti');
-        this.mostrarRecomendaciones.set(!!data?.showRecommendations && normalizedRecommended.length > 0);
+        if (!silent) {
+          this.cargando = false;
+        }
         this.sincronizarModalProductoTrasCatalogo();
         const prices = rows.map((p) => Number(p.price)).filter((n) => !Number.isNaN(n));
         
@@ -316,9 +317,26 @@ export class MenuClienteComponent implements OnInit {
             this.precioFiltroMax.set(0);
           }
         }
-        if (!silent) {
-          this.cargando = false;
-        }
+
+        this.http.get<MenuRecomendacionesResponse>(`${this.apiCatalogo}/productos/menu/recomendaciones${query}`).subscribe({
+          next: (r) => {
+            const highlighted = Array.isArray(r?.highlightedProducts) ? r.highlightedProducts : [];
+            const normalizedRecommended = highlighted
+              .map((p) => ({
+                ...p,
+                imagesBase64: Array.isArray(p.imagesBase64) ? p.imagesBase64 : [],
+                description: p.description ?? '',
+              }))
+              .filter((p) => rows.some((row) => row.id === p.id));
+            this.recomendaciones.set(normalizedRecommended);
+            this.recomendacionesTitulo.set(r?.recommendationsTitle || 'Sugerencias para ti');
+            this.mostrarRecomendaciones.set(!!r?.showRecommendations && normalizedRecommended.length > 0);
+          },
+          error: () => {
+            this.recomendaciones.set([]);
+            this.mostrarRecomendaciones.set(false);
+          },
+        });
       },
       error: () => {
         if (!silent) {
