@@ -94,8 +94,7 @@ export class PanelRepartidorComponent implements OnInit {
   }
 
   get ordenesDisponibles(): RepartidorOrdenCard[] {
-    const uid = this.auth.getSession()?.userId || '';
-    return this.ordenes().filter((o) => o.status === 'PREPARADO' && (!o.deliveryPersonId || o.deliveryPersonId === uid));
+    return this.ordenes().filter((o) => o.status === 'PREPARADO' && !o.deliveryPersonId);
   }
   get asumidos(): RepartidorOrdenCard[] {
     const uid = this.auth.getSession()?.userId || '';
@@ -169,8 +168,10 @@ export class PanelRepartidorComponent implements OnInit {
     this.http.post(`${API_REPARTIDOR}/${orderId}/asumir`, { userId: uid }).subscribe({
       next: () => {
         this.procesandoId.set(null);
-        this.cargarTablero();
+        this.marcarAsumidaLocal(orderId, uid);
         this.startUndo(orderId);
+        this.tab.set('asumidos');
+        this.cargarTablero();
       },
       error: (err) => {
         this.procesandoId.set(null);
@@ -348,6 +349,20 @@ export class PanelRepartidorComponent implements OnInit {
     Object.keys(this.pendingUndo()).forEach((id) => {
       if (!ids.has(id)) this.clearUndo(id);
     });
+  }
+
+  private marcarAsumidaLocal(orderId: string, userId: string): void {
+    this.ordenes.update((rows) =>
+      rows.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              deliveryPersonId: userId,
+              status: 'PREPARADO',
+            }
+          : o,
+      ),
+    );
   }
 
   private actualizarCountdowns(): void {

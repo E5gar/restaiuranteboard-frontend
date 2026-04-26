@@ -54,7 +54,7 @@
           <p class="mb-3 text-sm text-neutral-strong dark:text-dark-text-muted">{{ o.direccionEntrega || 'Dirección no registrada' }}</p>
           <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <button type="button" (click)="abrirDetalle(o.id)" class="rb-btn-secondary w-full min-h-11 sm:w-auto">Ver detalles</button>
-            <button type="button" [disabled]="countdown(o.id)<=0" (click)="deshacer(o.id)" class="rb-btn-danger w-full min-h-11 sm:w-auto disabled:opacity-45">
+            <button *ngIf="countdown(o.id)>0" type="button" [disabled]="countdown(o.id)<=0" (click)="deshacer(o.id)" class="rb-btn-danger w-full min-h-11 sm:w-auto disabled:opacity-45">
               {{ countdown(o.id)>0 ? 'Deshacer ('+countdown(o.id)+'s)' : 'Deshacer vencido' }}
             </button>
             <button type="button" [disabled]="procesandoId()===o.id" (click)="enCaminoAction(o.id)" class="rb-btn-primary w-full min-h-11 sm:w-auto disabled:opacity-45">
