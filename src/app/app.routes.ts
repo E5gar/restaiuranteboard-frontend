@@ -18,6 +18,7 @@ import { SeguimientoPedidoComponent } from './components/seguimiento-pedido/segu
 import { InicioRedirectComponent } from './components/inicio-redirect/inicio-redirect';
 import { PresentacionComponent } from './components/presentacion/presentacion';
 import { RetenidoComponent } from './components/retenido/retenido';
+import { MiPerfilComponent } from './components/mi-perfil/mi-perfil';
 import { authGuard } from './guards/auth.guard';
 import { guestGuard } from './guards/guest.guard';
 import { adminGuard } from './guards/admin.guard';
@@ -34,7 +35,8 @@ export const routes: Routes = [
   { path: 'presentacion', component: PresentacionComponent, canActivate: [ipBlockGuard, configRequiredGuard] },
   { path: 'login', component: LoginComponent, canActivate: [ipBlockGuard, configRequiredGuard, guestGuard] },
   { path: 'registro', component: RegistroComponent, canActivate: [ipBlockGuard, configRequiredGuard, guestGuard] },
-  { path: 'recuperar', component: RecuperarPasswordComponent, canActivate: [ipBlockGuard, configRequiredGuard, guestGuard] },
+  { path: 'recuperar', component: RecuperarPasswordComponent, canActivate: [ipBlockGuard, configRequiredGuard] },
+  { path: 'mi-perfil', component: MiPerfilComponent, canActivate: [ipBlockGuard, configRequiredGuard, authGuard] },
   {
     path: 'setup',
     component: SetupInicialComponent,

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
   bloquearTeclasNoNumericas,
   errorCodigo6,
@@ -25,13 +25,28 @@ export class RecuperarPasswordComponent {
   nuevaPassword = '';
   confirmarPassword = '';
   mostrarPassword = false;
+  lockedEmail = false;
 
   modal = { visible: false, titulo: '', mensaje: '', esError: false, esExpirado: false };
 
   constructor(
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
   ) {}
+
+  ngOnInit() {
+    const email = this.route.snapshot.queryParamMap.get('email');
+    const locked = this.route.snapshot.queryParamMap.get('locked') === '1';
+    if (email) {
+      this.email = email;
+    }
+    this.lockedEmail = locked && !!email;
+    if (this.lockedEmail) {
+      this.paso = 2;
+      this.abrirModal('Código Enviado', 'Revisa tu bandeja de entrada o spam.', false);
+    }
+  }
 
   soloNumeros(event: Event, max: number) {
     return filtrarSoloDigitos(event, max);
