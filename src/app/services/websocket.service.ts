@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Client, Message } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { Observable, ReplaySubject } from 'rxjs';
+import { environment } from '@env/environment';
 
 @Injectable({ providedIn: 'root' })
 export class WebsocketService {
@@ -10,7 +11,7 @@ export class WebsocketService {
 
   constructor() {
     this.stompClient = new Client({
-      webSocketFactory: () => new SockJS('https://restaiuranteboard-backend.onrender.com/ws-restaiurante'),
+      webSocketFactory: () => new SockJS(environment.wsUrl),
       reconnectDelay: 5000,
       debug: () => {},
     });

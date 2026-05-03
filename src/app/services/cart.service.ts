@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { environment } from '@env/environment'; 
 
 export const MAX_UNIDADES_POR_PRODUCTO = 10;
 
@@ -34,7 +35,7 @@ export interface VerificarPreciosResponseDto {
   carritoActualizado: CarritoResponseDto;
 }
 
-const API_CARRITO = 'https://restaiuranteboard-backend.onrender.com/api/carrito';
+const API_CARRITO = environment.apiUrl + '/carrito';
 
 const SNAPSHOT_PRECIOS_KEY = 'rb_cart_precios_snapshot';
 

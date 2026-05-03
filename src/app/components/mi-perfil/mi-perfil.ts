@@ -6,6 +6,7 @@ import { Router, RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { AuthService } from '../../services/auth.service';
 import { bloquearTeclasNoNumericas, errorTelefono9, filtrarSoloDigitos } from '../../utils/form-validators';
+import { environment } from '@env/environment'; 
 
 type PerfilResponse = {
   userId: string;
@@ -28,7 +29,7 @@ export class MiPerfilComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly apiPerfil = 'https://restaiuranteboard-backend.onrender.com/api/perfil';
+  private readonly apiPerfil = environment.apiUrl + '/perfil';
 
   cargando = signal(true);
   guardando = signal(false);

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
+import { environment } from '@env/environment'; 
 import {
   bloquearTeclasNoNumericas,
   errorDni8,
@@ -90,7 +91,7 @@ export class CrearPersonalComponent {
     };
 
     this.http
-      .post('https://restaiuranteboard-backend.onrender.com/api/auth/crear-empleado', payload)
+      .post(environment.apiUrl + '/auth/crear-empleado', payload)
       .subscribe({
         next: (res: any) => {
           this.cargando = false;

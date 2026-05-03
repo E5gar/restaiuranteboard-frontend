@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
+import { environment } from '@env/environment'; 
 
 type SlotEstado = 'VACIO' | 'CARGANDO' | 'ACTIVO';
 
@@ -27,7 +28,7 @@ interface IaSlot {
   templateUrl: './admin-modelos-ia.component.html',
 })
 export class AdminModelosIaComponent implements OnInit {
-  private readonly apiIa = 'https://restaiuranteboard-backend.onrender.com/api/ia-modelos';
+  private readonly apiIa = environment.apiUrl + '/ia-modelos';
 
   cargandoIa = false;
   guardandoIa = false;

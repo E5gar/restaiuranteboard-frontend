@@ -6,8 +6,9 @@ import { RouterModule } from '@angular/router';
 import Chart from 'chart.js/auto';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { ThemeService } from '../../services/theme.service';
+import { environment } from '@env/environment'; 
 
-const API = 'https://restaiuranteboard-backend.onrender.com/api/admin/dashboard';
+const API = environment.apiUrl + '/admin/dashboard';
 
 @Component({
   selector: 'app-admin-dashboard',

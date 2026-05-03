@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '@env/environment'; 
 
 @Injectable({
   providedIn: 'root',
 })
 export class HealthService {
-  private apiUrl = 'https://restaiuranteboard-backend.onrender.com/api/estado_bases_datos';
+  private apiUrl = environment.apiUrl + '/estado_bases_datos';
 
   constructor(private http: HttpClient) {}
 

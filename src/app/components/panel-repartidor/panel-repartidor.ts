@@ -9,8 +9,9 @@ import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { AuthService } from '../../services/auth.service';
 import { WebsocketService } from '../../services/websocket.service';
+import { environment } from '@env/environment'; 
 
-const API_REPARTIDOR = 'https://restaiuranteboard-backend.onrender.com/api/pedidos/repartidor';
+const API_REPARTIDOR = environment.apiUrl + '/pedidos/repartidor';
 const MAX_BYTES = 5 * 1024 * 1024;
 const MIME_OK = ['image/jpeg', 'image/jpg', 'image/png'];
 

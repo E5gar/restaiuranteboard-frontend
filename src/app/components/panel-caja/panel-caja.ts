@@ -8,8 +8,9 @@ import { filter } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { AuthService } from '../../services/auth.service';
 import { WebsocketService } from '../../services/websocket.service';
+import { environment } from '@env/environment'; 
 
-const API_CAJA = 'https://restaiuranteboard-backend.onrender.com/api/pedidos/caja';
+const API_CAJA = environment.apiUrl + '/pedidos/caja';
 
 export interface CajaOrdenListaItem {
   id: string;

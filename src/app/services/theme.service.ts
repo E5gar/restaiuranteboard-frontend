@@ -1,12 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from './auth.service';
+import { environment } from '@env/environment'; 
 
 const AUTH_KEY = 'rb_auth';
 const THEME_LS = 'rb_theme_dark';
 const GUEST_THEME_SS = 'rb_guest_dark';
 
-const API_AUTH = 'https://restaiuranteboard-backend.onrender.com/api/auth';
+const API_AUTH = environment.apiUrl + '/auth';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {

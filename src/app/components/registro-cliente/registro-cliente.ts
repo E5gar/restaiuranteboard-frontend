@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
+import { environment } from '@env/environment'; 
+
 import {
   bloquearTeclasNoNumericas,
   errorCodigo6,
@@ -104,7 +106,7 @@ export class RegistroClienteComponent {
 
     this.cargando = true;
     this.http
-      .post('https://restaiuranteboard-backend.onrender.com/api/auth/enviar-codigo-registro', {
+      .post(environment.apiUrl + '/auth/enviar-codigo-registro', {
         fullName: this.usuario.fullName.trim(),
         dni: this.usuario.dni,
         email: this.usuario.email,
@@ -140,7 +142,7 @@ export class RegistroClienteComponent {
     const payload = { ...this.usuario, codigo: this.codigoVerificacion };
 
     this.http
-      .post('https://restaiuranteboard-backend.onrender.com/api/auth/registrar-cliente', payload)
+      .post(environment.apiUrl + '/auth/registrar-cliente', payload)
       .subscribe({
         next: () => {
           this.cargando = false;

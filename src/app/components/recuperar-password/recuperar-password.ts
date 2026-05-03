@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { environment } from '@env/environment'; 
+
 import {
   bloquearTeclasNoNumericas,
   errorCodigo6,
@@ -71,7 +73,7 @@ export class RecuperarPasswordComponent {
 
     this.cargando = true;
     this.http
-      .post('https://restaiuranteboard-backend.onrender.com/api/auth/enviar-codigo-recuperacion', {
+      .post(environment.apiUrl + '/auth/enviar-codigo-recuperacion', {
         email: this.email,
       })
       .subscribe({
@@ -104,7 +106,7 @@ export class RecuperarPasswordComponent {
     const payload = { email: this.email, codigo: this.codigo, newPassword: this.nuevaPassword };
 
     this.http
-      .post('https://restaiuranteboard-backend.onrender.com/api/auth/reset-password', payload)
+      .post(environment.apiUrl + '/auth/reset-password', payload)
       .subscribe({
         next: () => {
           this.cargando = false;

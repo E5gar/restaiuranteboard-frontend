@@ -7,8 +7,9 @@ import { interval } from 'rxjs';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { AuthService } from '../../services/auth.service';
 import { WebsocketService } from '../../services/websocket.service';
+import { environment } from '@env/environment'; 
 
-const API_COCINA = 'https://restaiuranteboard-backend.onrender.com/api/pedidos/cocina';
+const API_COCINA = environment.apiUrl + '/pedidos/cocina';
 
 type CocinaEstado = 'PAGO_VALIDADO' | 'EN_COCINA' | 'PREPARADO';
 

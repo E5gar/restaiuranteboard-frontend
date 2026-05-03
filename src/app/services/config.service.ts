@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '@env/environment'; 
 
 export type ConfiguracionNegocioDto = {
   configuracionCompleta: boolean;
@@ -33,7 +34,7 @@ export type EstadoConfiguracionDto = { configuracionCompleta: boolean };
 
 @Injectable({ providedIn: 'root' })
 export class ConfigService {
-  private apiUrl = 'https://restaiuranteboard-backend.onrender.com/api/configuracion';
+  private apiUrl = environment.apiUrl + '/configuracion';
 
   constructor(private http: HttpClient) {}
 

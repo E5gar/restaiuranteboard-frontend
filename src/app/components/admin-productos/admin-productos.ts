@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
+import { environment } from '@env/environment'; 
 
 export interface CatOpcion {
   value: string;
@@ -52,8 +53,8 @@ export class AdminProductosComponent implements OnInit {
     { value: 'Panadería', label: 'Panadería', img: '/iconos/categoria-panaderia.png' },
   ];
 
-  private readonly apiCatalogo = 'https://restaiuranteboard-backend.onrender.com/api/catalogo';
-  private readonly apiIa = 'https://restaiuranteboard-backend.onrender.com/api/ia-modelos';
+  private readonly apiCatalogo = environment.apiUrl + '/catalogo';
+  private readonly apiIa = environment.apiUrl + '/ia-modelos';
 
   pestanaActiva = 'ingredientes';
   cargando = false;

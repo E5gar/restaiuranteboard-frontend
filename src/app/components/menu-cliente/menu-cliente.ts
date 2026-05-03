@@ -7,10 +7,15 @@ import { Router, RouterModule } from '@angular/router';
 import { Observable, of, switchMap } from 'rxjs';
 import { filter, map, tap, catchError } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
-import { CartService, MAX_UNIDADES_POR_PRODUCTO, type VerificarPreciosResponseDto } from '../../services/cart.service';
+import {
+  CartService,
+  MAX_UNIDADES_POR_PRODUCTO,
+  type VerificarPreciosResponseDto,
+} from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 import { UserInteractionsService } from '../../services/user-interactions.service';
 import { WebsocketService } from '../../services/websocket.service';
+import { environment } from '@env/environment';
 
 export interface CatOpcion {
   value: string;
@@ -62,11 +67,15 @@ export class MenuClienteComponent implements OnInit {
   private readonly ws = inject(WebsocketService);
   readonly cart = inject(CartService);
 
-  private readonly apiCatalogo = 'https://restaiuranteboard-backend.onrender.com/api/catalogo';
+  private readonly apiCatalogo = environment.apiUrl + '/catalogo';
 
   readonly categoriasProducto: CatOpcion[] = [
     { value: 'Entrada', label: 'Entradas', img: '/iconos/categoria-entrada.png' },
-    { value: 'Plato Principal', label: 'Platos Principales', img: '/iconos/categoria-plato-principal.png' },
+    {
+      value: 'Plato Principal',
+      label: 'Platos Principales',
+      img: '/iconos/categoria-plato-principal.png',
+    },
     { value: 'Postres', label: 'Postres', img: '/iconos/categoria-postres.png' },
     { value: 'Bebidas', label: 'Bebidas', img: '/iconos/categoria-bebidas.png' },
   ];
@@ -78,7 +87,9 @@ export class MenuClienteComponent implements OnInit {
 
   productos = signal<MenuProducto[]>([]);
   recomendaciones = signal<MenuProducto[]>([]);
-  sugerenciasCrossSell = signal<{ productId: string; name: string; unitPrice: number; thumbSrc: string }[]>([]);
+  sugerenciasCrossSell = signal<
+    { productId: string; name: string; unitPrice: number; thumbSrc: string }[]
+  >([]);
   recomendacionesTitulo = signal('Sugerencias para ti');
   mostrarRecomendaciones = signal(false);
 
@@ -180,11 +191,11 @@ export class MenuClienteComponent implements OnInit {
       );
     }
     return this.cart.verificarPreciosCheckout().pipe(
-      switchMap((r) =>
-        this.cart.cargarDesdeServidor(userId).pipe(map((meta) => ({ r, meta }))),
-      ),
+      switchMap((r) => this.cart.cargarDesdeServidor(userId).pipe(map((meta) => ({ r, meta })))),
       tap(({ r, meta }) => {
-        const rem = [...new Set([...(r.carritoActualizado?.removedItems ?? []), ...meta.removedItems])];
+        const rem = [
+          ...new Set([...(r.carritoActualizado?.removedItems ?? []), ...meta.removedItems]),
+        ];
         if (rem.length > 0) {
           this.modalDisponibilidadMenu.set(rem);
           if (r.preciosCambiaron) {
@@ -198,11 +209,14 @@ export class MenuClienteComponent implements OnInit {
       catchError((err) => {
         console.error('Error sincronizando carrito en menu (WS)', err);
         return of(void 0);
-      })
+      }),
     );
   }
 
-  private abrirModalPreciosCambio(r: VerificarPreciosResponseDto, origen: 'pago' | 'background'): void {
+  private abrirModalPreciosCambio(
+    r: VerificarPreciosResponseDto,
+    origen: 'pago' | 'background',
+  ): void {
     this.origenModalPrecios = origen;
     this.modalPreciosCheckout.set({
       detalle: r.detalleCambios ?? [],
@@ -284,21 +298,21 @@ export class MenuClienteComponent implements OnInit {
         }
         this.sincronizarModalProductoTrasCatalogo();
         const prices = rows.map((p) => Number(p.price)).filter((n) => !Number.isNaN(n));
-        
+
         if (prices.length > 0) {
           const mn = Math.min(...prices);
           const mx = Math.max(...prices);
           this.precioDbMin.set(mn);
           this.precioDbMax.set(mx);
           this.precioSliderMax.set(mx + 2);
-          
+
           if (!silent) {
             this.precioFiltroMin.set(mn);
             this.precioFiltroMax.set(mx);
           } else {
             let nextMin = minFiltroPrevio;
             let nextMax = maxFiltroPrevio;
-            
+
             if (minFiltroPrevio <= minDbPrevio || minFiltroPrevio === 0) nextMin = mn;
             if (maxFiltroPrevio >= maxDbPrevio || maxFiltroPrevio === 0) nextMax = mx;
 
@@ -318,25 +332,33 @@ export class MenuClienteComponent implements OnInit {
           }
         }
 
-        this.http.get<MenuRecomendacionesResponse>(`${this.apiCatalogo}/productos/menu/recomendaciones${query}`).subscribe({
-          next: (r) => {
-            const highlighted = Array.isArray(r?.highlightedProducts) ? r.highlightedProducts : [];
-            const normalizedRecommended = highlighted
-              .map((p) => ({
-                ...p,
-                imagesBase64: Array.isArray(p.imagesBase64) ? p.imagesBase64 : [],
-                description: p.description ?? '',
-              }))
-              .filter((p) => rows.some((row) => row.id === p.id));
-            this.recomendaciones.set(normalizedRecommended);
-            this.recomendacionesTitulo.set(r?.recommendationsTitle || 'Sugerencias para ti');
-            this.mostrarRecomendaciones.set(!!r?.showRecommendations && normalizedRecommended.length > 0);
-          },
-          error: () => {
-            this.recomendaciones.set([]);
-            this.mostrarRecomendaciones.set(false);
-          },
-        });
+        this.http
+          .get<MenuRecomendacionesResponse>(
+            `${this.apiCatalogo}/productos/menu/recomendaciones${query}`,
+          )
+          .subscribe({
+            next: (r) => {
+              const highlighted = Array.isArray(r?.highlightedProducts)
+                ? r.highlightedProducts
+                : [];
+              const normalizedRecommended = highlighted
+                .map((p) => ({
+                  ...p,
+                  imagesBase64: Array.isArray(p.imagesBase64) ? p.imagesBase64 : [],
+                  description: p.description ?? '',
+                }))
+                .filter((p) => rows.some((row) => row.id === p.id));
+              this.recomendaciones.set(normalizedRecommended);
+              this.recomendacionesTitulo.set(r?.recommendationsTitle || 'Sugerencias para ti');
+              this.mostrarRecomendaciones.set(
+                !!r?.showRecommendations && normalizedRecommended.length > 0,
+              );
+            },
+            error: () => {
+              this.recomendaciones.set([]);
+              this.mostrarRecomendaciones.set(false);
+            },
+          });
       },
       error: () => {
         if (!silent) {
@@ -507,12 +529,12 @@ export class MenuClienteComponent implements OnInit {
     }
     this.cart
       .verificarPreciosCheckout()
-      .pipe(
-        switchMap((r) => this.cart.cargarDesdeServidor(uid).pipe(map((meta) => ({ r, meta })))),
-      )
+      .pipe(switchMap((r) => this.cart.cargarDesdeServidor(uid).pipe(map((meta) => ({ r, meta })))))
       .subscribe({
         next: ({ r, meta }) => {
-          const rem = [...new Set([...(r.carritoActualizado?.removedItems ?? []), ...meta.removedItems])];
+          const rem = [
+            ...new Set([...(r.carritoActualizado?.removedItems ?? []), ...meta.removedItems]),
+          ];
           if (rem.length > 0) {
             this.modalPreCheckoutDisponibilidad.set(rem);
             if (r.preciosCambiaron) {

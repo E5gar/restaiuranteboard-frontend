@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '@env/environment'; 
 
 export type IpStatusDto = {
   blocked: boolean;
@@ -10,7 +11,7 @@ export type IpStatusDto = {
 
 @Injectable({ providedIn: 'root' })
 export class IpStatusService {
-  private apiUrl = 'https://restaiuranteboard-backend.onrender.com/api/auth';
+  private apiUrl = environment.apiUrl + '/auth';
 
   constructor(private http: HttpClient) {}
 

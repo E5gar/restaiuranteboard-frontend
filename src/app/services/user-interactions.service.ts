@@ -3,8 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { EMPTY } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { environment } from '@env/environment'; 
 
-const API_INTERACCIONES = 'https://restaiuranteboard-backend.onrender.com/api/interacciones';
+const API_INTERACCIONES = environment.apiUrl + '/interacciones';
 
 @Injectable({ providedIn: 'root' })
 export class UserInteractionsService {

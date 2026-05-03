@@ -7,8 +7,9 @@ import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { AuthService } from '../../services/auth.service';
 import { CartService } from '../../services/cart.service';
 import { ConfigService, type ConfiguracionNegocioDto } from '../../services/config.service';
+import { environment } from '@env/environment'; 
 
-const API_PEDIDOS = 'https://restaiuranteboard-backend.onrender.com/api/pedidos';
+const API_PEDIDOS = environment.apiUrl + '/pedidos';
 
 const MAX_BYTES = 3 * 1024 * 1024;
 const MIME_OK = ['image/jpeg', 'image/jpg', 'image/png'];

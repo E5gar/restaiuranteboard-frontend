@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { ConfigService } from '../../services/config.service';
+import { environment } from '@env/environment'; 
 import {
   bloquearTeclasNoNumericas,
   errorCodigo6,
@@ -66,7 +67,7 @@ export class RegistroComponent implements OnInit {
         }
       });
 
-    this.http.get('https://restaiuranteboard-backend.onrender.com/api/auth/check-admin').subscribe({
+    this.http.get(environment.apiUrl + '/auth/check-admin').subscribe({
       next: (res: any) => (this.isAdminMode = !res.hasAdmin),
       error: () =>
         this.abrirModal('error', 'Error de Conexión', 'No se pudo contactar al servidor.'),
@@ -155,7 +156,7 @@ export class RegistroComponent implements OnInit {
 
     this.cargando = true;
     this.http
-      .post('https://restaiuranteboard-backend.onrender.com/api/auth/enviar-codigo-registro', {
+      .post(environment.apiUrl + '/auth/enviar-codigo-registro', {
         fullName: `${this.usuario.nombres} ${this.usuario.apellidos}`.trim(),
         dni: this.usuario.dni,
         email: this.usuario.email,
@@ -203,7 +204,7 @@ export class RegistroComponent implements OnInit {
     };
 
     this.http
-      .post('https://restaiuranteboard-backend.onrender.com/api/auth/registrar', payload)
+      .post(environment.apiUrl + '/auth/registrar', payload)
       .subscribe({
         next: () => {
           this.cargando = false;

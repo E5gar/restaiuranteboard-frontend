@@ -9,6 +9,7 @@ import { AuthService } from '../../services/auth.service';
 import { CartService, type VerificarPreciosResponseDto } from '../../services/cart.service';
 import { ConfigService } from '../../services/config.service';
 import { ThemeService } from '../../services/theme.service';
+import { environment } from '@env/environment'; 
 
 @Component({
   selector: 'app-login',
@@ -81,7 +82,7 @@ export class LoginComponent implements OnInit {
 
     this.cargando = true;
     this.http
-      .post('https://restaiuranteboard-backend.onrender.com/api/auth/login', {
+      .post(environment.apiUrl + '/auth/login', {
         email: this.email,
         password: this.password,
       })

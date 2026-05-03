@@ -6,9 +6,10 @@ import { RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { AuthService } from '../../services/auth.service';
 import { WebsocketService } from '../../services/websocket.service';
+import { environment } from '@env/environment'; 
 
-const API_SEG = 'https://restaiuranteboard-backend.onrender.com/api/pedidos/seguimiento';
-const API_CAL = 'https://restaiuranteboard-backend.onrender.com/api/pedidos/calificacion';
+const API_SEG = environment.apiUrl + '/pedidos/seguimiento';
+const API_CAL = environment.apiUrl + '/pedidos/calificacion';
 
 type Estado = 'VALIDANDO_PAGO' | 'PAGO_VALIDADO' | 'EN_COCINA' | 'PREPARADO' | 'EN_CAMINO' | 'ENTREGADO' | 'CANCELADO';
 

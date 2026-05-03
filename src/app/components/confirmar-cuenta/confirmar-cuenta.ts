@@ -6,6 +6,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ConfigService } from '../../services/config.service';
 import { ThemeService } from '../../services/theme.service';
+import { environment } from '@env/environment'; 
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import {
   bloquearTeclasNoNumericas,
@@ -72,7 +73,7 @@ export class ConfirmarCuentaComponent implements OnInit {
   enviarCodigo() {
     this.cargando = true;
     this.http
-      .post('https://restaiuranteboard-backend.onrender.com/api/auth/enviar-codigo-empleado', {
+      .post(environment.apiUrl + '/auth/enviar-codigo-empleado', {
         email: this.email,
       })
       .subscribe({
@@ -113,7 +114,7 @@ export class ConfirmarCuentaComponent implements OnInit {
     };
 
     this.http
-      .post('https://restaiuranteboard-backend.onrender.com/api/auth/confirmar-empleado', payload)
+      .post(environment.apiUrl + '/auth/confirmar-empleado', payload)
       .subscribe({
         next: () => {
           this.cargando = false;
