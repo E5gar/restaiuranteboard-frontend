@@ -21,7 +21,7 @@ if (!fs.existsSync('./src/environments')) {
 
 paths.forEach(p => {
   fs.writeFileSync(p, envConfigFile);
-  console.log(`✅ Archivo generado en: ${p}`);
+  console.log(`Archivo generado en: ${p}`);
 });
 
 console.log(`MODO: ${isProduction ? 'PRODUCCIÓN' : 'LOCAL'}`);
