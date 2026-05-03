@@ -11,6 +11,7 @@ import { PanelCajaComponent } from './components/panel-caja/panel-caja';
 import { PanelCocinaComponent } from './components/panel-cocina/panel-cocina';
 import { PanelRepartidorComponent } from './components/panel-repartidor/panel-repartidor';
 import { AdminProductosComponent } from './components/admin-productos/admin-productos';
+import { AdminDashboardComponent } from './components/admin-dashboard/admin-dashboard';
 import { AdminModelosIaComponent } from './components/admin-modelos-ia/admin-modelos-ia';
 import { CheckoutComponent } from './components/checkout/checkout';
 import { PedidoEnviadoComponent } from './components/pedido-enviado/pedido-enviado';
@@ -68,6 +69,11 @@ export const routes: Routes = [
     path: 'seguimiento-pedido',
     component: SeguimientoPedidoComponent,
     canActivate: [ipBlockGuard, configRequiredGuard, clienteGuard],
+  },
+  {
+    path: 'dashboard',
+    component: AdminDashboardComponent,
+    canActivate: [ipBlockGuard, configRequiredGuard, authGuard, adminGuard],
   },
   {
     path: 'admin-productos',
