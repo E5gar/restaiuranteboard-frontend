@@ -1,6 +1,0 @@
-{
-  "/api": {
-    "target": "https://restaiuranteboard-backend.onrender.com",
-    "secure": false
-  }
-}
