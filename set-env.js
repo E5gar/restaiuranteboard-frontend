@@ -1,33 +1,32 @@
 const fs = require('fs');
-const path = require('path');
 
 const backendUrl = process.env.BACKEND_URL;
 
 if (!backendUrl) {
-  console.warn("⚠️ ADVERTENCIA: BACKEND_URL no está definida. Usando valor por defecto vacío.");
+  console.error("❌ ERROR: La variable BACKEND_URL no está definida en Vercel.");
+  process.exit(1); 
 }
-
-const url = backendUrl || '';
-const wsUrl = url
-  .replace('https://', 'wss://')
-  .replace('http://', 'ws://');
-
-const targetPath = path.join(__dirname, 'src', 'environments', 'environment.ts');
 
 const envConfigFile = `export const environment = {
   production: true,
-  apiUrl: '${url}/api',
-  wsUrl: '${wsUrl}/ws-restaiurante'
+  apiUrl: '${backendUrl}/api',
+  wsUrl: '${backendUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/ws-restaiurante'
 };
 `;
 
-console.log("🛠️ Generando environment.ts...");
-console.log("🔗 API URL:", `${url}/api`);
-console.log("🔗 WS URL:", `${wsUrl}/ws-restaiurante`);
+const targetPath = './src/environments/environment.ts';
 
-if (!fs.existsSync(path.join(__dirname, 'src', 'environments'))) {
-  fs.mkdirSync(path.join(__dirname, 'src', 'environments'), { recursive: true });
+console.log("🛠️ GENERANDO ENTORNO DINÁMICO...");
+console.log(`🔗 Backend: ${backendUrl}`);
+
+if (!fs.existsSync('./src/environments')) {
+  fs.mkdirSync('./src/environments', { recursive: true });
 }
 
-fs.writeFileSync(targetPath, envConfigFile);
-console.log("✅ environment.ts generado.");
+try {
+  fs.writeFileSync(targetPath, envConfigFile);
+  console.log(`✅ Archivo generado exitosamente en ${targetPath}`);
+} catch (err) {
+  console.error("❌ No se pudo escribir el archivo:", err);
+  process.exit(1);
+}
