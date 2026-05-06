@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -6,7 +7,8 @@ import { RouterModule } from '@angular/router';
 import Chart from 'chart.js/auto';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { ThemeService } from '../../services/theme.service';
-import { environment } from '@env/environment'; 
+import { environment } from '@env/environment';
+import { ChartTester } from '../../utils/chart-tester';
 
 const API = environment.apiUrl + '/admin/dashboard';
 
@@ -19,6 +21,7 @@ const API = environment.apiUrl + '/admin/dashboard';
 export class AdminDashboardComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly theme = inject(ThemeService);
+  private themeSub?: Subscription;
 
   readonly tabs: { id: string; label: string; icon: string }[] = [
     { id: 'ventas', label: 'Ventas y Pedidos', icon: '/iconos/billetes-soles.png' },
@@ -75,14 +78,18 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private charts = new Map<string, Chart>();
 
   diasSemanaLabel = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-
   readonly horasDia = Array.from({ length: 24 }, (_, i) => i);
 
   ngOnInit(): void {
+    this.themeSub = this.theme.themeChanged.subscribe(() => {
+      if (this.charts.size === 0) return;
+      queueMicrotask(() => this.refreshChartsForTheme());
+    });
     void this.cargarActual();
   }
 
   ngOnDestroy(): void {
+    this.themeSub?.unsubscribe();
     this.destroyAllCharts();
   }
 
@@ -127,6 +134,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   async cargarActual(): Promise<void> {
     this.cargando = true;
     this.errorMsg = '';
+    this.destroyAllCharts();
+
     try {
       if (this.pestana === 'ventas') await this.cargarVentas();
       else if (this.pestana === 'inventario') await this.cargarInventario();
@@ -135,11 +144,25 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       else if (this.pestana === 'operacion') await this.cargarOperacion();
       else if (this.pestana === 'seguridad') await this.cargarSeguridad();
       else if (this.pestana === 'interacciones') await this.cargarInteracciones();
+
+      this.cargando = false;
+      setTimeout(() => {
+        this.renderizarGraficosSegunPestana();
+      }, 150);
     } catch {
-      this.errorMsg = 'No se pudo cargar el panel. Revisa la conexión o vuelve a iniciar sesión.';
-    } finally {
+      this.errorMsg = 'No se pudo cargar el panel.';
       this.cargando = false;
     }
+  }
+
+  private renderizarGraficosSegunPestana() {
+    if (this.pestana === 'ventas') this.renderVentasCharts();
+    else if (this.pestana === 'inventario') this.renderInventarioCharts();
+    else if (this.pestana === 'productos') this.renderProductosCharts();
+    else if (this.pestana === 'clientes') this.renderClientesCharts();
+    else if (this.pestana === 'operacion') this.renderOperacionCharts();
+    else if (this.pestana === 'seguridad') this.renderSeguridadCharts();
+    else if (this.pestana === 'interacciones') this.renderInteraccionesCharts();
   }
 
   private cargarVentas(): Promise<void> {
@@ -152,7 +175,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.http.get(`${API}/ventas-pedidos`, { params: p }).subscribe({
         next: (d) => {
           this.ventas = d;
-          setTimeout(() => this.renderVentasCharts(), 0);
+          ChartTester.logPayload('Ventas y Pedidos', d);
+          setTimeout(() => this.renderVentasCharts(), 1000);
           resolve();
         },
         error: () => reject(),
@@ -170,6 +194,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.http.get(`${API}/inventario-costos`, { params: p }).subscribe({
         next: (d) => {
           this.inventario = d;
+          ChartTester.logPayload('Inventario', d);
           setTimeout(() => this.renderInventarioCharts(), 0);
           resolve();
         },
@@ -188,6 +213,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.http.get(`${API}/productos`, { params: p }).subscribe({
         next: (d) => {
           this.productos = d;
+          ChartTester.logPayload('Productos', d);
           setTimeout(() => this.renderProductosCharts(), 0);
           resolve();
         },
@@ -205,6 +231,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.http.get(`${API}/clientes`, { params: p }).subscribe({
         next: (d) => {
           this.clientes = d;
+          ChartTester.logPayload('Clientes', d);
           setTimeout(() => this.renderClientesCharts(), 0);
           resolve();
         },
@@ -219,6 +246,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.http.get(`${API}/operacion`, { params: p }).subscribe({
         next: (d) => {
           this.operacion = d;
+          ChartTester.logPayload('Operación', d);
           setTimeout(() => this.renderOperacionCharts(), 0);
           resolve();
         },
@@ -235,6 +263,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.http.get(`${API}/seguridad`, { params: p }).subscribe({
         next: (d) => {
           this.seguridad = d;
+          ChartTester.logPayload('Seguridad', d);
           setTimeout(() => this.renderSeguridadCharts(), 0);
           resolve();
         },
@@ -253,6 +282,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.http.get(`${API}/interacciones`, { params: p }).subscribe({
         next: (d) => {
           this.interacciones = d;
+          ChartTester.logPayload('Interacciones', d);
           setTimeout(() => this.renderInteraccionesCharts(), 0);
           resolve();
         },
@@ -266,8 +296,52 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     return {
       text: dark ? '#e2e8f0' : '#1f2937',
       grid: dark ? '#334155' : '#e5e7eb',
-      subtle: dark ? '#64748b' : '#9ca3af',
+      subtle: dark ? '#94a3b8' : '#6b7280',
     };
+  }
+
+  private patchChartOptions(opts: any): void {
+    if (!opts) return;
+    const t = this.tc();
+    const dark = this.theme.isDark();
+    opts.plugins = opts.plugins || {};
+    opts.plugins.tooltip = {
+      ...(opts.plugins.tooltip || {}),
+      backgroundColor: dark ? 'rgba(15,23,42,0.96)' : 'rgba(255,255,255,0.97)',
+      titleColor: t.text,
+      bodyColor: t.text,
+      borderColor: t.grid,
+      borderWidth: 1,
+      padding: 10,
+    };
+    const labels = opts.plugins.legend?.labels;
+    if (labels && typeof labels === 'object') {
+      (labels as { color?: string }).color = t.text;
+    }
+    const scales = opts.scales as Record<string, any> | undefined;
+    if (scales && typeof scales === 'object') {
+      for (const key of Object.keys(scales)) {
+        const s = scales[key];
+        if (!s || typeof s !== 'object') continue;
+        if (s.ticks) s.ticks.color = t.subtle;
+        if (s.grid) s.grid.color = t.grid;
+        if (s.title && typeof s.title === 'object') s.title.color = t.subtle;
+      }
+    }
+  }
+
+  private chartRegister(key: string, canvas: HTMLCanvasElement | null, config: any): void {
+    if (!canvas) return;
+    this.patchChartOptions(config.options);
+    ChartTester.logChart(key, config);
+    this.charts.set(key, new Chart(canvas, config));
+  }
+
+  private refreshChartsForTheme(): void {
+    for (const chart of this.charts.values()) {
+      this.patchChartOptions(chart.options);
+      chart.update();
+    }
   }
 
   private destroyPrefix(prefix: string): void {
@@ -288,15 +362,19 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     if (!this.ventas) return;
     this.destroyPrefix('vx-');
     const t = this.tc();
+
     const ventasPorDia = this.ventas['ventasPorDia'] as Record<string, number> | undefined;
     if (ventasPorDia) {
       const labels = Object.keys(ventasPorDia);
       const data = labels.map((k) => Number(ventasPorDia[k]));
       const el = document.getElementById('vx-line-dia') as HTMLCanvasElement | null;
       if (el) {
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'line',
-          data: { labels, datasets: [{ label: 'Ventas (S/)', data, borderColor: '#2563eb', tension: 0.2 }] },
+          data: {
+            labels,
+            datasets: [{ label: 'Ventas (S/)', data, borderColor: '#2563eb', tension: 0.2 }],
+          },
           options: {
             responsive: true,
             plugins: { legend: { labels: { color: t.text } } },
@@ -305,8 +383,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('vx-line-dia', ch);
+        };
+        this.chartRegister('vx-line-dia', el, config);
       }
     }
 
@@ -316,25 +394,35 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       if (el) {
         const labels = Object.keys(pedidosPorEstado);
         const data = labels.map((k) => pedidosPorEstado[k]);
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'doughnut',
           data: {
             labels,
-            datasets: [{ data, backgroundColor: ['#1e3a8a', '#f97316', '#10b981', '#a855f7', '#64748b', '#eab308'] }],
+            datasets: [
+              {
+                data,
+                backgroundColor: ['#1e3a8a', '#f97316', '#10b981', '#a855f7', '#64748b', '#eab308'],
+              },
+            ],
           },
-          options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: t.text } } } },
-        });
-        this.charts.set('vx-donut-estado', ch);
+          options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom', labels: { color: t.text } } },
+          },
+        };
+        this.chartRegister('vx-donut-estado', el, config);
       }
     }
 
-    const ingresoPorHora = this.ventas['ingresoPorHora'] as { hora: number; monto: number }[] | undefined;
+    const ingresoPorHora = this.ventas['ingresoPorHora'] as
+      | { hora: number; monto: number }[]
+      | undefined;
     if (ingresoPorHora?.length) {
       const el = document.getElementById('vx-bar-hora') as HTMLCanvasElement | null;
       if (el) {
         const labels = ingresoPorHora.map((x) => String(x.hora));
         const data = ingresoPorHora.map((x) => x.monto);
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'bar',
           data: { labels, datasets: [{ label: 'S/', data, backgroundColor: '#ea580c' }] },
           options: {
@@ -345,19 +433,21 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('vx-bar-hora', ch);
+        };
+        this.chartRegister('vx-bar-hora', el, config);
       }
     }
 
-    const pedidosPorDiaSemana = this.ventas['pedidosPorDiaSemana'] as Record<string, number> | undefined;
+    const pedidosPorDiaSemana = this.ventas['pedidosPorDiaSemana'] as
+      | Record<string, number>
+      | undefined;
     if (pedidosPorDiaSemana) {
       const orderKeys = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
       const labels = this.diasSemanaLabel;
       const data = orderKeys.map((k) => pedidosPorDiaSemana[k] ?? 0);
       const el = document.getElementById('vx-bar-dow') as HTMLCanvasElement | null;
       if (el) {
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'bar',
           data: { labels, datasets: [{ label: 'Pedidos', data, backgroundColor: '#1d4ed8' }] },
           options: {
@@ -368,20 +458,25 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('vx-bar-dow', ch);
+        };
+        this.chartRegister('vx-bar-dow', el, config);
       }
     }
 
-    const ticketSem = this.ventas['evolucionTicketSemanal'] as { semana: string; ticketPromedio: number }[] | undefined;
+    const ticketSem = this.ventas['evolucionTicketSemanal'] as
+      | { semana: string; ticketPromedio: number }[]
+      | undefined;
     if (ticketSem?.length) {
       const el = document.getElementById('vx-line-ticket') as HTMLCanvasElement | null;
       if (el) {
         const labels = ticketSem.map((x) => x.semana);
         const data = ticketSem.map((x) => x.ticketPromedio);
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'line',
-          data: { labels, datasets: [{ label: 'Ticket promedio', data, borderColor: '#059669', tension: 0.2 }] },
+          data: {
+            labels,
+            datasets: [{ label: 'Ticket promedio', data, borderColor: '#059669', tension: 0.2 }],
+          },
           options: {
             responsive: true,
             plugins: { legend: { labels: { color: t.text } } },
@@ -390,16 +485,18 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('vx-line-ticket', ch);
+        };
+        this.chartRegister('vx-line-ticket', el, config);
       }
     }
 
-    const clima = this.ventas['climaTemperaturaVsMonto'] as { tempC: number; monto: number }[] | undefined;
+    const clima = this.ventas['climaTemperaturaVsMonto'] as
+      | { tempC: number; monto: number }[]
+      | undefined;
     if (clima?.length) {
       const el = document.getElementById('vx-scatter-clima') as HTMLCanvasElement | null;
       if (el) {
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'scatter',
           data: {
             datasets: [
@@ -414,12 +511,20 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
             responsive: true,
             plugins: { legend: { labels: { color: t.text } } },
             scales: {
-              x: { title: { display: true, text: '°C', color: t.subtle }, ticks: { color: t.subtle }, grid: { color: t.grid } },
-              y: { title: { display: true, text: 'S/', color: t.subtle }, ticks: { color: t.subtle }, grid: { color: t.grid } },
+              x: {
+                title: { display: true, text: '°C', color: t.subtle },
+                ticks: { color: t.subtle },
+                grid: { color: t.grid },
+              },
+              y: {
+                title: { display: true, text: 'S/', color: t.subtle },
+                ticks: { color: t.subtle },
+                grid: { color: t.grid },
+              },
             },
           },
-        });
-        this.charts.set('vx-scatter-clima', ch);
+        };
+        this.chartRegister('vx-scatter-clima', el, config);
       }
     }
   }
@@ -431,107 +536,121 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   heatmapCell(h: number, d: number): number {
-    const list = this.ventas?.['heatmapHoraDia'] as { hora: number; diaIndex: number; valor: number }[] | undefined;
+    const list = this.ventas?.['heatmapHoraDia'] as
+      | { hora: number; diaIndex: number; valor: number }[]
+      | undefined;
     if (!list) return 0;
     const hit = list.find((x) => x.hora === h && x.diaIndex === d);
     return hit?.valor ?? 0;
   }
-
   private renderInventarioCharts(): void {
-    if (!this.inventario) return;
+    if (!this.inventario) {
+      return;
+    }
     this.destroyPrefix('ix-');
     const t = this.tc();
-    const stock = this.inventario['stockPorInsumo'] as { nombre: string; stock: number; umbral: number }[] | undefined;
-    if (stock?.length) {
+
+    const stock = this.inventario['stockPorInsumo'] as any[];
+    const elStock = document.getElementById('ix-bar-stock') as HTMLCanvasElement | null;
+    if (elStock && stock?.length) {
       const top = [...stock].sort((a, b) => a.stock - b.stock).slice(0, 12);
-      const el = document.getElementById('ix-bar-stock') as HTMLCanvasElement | null;
-      if (el) {
-        const ch = new Chart(el, {
-          type: 'bar',
-          data: {
-            labels: top.map((x) => x.nombre),
-            datasets: [
-              { label: 'Stock', data: top.map((x) => x.stock), backgroundColor: '#0ea5e9' },
-              { label: 'Umbral', data: top.map((x) => x.umbral), backgroundColor: '#f97316' },
-            ],
+      const config: any = {
+        type: 'bar',
+        data: {
+          labels: top.map((x) => x.nombre),
+          datasets: [
+            { label: 'Stock', data: top.map((x) => x.stock), backgroundColor: '#0ea5e9' },
+            { label: 'Umbral', data: top.map((x) => x.umbral), backgroundColor: '#f97316' },
+          ],
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: t.text } } },
+          scales: {
+            x: { ticks: { color: t.subtle }, grid: { color: t.grid } },
+            y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
           },
-          options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: { legend: { labels: { color: t.text } } },
-            scales: {
-              x: { ticks: { color: t.subtle }, grid: { color: t.grid } },
-              y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
-            },
-          },
-        });
-        this.charts.set('ix-bar-stock', ch);
-      }
+        },
+      };
+      this.chartRegister('ix-bar-stock', elStock, config);
     }
 
-    const consumoCat = this.inventario['consumoPorCategoria'] as Record<string, number> | undefined;
-    if (consumoCat && Object.keys(consumoCat).length) {
-      const el = document.getElementById('ix-donut-cat') as HTMLCanvasElement | null;
-      if (el) {
-        const labels = Object.keys(consumoCat);
-        const data = labels.map((k) => Number(consumoCat[k]));
-        const ch = new Chart(el, {
-          type: 'doughnut',
-          data: {
-            labels,
-            datasets: [{ data, backgroundColor: ['#16a34a', '#dc2626', '#ca8a04', '#7c3aed', '#64748b'] }],
-          },
-          options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: t.text } } } },
-        });
-        this.charts.set('ix-donut-cat', ch);
-      }
+    const consumoCat = this.inventario['consumoPorCategoria'];
+    const elConsumo = document.getElementById('ix-donut-cat') as HTMLCanvasElement | null;
+    if (elConsumo && consumoCat && Object.keys(consumoCat).length) {
+      const labels = Object.keys(consumoCat);
+      const data = labels.map((k) => Number(consumoCat[k]));
+      const config: any = {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [
+            { data, backgroundColor: ['#16a34a', '#dc2626', '#ca8a04', '#7c3aed', '#64748b'] },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: t.text } } },
+        },
+      };
+      this.chartRegister('ix-donut-cat', elConsumo, config);
     }
 
-    const abastSem = this.inventario['movimientosAbastecimientoPorSemana'] as Record<string, number> | undefined;
-    if (abastSem && Object.keys(abastSem).length) {
-      const el = document.getElementById('ix-line-abast') as HTMLCanvasElement | null;
-      if (el) {
-        const labels = Object.keys(abastSem);
-        const data = labels.map((k) => Number(abastSem[k]));
-        const ch = new Chart(el, {
-          type: 'line',
-          data: { labels, datasets: [{ label: 'Abastecimiento (S/)', data, borderColor: '#059669', tension: 0.2 }] },
-          options: {
-            responsive: true,
-            plugins: { legend: { labels: { color: t.text } } },
-            scales: {
-              x: { ticks: { color: t.subtle }, grid: { color: t.grid } },
-              y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
-            },
+    const abastSem = this.inventario['movimientosAbastecimientoPorSemana'];
+    const elAbast = document.getElementById('ix-line-abast') as HTMLCanvasElement | null;
+    if (elAbast && abastSem && Object.keys(abastSem).length) {
+      const labels = Object.keys(abastSem);
+      const data = labels.map((k) => Number(abastSem[k]));
+      const config: any = {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{ label: 'Abastecimiento (S/)', data, borderColor: '#059669', tension: 0.2 }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: t.text } } },
+          scales: {
+            x: { ticks: { color: t.subtle }, grid: { color: t.grid } },
+            y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
           },
-        });
-        this.charts.set('ix-line-abast', ch);
-      }
+        },
+      };
+      this.chartRegister('ix-line-abast', elAbast, config);
     }
 
-    const marg = this.inventario['margenBrutoProductos'] as { nombre: string; margenBruto: number }[] | undefined;
-    if (marg?.length) {
-      const el = document.getElementById('ix-bar-margen') as HTMLCanvasElement | null;
-      if (el) {
-        const slice = marg.slice(0, 12);
-        const ch = new Chart(el, {
-          type: 'bar',
-          data: {
-            labels: slice.map((x) => x.nombre),
-            datasets: [{ label: 'Margen (S/)', data: slice.map((x) => x.margenBruto), backgroundColor: '#c026d3' }],
-          },
-          options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { ticks: { color: t.subtle }, grid: { color: t.grid } },
-              y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
+    const marg = this.inventario['margenBrutoProductos'] as any[];
+    const elMargen = document.getElementById('ix-bar-margen') as HTMLCanvasElement | null;
+    if (elMargen && marg?.length) {
+      const slice = marg.slice(0, 12);
+      const config: any = {
+        type: 'bar',
+        data: {
+          labels: slice.map((x) => x.nombre),
+          datasets: [
+            {
+              label: 'Margen (S/)',
+              data: slice.map((x) => x.margenBruto),
+              backgroundColor: '#c026d3',
             },
+          ],
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: t.subtle }, grid: { color: t.grid } },
+            y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
           },
-        });
-        this.charts.set('ix-bar-margen', ch);
-      }
+        },
+      };
+      this.chartRegister('ix-bar-margen', elMargen, config);
     }
   }
 
@@ -539,42 +658,24 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     if (!this.productos) return;
     this.destroyPrefix('px-');
     const t = this.tc();
-    const top = this.productos['topProductos'] as { nombre: string; unidadesVendidas: number }[] | undefined;
+
+    const top = this.productos['topProductos'] as
+      | { nombre: string; unidadesVendidas: number }[]
+      | undefined;
     if (top?.length) {
       const el = document.getElementById('px-bar-top') as HTMLCanvasElement | null;
       if (el) {
         const slice = top.slice(0, 12);
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'bar',
           data: {
             labels: slice.map((x) => x.nombre),
-            datasets: [{ label: 'Unidades', data: slice.map((x) => x.unidadesVendidas), backgroundColor: '#db2777' }],
-          },
-          options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { ticks: { color: t.subtle }, grid: { color: t.grid } },
-              y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
-            },
-          },
-        });
-        this.charts.set('px-bar-top', ch);
-      }
-    }
-
-    const topMargen = this.productos['topProductos'] as { nombre: string; margenEstimado: number }[] | undefined;
-    if (topMargen?.length) {
-      const elM = document.getElementById('px-bar-margen') as HTMLCanvasElement | null;
-      if (elM) {
-        const sorted = [...topMargen].sort((a, b) => b.margenEstimado - a.margenEstimado).slice(0, 10);
-        const ch2 = new Chart(elM, {
-          type: 'bar',
-          data: {
-            labels: sorted.map((x) => x.nombre),
             datasets: [
-              { label: 'Margen estimado (S/)', data: sorted.map((x) => x.margenEstimado), backgroundColor: '#0f766e' },
+              {
+                label: 'Unidades',
+                data: slice.map((x) => x.unidadesVendidas),
+                backgroundColor: '#db2777',
+              },
             ],
           },
           options: {
@@ -586,8 +687,43 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('px-bar-margen', ch2);
+        };
+        this.chartRegister('px-bar-top', el, config);
+      }
+    }
+
+    const topMargen = this.productos['topProductos'] as
+      | { nombre: string; margenEstimado: number }[]
+      | undefined;
+    if (topMargen?.length) {
+      const elM = document.getElementById('px-bar-margen') as HTMLCanvasElement | null;
+      if (elM) {
+        const sorted = [...topMargen]
+          .sort((a, b) => b.margenEstimado - a.margenEstimado)
+          .slice(0, 10);
+        const config: any = {
+          type: 'bar',
+          data: {
+            labels: sorted.map((x) => x.nombre),
+            datasets: [
+              {
+                label: 'Margen estimado (S/)',
+                data: sorted.map((x) => x.margenEstimado),
+                backgroundColor: '#0f766e',
+              },
+            ],
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: t.subtle }, grid: { color: t.grid } },
+              y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
+            },
+          },
+        };
+        this.chartRegister('px-bar-margen', elM, config);
       }
     }
 
@@ -597,15 +733,18 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       if (el) {
         const labels = Object.keys(ingCat);
         const data = labels.map((k) => Number(ingCat[k]));
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'doughnut',
           data: {
             labels,
             datasets: [{ data, backgroundColor: ['#2563eb', '#ea580c', '#22c55e', '#a855f7'] }],
           },
-          options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: t.text } } } },
-        });
-        this.charts.set('px-donut-ing', ch);
+          options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom', labels: { color: t.text } } },
+          },
+        };
+        this.chartRegister('px-donut-ing', el, config);
       }
     }
 
@@ -615,7 +754,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       if (el) {
         const labels = ['1', '2', '3', '4', '5'];
         const data = labels.map((k) => Number(dist[k] ?? 0));
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'bar',
           data: { labels, datasets: [{ label: 'Cantidad', data, backgroundColor: '#eab308' }] },
           options: {
@@ -626,8 +765,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('px-bar-stars', ch);
+        };
+        this.chartRegister('px-bar-stars', el, config);
       }
     }
   }
@@ -636,13 +775,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     if (!this.clientes) return;
     this.destroyPrefix('cx-');
     const t = this.tc();
+
     const dist = this.clientes['distribucionEstrellas'] as Record<string, number> | undefined;
     if (dist) {
       const el = document.getElementById('cx-bar-stars') as HTMLCanvasElement | null;
       if (el) {
         const labels = ['1', '2', '3', '4', '5'];
         const data = labels.map((k) => Number(dist[k] ?? 0));
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'bar',
           data: { labels, datasets: [{ label: 'Valoraciones', data, backgroundColor: '#38bdf8' }] },
           options: {
@@ -653,8 +793,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('cx-bar-stars', ch);
+        };
+        this.chartRegister('cx-bar-stars', el, config);
       }
     }
 
@@ -664,7 +804,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       if (el) {
         const labels = Object.keys(hist);
         const data = labels.map((k) => hist[k]);
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'bar',
           data: { labels, datasets: [{ label: 'Clientes', data, backgroundColor: '#4f46e5' }] },
           options: {
@@ -675,8 +815,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('cx-bar-freq', ch);
+        };
+        this.chartRegister('cx-bar-freq', el, config);
       }
     }
   }
@@ -685,14 +825,17 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     if (!this.operacion) return;
     this.destroyPrefix('ox-');
     const t = this.tc();
-    const histEnt = this.operacion['histogramaTiemposEntrega'] as Record<string, number> | undefined;
+
+    const histEnt = this.operacion['histogramaTiemposEntrega'] as
+      | Record<string, number>
+      | undefined;
     if (histEnt && Object.keys(histEnt).length) {
       const el = document.getElementById('ox-bar-hist') as HTMLCanvasElement | null;
       if (el) {
         const order = ['0-20', '20-40', '40-60', '60+'];
         const labels = order.filter((k) => k in histEnt);
         const data = labels.map((k) => histEnt[k]);
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'bar',
           data: { labels, datasets: [{ label: 'Pedidos', data, backgroundColor: '#6366f1' }] },
           options: {
@@ -703,8 +846,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('ox-bar-hist', ch);
+        };
+        this.chartRegister('ox-bar-hist', el, config);
       }
     }
 
@@ -714,7 +857,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       if (el) {
         const labels = Object.keys(ent);
         const data = labels.map((k) => ent[k]);
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'bar',
           data: { labels, datasets: [{ label: 'Entregas', data, backgroundColor: '#0d9488' }] },
           options: {
@@ -725,23 +868,33 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('ox-bar-rep', ch);
+        };
+        this.chartRegister('ox-bar-rep', el, config);
       }
     }
 
-    const caj = this.operacion['cajeroValidadosVsRechazados'] as { cajero: string; validados: number; rechazados: number }[] | undefined;
+    const caj = this.operacion['cajeroValidadosVsRechazados'] as
+      | { cajero: string; validados: number; rechazados: number }[]
+      | undefined;
     if (caj?.length) {
       const el = document.getElementById('ox-bar-cajero') as HTMLCanvasElement | null;
       if (el) {
         const labels = caj.map((x) => x.cajero);
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'bar',
           data: {
             labels,
             datasets: [
-              { label: 'Superaron validación', data: caj.map((x) => x.validados), backgroundColor: '#2563eb' },
-              { label: 'Cancelados en caja', data: caj.map((x) => x.rechazados), backgroundColor: '#dc2626' },
+              {
+                label: 'Superaron validación',
+                data: caj.map((x) => x.validados),
+                backgroundColor: '#2563eb',
+              },
+              {
+                label: 'Cancelados en caja',
+                data: caj.map((x) => x.rechazados),
+                backgroundColor: '#dc2626',
+              },
             ],
           },
           options: {
@@ -752,12 +905,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('ox-bar-cajero', ch);
+        };
+        this.chartRegister('ox-bar-cajero', el, config);
       }
     }
 
-    const emb = this.operacion['embudoPorHora'] as { hora: number; porEstado: Record<string, number> }[] | undefined;
+    const emb = this.operacion['embudoPorHora'] as
+      | { hora: number; porEstado: Record<string, number> }[]
+      | undefined;
     if (emb?.length) {
       const estados = new Set<string>();
       emb.forEach((e) => Object.keys(e.porEstado ?? {}).forEach((s) => estados.add(s)));
@@ -766,7 +921,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       const colors = ['#1e3a8a', '#ea580c', '#16a34a', '#a855f7', '#dc2626', '#ca8a04'];
       const el = document.getElementById('ox-line-embudo') as HTMLCanvasElement | null;
       if (el) {
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'line',
           data: {
             labels,
@@ -786,8 +941,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('ox-line-embudo', ch);
+        };
+        this.chartRegister('ox-line-embudo', el, config);
       }
     }
   }
@@ -796,19 +951,37 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     if (!this.seguridad) return;
     this.destroyPrefix('sx-');
     const t = this.tc();
-    const porHora = this.seguridad['intentosPorHora'] as { hora: number; success: number; failed: number; blocked: number }[] | undefined;
+
+    const porHora = this.seguridad['intentosPorHora'] as
+      | { hora: number; success: number; failed: number; blocked: number }[]
+      | undefined;
     if (porHora?.length) {
       const el = document.getElementById('sx-line-login') as HTMLCanvasElement | null;
       if (el) {
         const labels = porHora.map((x) => String(x.hora));
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'line',
           data: {
             labels,
             datasets: [
-              { label: 'Éxito', data: porHora.map((x) => x.success), borderColor: '#22c55e', tension: 0.2 },
-              { label: 'Fallo', data: porHora.map((x) => x.failed), borderColor: '#ef4444', tension: 0.2 },
-              { label: 'Bloqueo', data: porHora.map((x) => x.blocked), borderColor: '#a855f7', tension: 0.2 },
+              {
+                label: 'Éxito',
+                data: porHora.map((x) => x.success),
+                borderColor: '#22c55e',
+                tension: 0.2,
+              },
+              {
+                label: 'Fallo',
+                data: porHora.map((x) => x.failed),
+                borderColor: '#ef4444',
+                tension: 0.2,
+              },
+              {
+                label: 'Bloqueo',
+                data: porHora.map((x) => x.blocked),
+                borderColor: '#a855f7',
+                tension: 0.2,
+              },
             ],
           },
           options: {
@@ -819,37 +992,34 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('sx-line-login', ch);
+        };
+        this.chartRegister('sx-line-login', el, config);
       }
     }
 
-    const kp = this.seguridad['kpis'] as {
-      totalIntentos?: number;
-      eventosBloqueo?: number;
-      intentosFallidos?: number;
-    } | undefined;
+    const kp = this.seguridad['kpis'] as
+      | { totalIntentos?: number; eventosBloqueo?: number; intentosFallidos?: number }
+      | undefined;
     const ok = (kp?.totalIntentos ?? 0) - (kp?.intentosFallidos ?? 0) - (kp?.eventosBloqueo ?? 0);
     const elDon = document.getElementById('sx-donut-res') as HTMLCanvasElement | null;
     if (elDon && kp?.totalIntentos && kp.totalIntentos > 0) {
-      const ch = new Chart(elDon, {
+      const config: any = {
         type: 'doughnut',
         data: {
           labels: ['Éxito', 'Fallo', 'Bloqueo'],
           datasets: [
             {
-              data: [
-                Math.max(0, ok),
-                kp.intentosFallidos ?? 0,
-                kp.eventosBloqueo ?? 0,
-              ],
+              data: [Math.max(0, ok), kp.intentosFallidos ?? 0, kp.eventosBloqueo ?? 0],
               backgroundColor: ['#22c55e', '#ef4444', '#a855f7'],
             },
           ],
         },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: t.text } } } },
-      });
-      this.charts.set('sx-donut-res', ch);
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom', labels: { color: t.text } } },
+        },
+      };
+      this.chartRegister('sx-donut-res', elDon, config);
     }
   }
 
@@ -857,21 +1027,27 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     if (!this.interacciones) return;
     this.destroyPrefix('ux-');
     const t = this.tc();
+
     const dist = this.interacciones['distribucionAcciones'] as Record<string, number> | undefined;
     if (dist && Object.keys(dist).length) {
       const el = document.getElementById('ux-donut-acc') as HTMLCanvasElement | null;
       if (el) {
         const labels = Object.keys(dist);
         const data = labels.map((k) => dist[k]);
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'doughnut',
           data: {
             labels,
-            datasets: [{ data, backgroundColor: ['#6366f1', '#f97316', '#14b8a6', '#ec4899', '#84cc16'] }],
+            datasets: [
+              { data, backgroundColor: ['#6366f1', '#f97316', '#14b8a6', '#ec4899', '#84cc16'] },
+            ],
           },
-          options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: t.text } } } },
-        });
-        this.charts.set('ux-donut-acc', ch);
+          options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom', labels: { color: t.text } } },
+          },
+        };
+        this.chartRegister('ux-donut-acc', el, config);
       }
     }
 
@@ -881,9 +1057,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       if (el) {
         const labels = Object.keys(seg);
         const data = labels.map((k) => seg[k]);
-        const ch = new Chart(el, {
+        const config: any = {
           type: 'bar',
-          data: { labels, datasets: [{ label: 'Interacciones', data, backgroundColor: '#8b5cf6' }] },
+          data: {
+            labels,
+            datasets: [{ label: 'Interacciones', data, backgroundColor: '#8b5cf6' }],
+          },
           options: {
             responsive: true,
             plugins: { legend: { display: false } },
@@ -892,8 +1071,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
               y: { ticks: { color: t.subtle }, grid: { color: t.grid } },
             },
           },
-        });
-        this.charts.set('ux-bar-seg', ch);
+        };
+        this.chartRegister('ux-bar-seg', el, config);
       }
     }
   }
@@ -901,11 +1080,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   formatSol(n: unknown): string {
     const v = typeof n === 'number' ? n : parseFloat(String(n ?? 0));
     return (
-      'S/ ' +
-      v.toLocaleString('es-PE', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
+      'S/ ' + v.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     );
   }
 

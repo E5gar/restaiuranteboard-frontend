@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Subject } from 'rxjs';
 import { AuthService } from './auth.service';
 import { environment } from '@env/environment'; 
 
@@ -13,6 +14,9 @@ const API_AUTH = environment.apiUrl + '/auth';
 export class ThemeService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+
+  private readonly themeChanged$ = new Subject<void>();
+  readonly themeChanged = this.themeChanged$.asObservable();
 
   initSync(): void {
     const raw = sessionStorage.getItem(AUTH_KEY);
@@ -38,6 +42,7 @@ export class ThemeService {
 
   applyDark(on: boolean): void {
     document.documentElement.classList.toggle('dark', on);
+    this.themeChanged$.next();
   }
 
   persistLoginTheme(dark: boolean, email: string): void {

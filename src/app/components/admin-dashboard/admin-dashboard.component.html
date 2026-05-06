@@ -1,17 +1,17 @@
 <div class="rb-page">
-  <div class="rb-container max-w-7xl">
+  <div class="rb-container">
     <div class="rb-card overflow-hidden">
       <div
-        class="border-b border-white/10 bg-secondary px-4 py-6 text-white dark:bg-slate-800 sm:px-6 sm:py-7 lg:px-8"
+        class="sticky top-0 z-50 border-b border-white/10 bg-secondary px-4 py-6 text-white shadow-md dark:bg-slate-800 dark:shadow-none sm:px-6 sm:py-7 lg:px-8"
       >
         <div
           class="mb-6 flex flex-col items-stretch justify-between gap-4 sm:items-start md:flex-row md:items-center"
         >
           <div class="flex items-start gap-3">
-            <img src="/iconos/dashboard.png" alt="" width="40" height="40" class="mt-1 h-10 w-10 object-contain" />
+            <img src="/iconos/dashboard.png" alt="" width="40" height="40" class="mt-1 h-8 w-8 object-contain sm:h-10 sm:w-10" />
             <div>
               <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">Dashboard y KPIs</h2>
-              <p class="mt-1 text-sm text-white/80">Indicadores operativos por pestaña</p>
+              <p class="mt-1 text-sm text-white/80 lg:text-base">Indicadores operativos por pestaña</p>
             </div>
           </div>
           <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -42,8 +42,8 @@
         </div>
       </div>
 
-      <div class="space-y-6 p-4 sm:p-6 lg:p-8">
-        <div class="rb-section-muted flex flex-wrap items-end gap-4">
+      <div class="space-y-6 p-4 sm:space-y-8 sm:p-6 lg:p-8">
+        <div class="rb-section-muted flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
           <div class="min-w-[140px] flex-1">
             <label class="rb-label !normal-case">Desde</label>
             <input type="date" [(ngModel)]="fromDate" class="rb-input rb-focus-secondary" name="df" />
@@ -68,38 +68,38 @@
         <div *ngIf="cargando" class="text-center text-sm text-neutral-strong dark:text-dark-text-muted">Cargando…</div>
 
         <ng-container *ngIf="!cargando && pestana === 'ventas'">
-          <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-4">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-4 lg:grid-cols-4">
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Total ventas</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatSol(ventas?.['kpis']?.['totalVentas']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Total ventas</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatSol(ventas?.['kpis']?.['totalVentas']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">N.º pedidos</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(ventas?.['kpis']?.['numPedidos']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">N.º pedidos</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(ventas?.['kpis']?.['numPedidos']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Ticket promedio</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatSol(ventas?.['kpis']?.['ticketPromedio']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Ticket promedio</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatSol(ventas?.['kpis']?.['ticketPromedio']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Tasa cancelación</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatPct(ventas?.['kpis']?.['tasaCancelacionPct']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Tasa cancelación</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(ventas?.['kpis']?.['tasaCancelacionPct']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Conversión entrega</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatPct(ventas?.['kpis']?.['conversionPct']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Conversión entrega</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(ventas?.['kpis']?.['conversionPct']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Pedidos hoy</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(ventas?.['kpis']?.['pedidosHoy']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Pedidos hoy</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(ventas?.['kpis']?.['pedidosHoy']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Ingreso hoy</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatSol(ventas?.['kpis']?.['ingresoHoy']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Ingreso hoy</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatSol(ventas?.['kpis']?.['ingresoHoy']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Pedidos en curso</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(ventas?.['kpis']?.['pedidosEnCurso']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Pedidos en curso</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(ventas?.['kpis']?.['pedidosEnCurso']) }}</p>
             </div>
           </div>
 
@@ -126,11 +126,15 @@
               <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroClima" name="wc" placeholder="SOLEADO" />
             </div>
           </div>
-          <button type="button" (click)="aplicarFiltros()" class="rb-btn-primary rounded-xl px-5 py-3 text-sm font-semibold">
+          <button
+            type="button"
+            (click)="aplicarFiltros()"
+            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
+          >
             Aplicar filtros de ventas
           </button>
 
-          <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Ventas por día</h3>
               <div class="relative h-64 w-full"><canvas id="vx-line-dia"></canvas></div>
@@ -159,7 +163,7 @@
 
           <div class="rb-section-muted overflow-x-auto">
             <h3 class="rb-heading-accent mb-4 text-base">Mapa hora × día (intensidad ventas S/)</h3>
-            <table class="w-full border-collapse text-center text-xs sm:text-sm">
+            <table class="w-full min-w-[560px] border-collapse text-center text-xs text-gray-900 sm:text-sm dark:text-slate-100">
               <thead>
                 <tr>
                   <th class="border border-gray-200 p-1 dark:border-dark-border"></th>
@@ -171,7 +175,7 @@
                   <td class="border border-gray-200 p-1 font-medium dark:border-dark-border">{{ h }}</td>
                   <td
                     *ngFor="let d of [0,1,2,3,4,5,6]"
-                    class="border border-gray-200 p-2 dark:border-dark-border"
+                    class="border border-gray-200 p-2 text-gray-900 dark:border-dark-border dark:text-slate-100"
                     [style.opacity]="heatmapCell(h, d) > 0 ? 1 : 0.35"
                     [style.backgroundColor]="
                       'rgba(234, 88, 12, ' +
@@ -188,30 +192,30 @@
         </ng-container>
 
         <ng-container *ngIf="!cargando && pestana === 'inventario'">
-          <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Stock bajo</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(inventario?.['kpis']?.['insumosStockBajo']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Stock bajo</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(inventario?.['kpis']?.['insumosStockBajo']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Valor inventario</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatSol(inventario?.['kpis']?.['valorTotalInventario']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Valor inventario</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatSol(inventario?.['kpis']?.['valorTotalInventario']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Costo MP salida</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatSol(inventario?.['kpis']?.['costoMateriaConsumida']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Costo MP salida</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatSol(inventario?.['kpis']?.['costoMateriaConsumida']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Abastecimiento período</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatSol(inventario?.['kpis']?.['totalAbastecidoPeriodo']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Abastecimiento período</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatSol(inventario?.['kpis']?.['totalAbastecidoPeriodo']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Sin movimiento reciente</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(inventario?.['kpis']?.['insumosSinMovimiento']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Sin movimiento reciente</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(inventario?.['kpis']?.['insumosSinMovimiento']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Rotación</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(inventario?.['kpis']?.['rotacionInventario']) }}×</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Rotación</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(inventario?.['kpis']?.['rotacionInventario']) }}×</p>
             </div>
           </div>
 
@@ -232,11 +236,15 @@
               </label>
             </div>
           </div>
-          <button type="button" (click)="aplicarFiltros()" class="rb-btn-primary rounded-xl px-5 py-3 text-sm font-semibold">
+          <button
+            type="button"
+            (click)="aplicarFiltros()"
+            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
+          >
             Aplicar filtros inventario
           </button>
 
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Stock vs umbral (prioridad bajo)</h3>
               <div class="relative h-72 w-full"><canvas id="ix-bar-stock"></canvas></div>
@@ -257,30 +265,30 @@
         </ng-container>
 
         <ng-container *ngIf="!cargando && pestana === 'productos'">
-          <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Productos activos</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(productos?.['kpis']?.['productosActivos']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Productos activos</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(productos?.['kpis']?.['productosActivos']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Más vendido</p>
-              <p class="mt-1 text-lg font-semibold">{{ productos?.['kpis']?.['productoMasVendido'] }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Más vendido</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ productos?.['kpis']?.['productoMasVendido'] }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Más rentable</p>
-              <p class="mt-1 text-lg font-semibold">{{ productos?.['kpis']?.['productoMasRentable'] }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Más rentable</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ productos?.['kpis']?.['productoMasRentable'] }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Calificación media</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(productos?.['kpis']?.['calificacionPromedio']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Calificación media</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(productos?.['kpis']?.['calificacionPromedio']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Categoría líder</p>
-              <p class="mt-1 text-lg font-semibold">{{ productos?.['kpis']?.['categoriaLiderVentas'] }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Categoría líder</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ productos?.['kpis']?.['categoriaLiderVentas'] }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Pedidos calificados</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatPct(productos?.['kpis']?.['tasaPedidosCalificadosPct']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Pedidos calificados</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(productos?.['kpis']?.['tasaPedidosCalificadosPct']) }}</p>
             </div>
           </div>
 
@@ -302,11 +310,15 @@
               <input type="number" class="rb-input rb-focus-secondary" [(ngModel)]="precioMax" name="pmax" />
             </div>
           </div>
-          <button type="button" (click)="aplicarFiltros()" class="rb-btn-primary rounded-xl px-5 py-3 text-sm font-semibold">
+          <button
+            type="button"
+            (click)="aplicarFiltros()"
+            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
+          >
             Aplicar filtros productos
           </button>
 
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Top productos vendidos</h3>
               <div class="relative h-80 w-full"><canvas id="px-bar-top"></canvas></div>
@@ -327,30 +339,30 @@
         </ng-container>
 
         <ng-container *ngIf="!cargando && pestana === 'clientes'">
-          <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Total clientes</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(clientes?.['kpis']?.['totalClientes']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Total clientes</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(clientes?.['kpis']?.['totalClientes']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Nuevos en período</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(clientes?.['kpis']?.['clientesNuevosPeriodo']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Nuevos en período</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(clientes?.['kpis']?.['clientesNuevosPeriodo']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Recurrentes</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(clientes?.['kpis']?.['clientesRecurrentes']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Recurrentes</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(clientes?.['kpis']?.['clientesRecurrentes']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Tasa recurrencia</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatPct(clientes?.['kpis']?.['tasaRecurrenciaPct']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Tasa recurrencia</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(clientes?.['kpis']?.['tasaRecurrenciaPct']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Calificación media</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(clientes?.['kpis']?.['calificacionPromedioGeneral']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Calificación media</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(clientes?.['kpis']?.['calificacionPromedioGeneral']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Pedidos / cliente</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(clientes?.['kpis']?.['pedidosPromedioPorCliente']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Pedidos / cliente</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(clientes?.['kpis']?.['pedidosPromedioPorCliente']) }}</p>
             </div>
           </div>
 
@@ -367,11 +379,15 @@
               <input type="checkbox" [(ngModel)]="soloRecurrentes" name="sr" /> Solo recurrentes en ranking
             </label>
           </div>
-          <button type="button" (click)="aplicarFiltros()" class="rb-btn-primary rounded-xl px-5 py-3 text-sm font-semibold">
+          <button
+            type="button"
+            (click)="aplicarFiltros()"
+            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
+          >
             Aplicar filtros clientes
           </button>
 
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Distribución de estrellas</h3>
               <div class="relative h-72 w-full"><canvas id="cx-bar-stars"></canvas></div>
@@ -384,12 +400,12 @@
 
           <div class="rb-section-muted overflow-x-auto">
             <h3 class="rb-heading-accent mb-4 text-base">Top clientes por gasto</h3>
-            <table class="w-full min-w-[520px] text-left text-sm">
+            <table class="w-full min-w-[520px] text-left text-sm text-gray-900 dark:text-slate-100">
               <thead>
                 <tr class="border-b border-gray-200 dark:border-dark-border">
-                  <th class="py-2 pr-4">Cliente</th>
-                  <th class="py-2 pr-4">Pedidos</th>
-                  <th class="py-2">Gasto total</th>
+                  <th class="py-2 pr-4 font-semibold">Cliente</th>
+                  <th class="py-2 pr-4 font-semibold">Pedidos</th>
+                  <th class="py-2 font-semibold">Gasto total</th>
                 </tr>
               </thead>
               <tbody>
@@ -407,30 +423,30 @@
         </ng-container>
 
         <ng-container *ngIf="!cargando && pestana === 'operacion'">
-          <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Validación (cancelaciones)</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(operacion?.['kpis']?.['tiempoPromedioValidacionMin']) }} min</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Validación (cancelaciones)</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(operacion?.['kpis']?.['tiempoPromedioValidacionMin']) }} min</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Cocina (aprox.)</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(operacion?.['kpis']?.['tiempoPromedioCocinaMin']) }} min</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Cocina (aprox.)</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(operacion?.['kpis']?.['tiempoPromedioCocinaMin']) }} min</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Entrega</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(operacion?.['kpis']?.['tiempoPromedioEntregaMin']) }} min</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Entrega</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(operacion?.['kpis']?.['tiempoPromedioEntregaMin']) }} min</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Superaron validación hoy</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(operacion?.['kpis']?.['pedidosSuperaronValidacionHoy']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Superaron validación hoy</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(operacion?.['kpis']?.['pedidosSuperaronValidacionHoy']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">En cocina ahora</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(operacion?.['kpis']?.['pedidosEnCocinaAhora']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">En cocina ahora</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(operacion?.['kpis']?.['pedidosEnCocinaAhora']) }}</p>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Histograma tiempos de entrega (min)</h3>
               <div class="relative h-64 w-full"><canvas id="ox-bar-hist"></canvas></div>
@@ -451,30 +467,30 @@
         </ng-container>
 
         <ng-container *ngIf="!cargando && pestana === 'seguridad'">
-          <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Intentos totales</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(seguridad?.['kpis']?.['totalIntentos']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Intentos totales</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(seguridad?.['kpis']?.['totalIntentos']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Tasa éxito</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatPct(seguridad?.['kpis']?.['tasaExitoPct']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Tasa éxito</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(seguridad?.['kpis']?.['tasaExitoPct']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">IPs bloqueadas</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(seguridad?.['kpis']?.['ipsBloqueadasActivas']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">IPs bloqueadas</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(seguridad?.['kpis']?.['ipsBloqueadasActivas']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Fallidos</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(seguridad?.['kpis']?.['intentosFallidos']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Fallidos</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(seguridad?.['kpis']?.['intentosFallidos']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Usuarios únicos (éxito)</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(seguridad?.['kpis']?.['usuariosUnicosActivos']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Usuarios únicos (éxito)</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(seguridad?.['kpis']?.['usuariosUnicosActivos']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Eventos bloqueo</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(seguridad?.['kpis']?.['eventosBloqueo']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Eventos bloqueo</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(seguridad?.['kpis']?.['eventosBloqueo']) }}</p>
             </div>
           </div>
 
@@ -488,11 +504,15 @@
               <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroRolLogin" name="lr" placeholder="ADMIN" />
             </div>
           </div>
-          <button type="button" (click)="aplicarFiltros()" class="rb-btn-primary rounded-xl px-5 py-3 text-sm font-semibold">
+          <button
+            type="button"
+            (click)="aplicarFiltros()"
+            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
+          >
             Aplicar filtros seguridad
           </button>
 
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Intentos por hora</h3>
               <div class="relative h-72 w-full"><canvas id="sx-line-login"></canvas></div>
@@ -505,11 +525,11 @@
 
           <div class="rb-section-muted overflow-x-auto">
             <h3 class="rb-heading-accent mb-4 text-base">IPs con más fallos</h3>
-            <table class="w-full min-w-[360px] text-left text-sm">
+            <table class="w-full min-w-[360px] text-left text-sm text-gray-900 dark:text-slate-100">
               <thead>
                 <tr class="border-b border-gray-200 dark:border-dark-border">
-                  <th class="py-2 pr-4">IP</th>
-                  <th class="py-2">Fallos</th>
+                  <th class="py-2 pr-4 font-semibold">IP</th>
+                  <th class="py-2 font-semibold">Fallos</th>
                 </tr>
               </thead>
               <tbody>
@@ -526,30 +546,30 @@
         </ng-container>
 
         <ng-container *ngIf="!cargando && pestana === 'interacciones'">
-          <div class="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Interacciones</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(interacciones?.['kpis']?.['interaccionesTotales']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Interacciones</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(interacciones?.['kpis']?.['interaccionesTotales']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Tasa add to cart</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatPct(interacciones?.['kpis']?.['tasaAddToCartPct']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Tasa add to cart</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(interacciones?.['kpis']?.['tasaAddToCartPct']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Rechazo recomendación</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatPct(interacciones?.['kpis']?.['tasaRechazoRecomendacionPct']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Rechazo recomendación</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(interacciones?.['kpis']?.['tasaRechazoRecomendacionPct']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Dwell medio (s)</p>
-              <p class="mt-1 text-lg font-semibold">{{ formatNum(interacciones?.['kpis']?.['dwellTimePromedioSeg']) }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Dwell medio (s)</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(interacciones?.['kpis']?.['dwellTimePromedioSeg']) }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Estado slot 1 IA</p>
-              <p class="mt-1 text-lg font-semibold">{{ interacciones?.['kpis']?.['estadoSlot1Ia'] }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Estado slot 1 IA</p>
+              <p class="mt-1 text-base font-semibold sm:text-lg">{{ interacciones?.['kpis']?.['estadoSlot1Ia'] }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
-              <p class="text-xs text-neutral-strong dark:text-dark-text-muted">Producto más visto</p>
-              <p class="mt-1 line-clamp-2 text-lg font-semibold">{{ interacciones?.['productoMasVistoNombre'] }}</p>
+              <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Producto más visto</p>
+              <p class="mt-1 line-clamp-2 text-base font-semibold sm:text-lg">{{ interacciones?.['productoMasVistoNombre'] }}</p>
             </div>
           </div>
 
@@ -571,11 +591,15 @@
               <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroUserIx" name="iu" />
             </div>
           </div>
-          <button type="button" (click)="aplicarFiltros()" class="rb-btn-primary rounded-xl px-5 py-3 text-sm font-semibold">
+          <button
+            type="button"
+            (click)="aplicarFiltros()"
+            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
+          >
             Aplicar filtros interacciones
           </button>
 
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Distribución de acciones</h3>
               <div class="relative mx-auto h-72 max-w-md"><canvas id="ux-donut-acc"></canvas></div>
@@ -588,11 +612,11 @@
 
           <div class="rb-section-muted overflow-x-auto">
             <h3 class="rb-heading-accent mb-4 text-base">Top productos por interacciones</h3>
-            <table class="w-full min-w-[400px] text-left text-sm">
+            <table class="w-full min-w-[400px] text-left text-sm text-gray-900 dark:text-slate-100">
               <thead>
                 <tr class="border-b border-gray-200 dark:border-dark-border">
-                  <th class="py-2 pr-4">Producto ID</th>
-                  <th class="py-2">N.º</th>
+                  <th class="py-2 pr-4 font-semibold">Producto ID</th>
+                  <th class="py-2 font-semibold">N.º</th>
                 </tr>
               </thead>
               <tbody>
