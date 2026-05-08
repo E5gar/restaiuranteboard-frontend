@@ -1,5 +1,5 @@
 <div class="rb-page">
-  <div class="rb-container max-w-7xl">
+  <div class="rb-container">
     <div class="rb-card overflow-hidden">
       <div
         class="border-b border-white/10 bg-secondary px-4 py-6 text-white dark:bg-slate-800 sm:px-6 sm:py-7 lg:px-8"
@@ -27,22 +27,22 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-4 p-4 sm:gap-6 sm:p-6 lg:grid-cols-2 lg:gap-8 lg:p-8">
+      <div class="p-4 sm:p-6 lg:p-8">
         <section class="rb-section-muted">
           <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-2">
-              <img src="/iconos/billetes-soles.png" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
-              <h3 class="rb-heading-accent !mb-0 text-base">PostgreSQL</h3>
+              <img src="/iconos/documento.png" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+              <h3 class="rb-heading-accent !mb-0 text-base">Respaldos conjuntos PostgreSQL + MongoDB</h3>
             </div>
             <div class="flex flex-col gap-2 sm:flex-row">
-              <button type="button" (click)="generar('postgresql')" [disabled]="cargandoPg" class="rb-btn-secondary">
+              <button type="button" (click)="generar()" [disabled]="cargando" class="rb-btn-secondary">
                 <span
-                  *ngIf="cargandoPg"
+                  *ngIf="cargando"
                   class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
                 ></span>
-                Generar backup
+                Generar Backup
               </button>
-              <button type="button" (click)="cargarLista('postgresql')" [disabled]="cargandoPg" class="rb-btn-neutral">
+              <button type="button" (click)="refrescarTodo()" [disabled]="cargando" class="rb-btn-neutral">
                 <img src="/iconos/lupa.png" alt="" class="h-4 w-4 object-contain" />
                 Actualizar
               </button>
@@ -50,105 +50,45 @@
           </div>
 
           <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-dark-border dark:bg-dark-surface">
-            <table class="w-full min-w-[520px] text-left text-sm">
+            <table class="w-full min-w-[760px] text-left text-sm">
               <thead class="rb-table-header-row">
                 <tr>
-                  <th class="px-4 py-3">Backup</th>
-                  <th class="px-4 py-3">Tamaño</th>
+                  <th class="px-4 py-3">Lote</th>
+                  <th class="px-4 py-3">Backup PostgreSQL</th>
+                  <th class="px-4 py-3">Backup MongoDB</th>
+                  <th class="px-4 py-3">Tamaño total</th>
                   <th class="px-4 py-3">Fecha</th>
                   <th class="px-4 py-3 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 <tr
-                  *ngFor="let r of itemsPg"
+                  *ngFor="let r of items"
                   class="border-b border-gray-100 last:border-b-0 dark:border-slate-700/80"
                 >
-                  <td class="px-4 py-3 font-mono text-xs">{{ r.key }}</td>
+                  <td class="px-4 py-3 font-mono text-xs">{{ r.pairId }}</td>
+                  <td class="px-4 py-3 font-mono text-xs">{{ r.postgresKey }}</td>
+                  <td class="px-4 py-3 font-mono text-xs">{{ r.mongoKey }}</td>
                   <td class="px-4 py-3">{{ formatBytes(r.sizeBytes) }}</td>
                   <td class="px-4 py-3 text-xs text-neutral-strong dark:text-dark-text-muted">
                     {{ r.lastModified || '—' }}
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex flex-col justify-end gap-2 sm:flex-row">
-                      <button type="button" class="rb-btn-success rb-btn-sm" (click)="restaurar('postgresql', r.key)">
+                      <button type="button" class="rb-btn-success rb-btn-sm" [disabled]="cargando" (click)="restaurar(r)">
                         <img src="/iconos/correcto-check-verde.png" alt="" class="h-4 w-4 object-contain" />
                         Restaurar
                       </button>
-                      <button type="button" class="rb-btn-danger rb-btn-sm" (click)="eliminar('postgresql', r.key)">
+                      <button type="button" class="rb-btn-danger rb-btn-sm" [disabled]="cargando" (click)="eliminar(r)">
                         <img src="/iconos/tacho.png" alt="" class="h-4 w-4 object-contain" />
                         Eliminar
                       </button>
                     </div>
                   </td>
                 </tr>
-                <tr *ngIf="!itemsPg.length">
-                  <td colspan="4" class="px-4 py-6 text-center text-sm text-neutral-strong dark:text-dark-text-muted">
-                    No hay backups disponibles.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="rb-section-muted">
-          <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center gap-2">
-              <img src="/iconos/destellos-recomendaciones.png" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
-              <h3 class="rb-heading-accent !mb-0 text-base">MongoDB</h3>
-            </div>
-            <div class="flex flex-col gap-2 sm:flex-row">
-              <button type="button" (click)="generar('mongodb')" [disabled]="cargandoMg" class="rb-btn-secondary">
-                <span
-                  *ngIf="cargandoMg"
-                  class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
-                ></span>
-                Generar backup
-              </button>
-              <button type="button" (click)="cargarLista('mongodb')" [disabled]="cargandoMg" class="rb-btn-neutral">
-                <img src="/iconos/lupa.png" alt="" class="h-4 w-4 object-contain" />
-                Actualizar
-              </button>
-            </div>
-          </div>
-
-          <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-dark-border dark:bg-dark-surface">
-            <table class="w-full min-w-[520px] text-left text-sm">
-              <thead class="rb-table-header-row">
-                <tr>
-                  <th class="px-4 py-3">Backup</th>
-                  <th class="px-4 py-3">Tamaño</th>
-                  <th class="px-4 py-3">Fecha</th>
-                  <th class="px-4 py-3 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  *ngFor="let r of itemsMg"
-                  class="border-b border-gray-100 last:border-b-0 dark:border-slate-700/80"
-                >
-                  <td class="px-4 py-3 font-mono text-xs">{{ r.key }}</td>
-                  <td class="px-4 py-3">{{ formatBytes(r.sizeBytes) }}</td>
-                  <td class="px-4 py-3 text-xs text-neutral-strong dark:text-dark-text-muted">
-                    {{ r.lastModified || '—' }}
-                  </td>
-                  <td class="px-4 py-3">
-                    <div class="flex flex-col justify-end gap-2 sm:flex-row">
-                      <button type="button" class="rb-btn-success rb-btn-sm" (click)="restaurar('mongodb', r.key)">
-                        <img src="/iconos/correcto-check-verde.png" alt="" class="h-4 w-4 object-contain" />
-                        Restaurar
-                      </button>
-                      <button type="button" class="rb-btn-danger rb-btn-sm" (click)="eliminar('mongodb', r.key)">
-                        <img src="/iconos/tacho.png" alt="" class="h-4 w-4 object-contain" />
-                        Eliminar
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr *ngIf="!itemsMg.length">
-                  <td colspan="4" class="px-4 py-6 text-center text-sm text-neutral-strong dark:text-dark-text-muted">
-                    No hay backups disponibles.
+                <tr *ngIf="!items.length">
+                  <td colspan="6" class="px-4 py-6 text-center text-sm text-neutral-strong dark:text-dark-text-muted">
+                    No hay respaldos conjuntos disponibles.
                   </td>
                 </tr>
               </tbody>

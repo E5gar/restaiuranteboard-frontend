@@ -15,6 +15,14 @@ interface BackupItem {
   lastModified: string | null;
 }
 
+interface BackupPairItem {
+  pairId: string;
+  postgresKey: string;
+  mongoKey: string;
+  sizeBytes: number;
+  lastModified: string | null;
+}
+
 @Component({
   selector: 'app-admin-respaldos',
   standalone: true,
@@ -24,11 +32,8 @@ interface BackupItem {
 export class AdminRespaldosComponent implements OnInit {
   private readonly http = inject(HttpClient);
 
-  cargandoPg = false;
-  cargandoMg = false;
-
-  itemsPg: BackupItem[] = [];
-  itemsMg: BackupItem[] = [];
+  cargando = false;
+  items: BackupPairItem[] = [];
 
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '' };
 
@@ -37,77 +42,95 @@ export class AdminRespaldosComponent implements OnInit {
   }
 
   async refrescarTodo(): Promise<void> {
-    await Promise.all([this.cargarLista('postgresql'), this.cargarLista('mongodb')]);
+    this.cargando = true;
+    try {
+      const [itemsPg, itemsMg] = await Promise.all([this.listar('postgresql'), this.listar('mongodb')]);
+      this.items = this.unirPares(itemsPg, itemsMg);
+    } catch {
+      this.abrirModal('error', 'Error', 'No se pudo cargar la lista de respaldos.');
+    } finally {
+      this.cargando = false;
+    }
   }
 
-  cargarLista(db: DbKind): Promise<void> {
-    this.setLoading(db, true);
+  private listar(db: DbKind): Promise<BackupItem[]> {
     const params = new HttpParams().set('db', db);
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       this.http.get<BackupItem[]>(`${API}/list`, { params }).subscribe({
-        next: (rows) => {
-          if (db === 'postgresql') this.itemsPg = rows ?? [];
-          else this.itemsMg = rows ?? [];
-          this.setLoading(db, false);
-          resolve();
-        },
-        error: () => {
-          this.setLoading(db, false);
-          this.abrirModal('error', 'Error', 'No se pudo cargar la lista de respaldos.');
-          resolve();
-        },
+        next: (rows) => resolve(rows ?? []),
+        error: () => reject(),
       });
     });
   }
 
-  generar(db: DbKind): void {
-    this.setLoading(db, true);
+  async generar(): Promise<void> {
+    this.cargando = true;
+    try {
+      await Promise.all([this.generarDb('postgresql'), this.generarDb('mongodb')]);
+      await this.refrescarTodo();
+      this.abrirModal('ok', 'Respaldo generado', 'Los backups de PostgreSQL y MongoDB se generaron correctamente.');
+    } catch (e) {
+      this.abrirModal('error', 'Error', this.msg(e) || 'No se pudo generar el backup conjunto.');
+      this.cargando = false;
+    }
+  }
+
+  private generarDb(db: DbKind): Promise<void> {
     const params = new HttpParams().set('db', db);
-    this.http.post<{ ok: boolean; item?: BackupItem }>(`${API}/generate`, null, { params }).subscribe({
-      next: () => {
-        this.setLoading(db, false);
-        void this.cargarLista(db);
-        this.abrirModal('ok', 'Respaldo generado', 'El backup se subió correctamente.');
-      },
-      error: (e) => {
-        this.setLoading(db, false);
-        this.abrirModal('error', 'Error', this.msg(e) || 'No se pudo generar el backup.');
-      },
+    return new Promise((resolve, reject) => {
+      this.http.post<{ ok: boolean; item?: BackupItem }>(`${API}/generate`, null, { params }).subscribe({
+        next: () => resolve(),
+        error: (e) => reject(e),
+      });
     });
   }
 
-  restaurar(db: DbKind, key: string): void {
-    if (!key) return;
-    if (!confirm('¿Deseas restaurar este backup? Esto reemplazará los datos actuales.')) return;
-    this.setLoading(db, true);
+  async restaurar(item: BackupPairItem): Promise<void> {
+    if (!confirm('¿Deseas restaurar este backup conjunto? Esto reemplazará los datos actuales.')) return;
+    this.cargando = true;
+    try {
+      await Promise.all([
+        this.restaurarDb('postgresql', item.postgresKey),
+        this.restaurarDb('mongodb', item.mongoKey),
+      ]);
+      this.abrirModal('ok', 'Restauración iniciada', 'Se inició la restauración conjunta de PostgreSQL y MongoDB.');
+    } catch (e) {
+      this.abrirModal('error', 'Error', this.msg(e) || 'No se pudo restaurar el backup conjunto.');
+    } finally {
+      this.cargando = false;
+    }
+  }
+
+  private restaurarDb(db: DbKind, key: string): Promise<void> {
     const params = new HttpParams().set('db', db).set('key', key);
-    this.http.post<{ ok: boolean }>(`${API}/restore`, null, { params }).subscribe({
-      next: () => {
-        this.setLoading(db, false);
-        this.abrirModal('ok', 'Restauración completa', 'La base de datos fue restaurada.');
-      },
-      error: (e) => {
-        this.setLoading(db, false);
-        this.abrirModal('error', 'Error', this.msg(e) || 'No se pudo restaurar el backup.');
-      },
+    return new Promise((resolve, reject) => {
+      this.http.post<{ ok: boolean }>(`${API}/restore`, null, { params }).subscribe({
+        next: () => resolve(),
+        error: (e) => reject(e),
+      });
     });
   }
 
-  eliminar(db: DbKind, key: string): void {
-    if (!key) return;
-    if (!confirm('¿Deseas eliminar este backup?')) return;
-    this.setLoading(db, true);
+  async eliminar(item: BackupPairItem): Promise<void> {
+    if (!confirm('¿Deseas eliminar este backup conjunto?')) return;
+    this.cargando = true;
+    try {
+      await Promise.all([this.eliminarDb(item.postgresKey), this.eliminarDb(item.mongoKey)]);
+      await this.refrescarTodo();
+      this.abrirModal('ok', 'Eliminado', 'El backup conjunto fue eliminado.');
+    } catch (e) {
+      this.abrirModal('error', 'Error', this.msg(e) || 'No se pudo eliminar el backup conjunto.');
+      this.cargando = false;
+    }
+  }
+
+  private eliminarDb(key: string): Promise<void> {
     const params = new HttpParams().set('key', key);
-    this.http.delete<{ ok: boolean }>(`${API}/delete`, { params }).subscribe({
-      next: () => {
-        this.setLoading(db, false);
-        void this.cargarLista(db);
-        this.abrirModal('ok', 'Eliminado', 'El backup fue eliminado.');
-      },
-      error: (e) => {
-        this.setLoading(db, false);
-        this.abrirModal('error', 'Error', this.msg(e) || 'No se pudo eliminar el backup.');
-      },
+    return new Promise((resolve, reject) => {
+      this.http.delete<{ ok: boolean }>(`${API}/delete`, { params }).subscribe({
+        next: () => resolve(),
+        error: (e) => reject(e),
+      });
     });
   }
 
@@ -119,13 +142,52 @@ export class AdminRespaldosComponent implements OnInit {
     this.modal = { visible: true, tipo, titulo, mensaje };
   }
 
-  private setLoading(db: DbKind, on: boolean): void {
-    if (db === 'postgresql') this.cargandoPg = on;
-    else this.cargandoMg = on;
-  }
-
   private msg(e: any): string {
     return e?.error?.message || e?.error?.error || e?.message || '';
+  }
+
+  private unirPares(pg: BackupItem[], mg: BackupItem[]): BackupPairItem[] {
+    const mgById = new Map<string, BackupItem>();
+    for (const item of mg) {
+      const id = this.extraerPairId(item.key);
+      if (!id) continue;
+      mgById.set(id, item);
+    }
+    const out: BackupPairItem[] = [];
+    for (const p of pg) {
+      const id = this.extraerPairId(p.key);
+      if (!id) continue;
+      const m = mgById.get(id);
+      if (!m) continue;
+      out.push({
+        pairId: id,
+        postgresKey: p.key,
+        mongoKey: m.key,
+        sizeBytes: Number(p.sizeBytes || 0) + Number(m.sizeBytes || 0),
+        lastModified: this.maxDate(p.lastModified, m.lastModified),
+      });
+    }
+    out.sort((a, b) => this.sortDateDesc(a.lastModified, b.lastModified));
+    return out;
+  }
+
+  private extraerPairId(key: string): string | null {
+    const m = key?.match(/^backup_(postgresql|mongodb)_(\d{8}_\d{4})/i);
+    return m?.[2] ?? null;
+  }
+
+  private maxDate(a: string | null, b: string | null): string | null {
+    if (!a) return b ?? null;
+    if (!b) return a;
+    const da = new Date(a).getTime();
+    const db = new Date(b).getTime();
+    return da >= db ? a : b;
+  }
+
+  private sortDateDesc(a: string | null, b: string | null): number {
+    const ta = a ? new Date(a).getTime() : 0;
+    const tb = b ? new Date(b).getTime() : 0;
+    return tb - ta;
   }
 
   formatBytes(n: number): string {
