@@ -104,8 +104,8 @@
   <div class="rb-modal max-w-sm !p-5 text-center sm:!p-8" (click)="$event.stopPropagation()">
     <div class="rb-modal-icon !mb-6 !text-3xl">
       <img
-        [src]="modal.tipo === 'error' ? '/iconos/error-rojo.png' : '/iconos/correcto-check-verde.png'"
-        [attr.alt]="modal.tipo === 'error' ? 'Error' : 'Éxito'"
+        [src]="modal.tipo === 'error' || modal.tipo === 'confirm' ? '/iconos/error-rojo.png' : '/iconos/correcto-check-verde.png'"
+        [attr.alt]="modal.tipo === 'error' ? 'Error' : modal.tipo === 'confirm' ? 'Confirmar' : 'Éxito'"
         width="48"
         height="48"
         class="h-12 w-12 object-contain"
@@ -117,11 +117,30 @@
       [ngClass]="
         modal.tipo === 'error'
           ? 'font-medium text-danger dark:text-red-200'
+          : modal.tipo === 'confirm'
+            ? 'font-medium text-warning dark:text-amber-300'
           : 'text-neutral-strong dark:text-dark-text-muted'
       "
     >
       {{ modal.mensaje }}
     </p>
+    <div class="flex flex-col justify-center gap-2 sm:flex-row" *ngIf="modal.tipo === 'confirm'; else modalSimple">
+      <button
+        type="button"
+        (click)="cancelarConfirmacion()"
+        class="w-full sm:w-max rb-btn-neutral"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="confirmarModal()"
+        class="w-full sm:w-max rb-btn-secondary"
+      >
+        Confirmar
+      </button>
+    </div>
+    <ng-template #modalSimple>
     <div class="flex justify-center">
       <button
         type="button"
@@ -132,6 +151,7 @@
         Entendido
       </button>
     </div>
+    </ng-template>
   </div>
 </div>
 
