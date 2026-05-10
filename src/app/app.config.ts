@@ -7,6 +7,7 @@ import { ThemeService } from './services/theme.service';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { backendAwakeInterceptor } from './interceptors/backend-awake.interceptor';
 import { frontendErrorInterceptor } from './interceptors/frontend-error.interceptor';
+import { maintenanceInterceptor } from './interceptors/maintenance.interceptor';
 import { GlobalErrorHandlerService } from './services/global-error-handler.service';
 
 function initThemeFactory(theme: ThemeService) {
@@ -19,7 +20,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([backendAwakeInterceptor, frontendErrorInterceptor, authInterceptor])),
+    provideHttpClient(withInterceptors([maintenanceInterceptor, backendAwakeInterceptor, frontendErrorInterceptor, authInterceptor])),
     { provide: ErrorHandler, useClass: GlobalErrorHandlerService },
     {
       provide: APP_INITIALIZER,

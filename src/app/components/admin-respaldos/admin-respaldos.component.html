@@ -222,6 +222,58 @@
   </div>
 </div>
 
+<div *ngIf="restaurandoAhora" class="rb-modal-backdrop z-[95] cursor-wait">
+  <div class="rb-modal max-w-md border-gray-200 dark:border-dark-border">
+    <div class="rb-modal-icon !mb-6 animate-pulse">
+      <img src="/iconos/engranajes.png" alt="" width="48" height="48" class="h-12 w-12 object-contain" />
+    </div>
+    <h3 class="mb-3 text-lg font-semibold text-gray-900 sm:text-xl dark:text-dark-text-strong">
+      Restaurando bases de datos...
+    </h3>
+    <p class="text-sm font-medium text-neutral-strong dark:text-dark-text-muted lg:text-base">
+      El sistema está en modo mantenimiento. Espere a que finalice la restauración.
+    </p>
+  </div>
+</div>
+
+<div *ngIf="modalMantenimiento.visible" class="rb-modal-backdrop z-[90]">
+  <div class="rb-modal max-w-md border-gray-200 dark:border-dark-border">
+    <div class="rb-modal-icon !mb-6">
+      <img src="/iconos/error-rojo.png" alt="" width="48" height="48" class="h-12 w-12 object-contain" />
+    </div>
+    <h3 class="mb-3 text-lg font-semibold text-gray-900 sm:text-xl dark:text-dark-text-strong">
+      Confirmar restauración
+    </h3>
+    <p class="mb-6 text-sm font-medium text-danger dark:text-red-200 lg:text-base">
+      Al confirmar, el sistema entrará en Modo Mantenimiento. Se bloqueará el acceso temporalmente a la aplicación hasta
+      que finalice la restauración. Las órdenes no guardadas se perderán.
+    </p>
+    <label
+      class="mb-6 flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-left dark:border-dark-border dark:bg-slate-900/70"
+    >
+      <input
+        type="checkbox"
+        class="mt-1 h-5 w-5 shrink-0 rounded border-gray-300 text-secondary focus:ring-secondary dark:border-slate-600 dark:bg-slate-900"
+        [(ngModel)]="modalMantenimiento.notify"
+        name="notifyMaintenanceEnd"
+      />
+      <span class="flex flex-col gap-1">
+        <span class="flex items-center gap-2 text-sm font-semibold text-neutral-strong dark:text-dark-text-strong">
+          <img src="/iconos/correo.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+          Notificarme cuando termine el mantenimiento
+        </span>
+        <span class="text-xs text-neutral-strong dark:text-dark-text-muted">
+          Se enviará un correo al administrador cuando finalice la restauración.
+        </span>
+      </span>
+    </label>
+    <div class="flex flex-col justify-center gap-2 sm:flex-row">
+      <button type="button" (click)="cerrarMantenimiento()" class="w-full sm:w-max rb-btn-neutral">Cancelar</button>
+      <button type="button" (click)="confirmarMantenimiento()" class="w-full sm:w-max rb-btn-danger">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <div *ngIf="modal.visible" class="rb-modal-backdrop z-[80]">
   <div class="rb-modal max-w-sm !p-5 text-center sm:!p-8" (click)="$event.stopPropagation()">
     <div class="rb-modal-icon !mb-6 !text-3xl">

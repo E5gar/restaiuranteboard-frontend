@@ -11,6 +11,8 @@ function isPingUrl(url: string): boolean {
 function shouldWakeBackend(error: unknown, reqUrl: string): boolean {
   if (isPingUrl(reqUrl)) return false;
   if (!(error instanceof HttpErrorResponse)) return false;
+  const maint = (error.headers?.get('X-Maintenance') || '').toLowerCase() === 'true';
+  if (maint) return false;
   const s = error.status;
   return s === 0 || s === 502 || s === 503 || s === 504;
 }

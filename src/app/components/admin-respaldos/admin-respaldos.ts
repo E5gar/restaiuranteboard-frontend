@@ -5,6 +5,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { environment } from '@env/environment';
+import { AuthService } from '../../services/auth.service';
 
 const API = environment.apiUrl + '/admin/backups';
 
@@ -48,6 +49,7 @@ interface BackupAutomationDto {
 export class AdminRespaldosComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly auth = inject(AuthService);
   errorMsg = '';
 
   cargando = false;
@@ -56,6 +58,8 @@ export class AdminRespaldosComponent implements OnInit {
   private pendingAction: null | (() => Promise<void>) = null;
 
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '' };
+  modalMantenimiento = { visible: false, notify: true, item: null as BackupPairItem | null };
+  restaurandoAhora = false;
 
   autoEnabled = false;
   autoFrequency: Freq = 'DAILY';
@@ -249,13 +253,42 @@ export class AdminRespaldosComponent implements OnInit {
   }
 
   restaurar(item: BackupPairItem): void {
-    this.abrirConfirmacion(
-      'Restaurar backup',
-      '¿Deseas restaurar este backup conjunto? Esto reemplazará los datos actuales.',
-      async () => {
-        await this.restaurarConfirmado(item);
-      },
-    );
+    this.modalMantenimiento = { visible: true, notify: true, item };
+    this.cdr.detectChanges();
+  }
+
+  cerrarMantenimiento(): void {
+    this.modalMantenimiento = { visible: false, notify: true, item: null };
+    this.cdr.detectChanges();
+  }
+
+  async confirmarMantenimiento(): Promise<void> {
+    if (!this.modalMantenimiento.item || this.cargando) return;
+    const item = this.modalMantenimiento.item;
+    this.modalMantenimiento.visible = false;
+    this.restaurandoAhora = true;
+    this.cdr.detectChanges();
+    try {
+      const s = this.auth.getSession();
+      await new Promise<void>((resolve, reject) => {
+        this.http
+          .post<{ ok: boolean }>(`${API}/restore-pair`, {
+            postgresKey: item.postgresKey,
+            mongoKey: item.mongoKey,
+            notifyWhenDone: this.modalMantenimiento.notify,
+            notifyEmail: typeof s?.email === 'string' ? s.email : undefined,
+          })
+          .subscribe({
+            next: () => resolve(),
+            error: () => reject(),
+          });
+      });
+    } catch (e) {
+      this.restaurandoAhora = false;
+      this.abrirModal('error', 'Error', this.msg(e) || 'No se pudo iniciar el mantenimiento.');
+    } finally {
+      this.cdr.detectChanges();
+    }
   }
 
   private async restaurarConfirmado(item: BackupPairItem): Promise<void> {

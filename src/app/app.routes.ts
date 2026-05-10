@@ -21,6 +21,7 @@ import { InicioRedirectComponent } from './components/inicio-redirect/inicio-red
 import { PresentacionComponent } from './components/presentacion/presentacion';
 import { RetenidoComponent } from './components/retenido/retenido';
 import { MiPerfilComponent } from './components/mi-perfil/mi-perfil';
+import { MantenimientoComponent } from './components/mantenimiento/mantenimiento';
 import { authGuard } from './guards/auth.guard';
 import { guestGuard } from './guards/guest.guard';
 import { adminGuard } from './guards/admin.guard';
@@ -33,6 +34,7 @@ import { cocinaGuard } from './guards/cocina.guard';
 import { repartidorGuard } from './guards/repartidor.guard';
 
 export const routes: Routes = [
+  { path: 'mantenimiento', component: MantenimientoComponent },
   { path: 'retenido', component: RetenidoComponent },
   { path: 'presentacion', component: PresentacionComponent, canActivate: [ipBlockGuard, configRequiredGuard] },
   { path: 'login', component: LoginComponent, canActivate: [ipBlockGuard, configRequiredGuard, guestGuard] },

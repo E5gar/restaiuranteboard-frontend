@@ -7,6 +7,7 @@ import { filter, Subscription } from 'rxjs';
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
 import { AuthService } from './services/auth.service';
 import { WebsocketService } from './services/websocket.service';
+import { MaintenanceService } from './services/maintenance.service';
 
 @Component({
   selector: 'app-root',
@@ -86,6 +87,19 @@ import { WebsocketService } from './services/websocket.service';
         </div>
       </div>
     </div>
+    <div *ngIf="maintenance.active()" class="rb-modal-backdrop z-[110] cursor-wait">
+      <div class="rb-modal max-w-md border-gray-200 dark:border-dark-border">
+        <div class="rb-modal-icon !mb-6 animate-pulse">
+          <img src="/iconos/engranajes.png" alt="" width="48" height="48" class="h-12 w-12 object-contain" />
+        </div>
+        <h3 class="mb-3 text-lg font-semibold text-gray-900 sm:text-xl dark:text-dark-text-strong">
+          {{ maintenance.title() }}
+        </h3>
+        <p class="text-sm font-medium text-neutral-strong dark:text-dark-text-muted lg:text-base">
+          {{ maintenance.message() }}
+        </p>
+      </div>
+    </div>
     <div *ngIf="entradaInvalidaModal" class="rb-modal-backdrop">
       <div class="rb-modal max-w-sm border-gray-200 dark:border-dark-border">
         <div class="rb-modal-icon !mb-6">
@@ -121,6 +135,7 @@ export class App implements OnInit, OnDestroy {
 
   private navSub?: Subscription;
   private wsEmailSub?: Subscription;
+  private wsSystemSub?: Subscription;
 
   constructor(
     private healthService: HealthService,
@@ -128,6 +143,7 @@ export class App implements OnInit, OnDestroy {
     readonly backendStatus: BackendStatusService,
     private authService: AuthService,
     private websocketService: WebsocketService,
+    readonly maintenance: MaintenanceService,
   ) {}
 
   ngOnInit() {
@@ -162,11 +178,23 @@ export class App implements OnInit, OnDestroy {
         return;
       }
     });
+
+    this.wsSystemSub = this.websocketService.subscribeToTopic('/topic/system').subscribe((raw) => {
+      const msg = String(raw || '').trim();
+      if (msg === 'MAINTENANCE_START') {
+        this.maintenance.start();
+      }
+      if (msg === 'MAINTENANCE_END') {
+        this.maintenance.end();
+        window.location.reload();
+      }
+    });
   }
 
   ngOnDestroy() {
     this.navSub?.unsubscribe();
     this.wsEmailSub?.unsubscribe();
+    this.wsSystemSub?.unsubscribe();
     document.removeEventListener('input', this.onDocumentInput, true);
   }
 
