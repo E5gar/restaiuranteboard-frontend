@@ -5,6 +5,8 @@ import { BackendStatusService } from './services/backend-status.service';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
+import { AuthService } from './services/auth.service';
+import { WebsocketService } from './services/websocket.service';
 
 @Component({
   selector: 'app-root',
@@ -62,6 +64,28 @@ import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.com
         </p>
       </div>
     </div>
+    <div *ngIf="emailEnvioModal" class="rb-modal-backdrop z-[90]">
+      <div class="rb-modal max-w-sm border-gray-200 dark:border-dark-border">
+        <div class="rb-modal-icon !mb-6">
+          <img
+            src="/iconos/error-rojo.png"
+            alt=""
+            width="48"
+            height="48"
+            class="h-12 w-12 object-contain"
+          />
+        </div>
+        <h3 class="mb-3 text-lg font-semibold text-gray-900 sm:text-xl dark:text-dark-text-strong">
+          Envío de correo
+        </h3>
+        <p class="mb-8 text-sm font-medium text-danger dark:text-red-200 lg:text-base">
+          {{ emailEnvioMsg }}
+        </p>
+        <div class="flex justify-center">
+          <button type="button" (click)="cerrarEmailEnvio()" class="rb-btn-danger w-full sm:w-max">Entendido</button>
+        </div>
+      </div>
+    </div>
     <div *ngIf="entradaInvalidaModal" class="rb-modal-backdrop">
       <div class="rb-modal max-w-sm border-gray-200 dark:border-dark-border">
         <div class="rb-modal-icon !mb-6">
@@ -86,6 +110,8 @@ import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.com
 export class App implements OnInit, OnDestroy {
   statusData: any = null;
   entradaInvalidaModal = false;
+  emailEnvioModal = false;
+  emailEnvioMsg = '';
 
   hideThemeFab = false;
 
@@ -94,11 +120,14 @@ export class App implements OnInit, OnDestroy {
   private readonly onDocumentInput = (event: Event) => this.validarEntradaGlobal(event);
 
   private navSub?: Subscription;
+  private wsEmailSub?: Subscription;
 
   constructor(
     private healthService: HealthService,
     private router: Router,
     readonly backendStatus: BackendStatusService,
+    private authService: AuthService,
+    private websocketService: WebsocketService,
   ) {}
 
   ngOnInit() {
@@ -119,10 +148,25 @@ export class App implements OnInit, OnDestroy {
         };
       },
     });
+
+    this.wsEmailSub = this.websocketService.subscribeToTopic('/topic/auth/status').subscribe((raw) => {
+      const s = this.authService.getSession();
+      if (!s?.userId) return;
+      try {
+        const o = JSON.parse(raw) as { userId?: string; kind?: string; message?: string };
+        if (o.userId === s.userId && o.kind === 'email_dispatch_failed') {
+          this.emailEnvioModal = true;
+          this.emailEnvioMsg = o.message || 'No ha sido posible enviar el correo.';
+        }
+      } catch {
+        return;
+      }
+    });
   }
 
   ngOnDestroy() {
     this.navSub?.unsubscribe();
+    this.wsEmailSub?.unsubscribe();
     document.removeEventListener('input', this.onDocumentInput, true);
   }
 
@@ -133,6 +177,10 @@ export class App implements OnInit, OnDestroy {
 
   cerrarEntradaInvalida() {
     this.entradaInvalidaModal = false;
+  }
+
+  cerrarEmailEnvio() {
+    this.emailEnvioModal = false;
   }
 
   private validarEntradaGlobal(event: Event) {
