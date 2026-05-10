@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { APP_INITIALIZER, ApplicationConfig, ErrorHandler, provideZoneChangeDetection } from '@angular/core';
 
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
@@ -6,6 +6,8 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ThemeService } from './services/theme.service';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { backendAwakeInterceptor } from './interceptors/backend-awake.interceptor';
+import { frontendErrorInterceptor } from './interceptors/frontend-error.interceptor';
+import { GlobalErrorHandlerService } from './services/global-error-handler.service';
 
 function initThemeFactory(theme: ThemeService) {
   return () => {
@@ -17,7 +19,8 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([backendAwakeInterceptor, authInterceptor])),
+    provideHttpClient(withInterceptors([backendAwakeInterceptor, frontendErrorInterceptor, authInterceptor])),
+    { provide: ErrorHandler, useClass: GlobalErrorHandlerService },
     {
       provide: APP_INITIALIZER,
       useFactory: initThemeFactory,
