@@ -52,6 +52,13 @@ export class MiPerfilComponent implements OnInit {
     this.cargarPerfil();
   }
 
+  volver(): void {
+    const path = this.auth.getPostLoginPath();
+    const queryParams = this.auth.getPostLoginQueryParams();
+    
+    this.router.navigate([path], { queryParams });
+  }
+
   soloNumeros(event: Event, max: number): void {
     this.form.phone = filtrarSoloDigitos(event, max);
   }
