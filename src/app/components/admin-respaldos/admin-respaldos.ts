@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
@@ -23,10 +24,25 @@ interface BackupPairItem {
   lastModified: string | null;
 }
 
+type Freq = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+
+interface BackupAutomationDto {
+  enabled: boolean;
+  frequency: Freq;
+  timeHHmm: string;
+  notifyEmailAfterFinish: boolean;
+  nextBackupSummary: string;
+  lastAttemptStatus: string;
+  lastAttemptAt: string | null;
+  lastWorkflowStatus: string | null;
+  lastWorkflowAt: string | null;
+  lastWorkflowDetail: string | null;
+}
+
 @Component({
   selector: 'app-admin-respaldos',
   standalone: true,
-  imports: [CommonModule, RouterModule, LogoutButtonComponent],
+  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent],
   templateUrl: './admin-respaldos.component.html',
 })
 export class AdminRespaldosComponent implements OnInit {
@@ -35,19 +51,107 @@ export class AdminRespaldosComponent implements OnInit {
   errorMsg = '';
 
   cargando = false;
+  guardandoAuto = false;
   items: BackupPairItem[] = [];
   private pendingAction: null | (() => Promise<void>) = null;
 
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '' };
 
+  autoEnabled = false;
+  autoFrequency: Freq = 'DAILY';
+  autoTime = '03:00';
+  autoNotifyEmail = false;
+  automationView: BackupAutomationDto | null = null;
+
   ngOnInit(): void {
-    void this.refrescarTodo();
+    void Promise.all([this.cargarAutomation(), this.refrescarTodo()]);
+  }
+
+  private async cargarAutomation(): Promise<void> {
+    return new Promise((resolve) => {
+      this.http.get<BackupAutomationDto>(`${API}/automation`).subscribe({
+        next: (row) => {
+          this.automationView = row;
+          this.autoEnabled = !!row.enabled;
+          this.autoFrequency = row.frequency || 'DAILY';
+          this.autoTime = row.timeHHmm || '03:00';
+          this.autoNotifyEmail = !!row.notifyEmailAfterFinish;
+          this.cdr.markForCheck();
+          resolve();
+        },
+        error: () => resolve(),
+      });
+    });
+  }
+
+  async guardarAutomatizacion(): Promise<void> {
+    this.guardandoAuto = true;
+    this.cdr.detectChanges();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        this.http
+          .put<BackupAutomationDto>(`${API}/automation`, {
+            enabled: this.autoEnabled,
+            frequency: this.autoFrequency,
+            timeHHmm: this.autoTime,
+            notifyEmailAfterFinish: this.autoNotifyEmail,
+          })
+          .subscribe({
+            next: (row) => {
+              this.automationView = row;
+              this.autoEnabled = !!row.enabled;
+              this.autoFrequency = row.frequency || 'DAILY';
+              this.autoTime = row.timeHHmm || '03:00';
+              this.autoNotifyEmail = !!row.notifyEmailAfterFinish;
+              resolve();
+            },
+            error: () => reject(),
+          });
+      });
+      this.abrirModal('ok', 'Configuración guardada', 'La política de respaldo automático se actualizó.');
+    } catch {
+      this.abrirModal('error', 'Error', 'No se pudo guardar la configuración automática.');
+    } finally {
+      this.guardandoAuto = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  textoEstadoUltimo(): string {
+    const w = this.automationView?.lastWorkflowStatus;
+    const a = this.automationView?.lastAttemptStatus;
+    const raw = (w && w !== 'NONE' ? w : a) || 'NONE';
+    const u = String(raw).toUpperCase();
+    if (u === 'SUCCESS') return 'Exitoso';
+    if (u === 'FAILURE') return 'Fallido';
+    if (u === 'PENDING') return 'En proceso';
+    if (u === 'CANCELLED' || u === 'CANCELED') return 'Cancelado';
+    return 'Sin datos';
+  }
+
+  iconoEstadoUltimo(): string {
+    const t = this.textoEstadoUltimo();
+    if (t === 'Exitoso') return '/iconos/correcto-check-verde.png';
+    if (t === 'Fallido' || t === 'Cancelado') return '/iconos/error-rojo.png';
+    if (t === 'En proceso') return '/iconos/consulta-informacion-azul.png';
+    return '/iconos/advertencia-amarillo.png';
+  }
+
+  cuandoUltimoIntento(): string {
+    const iso = this.automationView?.lastWorkflowAt || this.automationView?.lastAttemptAt;
+    if (!iso) return '—';
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' });
+    } catch {
+      return iso;
+    }
   }
 
   async refrescarTodo(): Promise<void> {
     this.setCargando(true);
     try {
-      await this.recargarPares();
+      await Promise.all([this.recargarPares(), this.cargarAutomation()]);
     } catch {
       this.abrirModal('error', 'Error', 'No se pudo cargar la lista de respaldos.');
     } finally {
@@ -70,10 +174,7 @@ export class AdminRespaldosComponent implements OnInit {
     this.errorMsg = '';
 
     try {
-      const pgKey = await this.generarDb('postgresql');
-      const mgKey = await this.generarDb('mongodb');
-
-      console.log('Esperando por:', { pgKey, mgKey });
+      const { pgKey, mgKey } = await this.generarPar();
 
       const inicio = Date.now();
       const timeoutMs = 80000;
@@ -101,6 +202,7 @@ export class AdminRespaldosComponent implements OnInit {
 
       if (encontrado) {
         await this.recargarPares();
+        await this.cargarAutomation();
         this.abrirModal(
           'ok',
           'Respaldo exitoso',
@@ -129,17 +231,16 @@ export class AdminRespaldosComponent implements OnInit {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  private async generarDb(db: DbKind): Promise<string> {
-    const params = new HttpParams().set('db', db);
+  private async generarPar(): Promise<{ pgKey: string; mgKey: string }> {
     return new Promise((resolve, reject) => {
       this.http
-        .post<{ ok: boolean; item?: BackupItem }>(`${API}/generate`, null, { params })
+        .post<{ ok: boolean; postgresKey?: string; mongoKey?: string }>(`${API}/generate-pair`, null)
         .subscribe({
           next: (res) => {
-            if (res?.item?.key) {
-              resolve(res.item.key);
+            if (res?.postgresKey && res?.mongoKey) {
+              resolve({ pgKey: res.postgresKey, mgKey: res.mongoKey });
             } else {
-              reject(new Error(`El servidor no devolvió una clave para ${db}`));
+              reject(new Error('Sin claves emparejadas'));
             }
           },
           error: (e) => reject(e),

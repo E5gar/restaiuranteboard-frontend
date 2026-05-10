@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HealthService } from './services/health.service';
+import { BackendStatusService } from './services/backend-status.service';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
@@ -12,6 +13,55 @@ import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.com
   template: `
     <router-outlet></router-outlet>
     <app-theme-toggle *ngIf="!hideThemeFab" />
+    <div
+      *ngIf="backendStatus.isOffline()"
+      class="rb-modal-backdrop z-[100] cursor-wait items-start overflow-y-auto pt-[min(15vh,5rem)] sm:items-center sm:pt-0"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div
+        class="rb-modal mx-auto max-w-md border-gray-200/90 px-6 py-8 sm:px-9 sm:py-9 dark:border-dark-border"
+      >
+        <div class="rb-modal-icon !mb-5 animate-pulse sm:!mb-6">
+          <img
+            src="/iconos/engranajes.png"
+            alt=""
+            width="48"
+            height="48"
+            class="h-11 w-11 object-contain sm:h-12 sm:w-12"
+          />
+        </div>
+        <h3
+          class="mb-3 text-base font-semibold text-gray-900 sm:text-lg md:text-xl dark:text-dark-text-strong"
+        >
+          Estableciendo conexión con el servidor
+        </h3>
+        <p
+          class="mx-auto mb-6 flex max-w-sm flex-col items-center gap-3 text-sm font-medium leading-relaxed text-neutral-strong sm:text-base dark:text-dark-text-muted"
+        >
+          <span class="inline-flex items-center gap-2">
+            <img
+              src="/iconos/consulta-informacion-azul.png"
+              alt=""
+              width="20"
+              height="20"
+              class="h-5 w-5 shrink-0 object-contain"
+            />
+            Conectando...
+          </span>
+          <span class="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 sm:text-sm dark:text-slate-400">
+            <img
+              src="/iconos/destellos-recomendaciones.png"
+              alt=""
+              width="18"
+              height="18"
+              class="h-4 w-4 shrink-0 object-contain opacity-90"
+            />
+            Estamos conectando automáticamente.
+          </span>
+        </p>
+      </div>
+    </div>
     <div *ngIf="entradaInvalidaModal" class="rb-modal-backdrop">
       <div class="rb-modal max-w-sm border-gray-200 dark:border-dark-border">
         <div class="rb-modal-icon !mb-6">
@@ -48,6 +98,7 @@ export class App implements OnInit, OnDestroy {
   constructor(
     private healthService: HealthService,
     private router: Router,
+    readonly backendStatus: BackendStatusService,
   ) {}
 
   ngOnInit() {
