@@ -1206,6 +1206,10 @@
         <span class="text-sm font-medium text-gray-900 dark:text-dark-text-strong">Incluir KPIs</span>
       </label>
       <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 dark:border-dark-border dark:bg-dark-surface">
+        <input type="checkbox" [(ngModel)]="modalExportOpciones.includeCharts" class="h-4 w-4 rounded border-gray-300 text-secondary focus:ring-secondary dark:border-slate-500 dark:bg-slate-900" />
+        <span class="text-sm font-medium text-gray-900 dark:text-dark-text-strong">Incluir gráficos</span>
+      </label>
+      <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 dark:border-dark-border dark:bg-dark-surface">
         <input type="checkbox" [(ngModel)]="modalExportOpciones.includeTables" class="h-4 w-4 rounded border-gray-300 text-secondary focus:ring-secondary dark:border-slate-500 dark:bg-slate-900" />
         <span class="text-sm font-medium text-gray-900 dark:text-dark-text-strong">Incluir tablas</span>
       </label>
