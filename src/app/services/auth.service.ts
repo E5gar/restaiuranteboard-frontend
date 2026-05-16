@@ -99,7 +99,7 @@ export class AuthService {
       case 'REPARTIDOR':
         return '/entregas';
       case 'CLIENTE':
-        return '/menu';
+        return null;
       default:
         return null;
     }
