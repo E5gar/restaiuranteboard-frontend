@@ -105,7 +105,7 @@
               </span>
               {{
                 descargandoDataset === slot.slotNumber
-                  ? 'Preparando descarga...'
+                  ? 'Generando dataset...'
                   : 'Descargar dataset de entrenamiento'
               }}
             </button>
@@ -275,6 +275,71 @@
           </article>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="modalDataset.visible" class="rb-modal-backdrop z-[85]">
+  <div class="rb-modal max-w-md !p-5 text-center sm:!p-8" (click)="$event.stopPropagation()">
+    <div class="rb-modal-icon !mb-6 !text-3xl">
+      <img
+        [src]="
+          modalDataset.fase === 'listo'
+            ? '/iconos/correcto-check-verde.png'
+            : modalDataset.fase === 'error'
+              ? '/iconos/error-rojo.png'
+              : '/iconos/consulta-informacion-azul.png'
+        "
+        alt=""
+        width="48"
+        height="48"
+        class="h-12 w-12 object-contain"
+      />
+    </div>
+    <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">
+      {{
+        modalDataset.fase === 'listo'
+          ? 'Dataset generado'
+          : modalDataset.fase === 'error'
+            ? 'Error en dataset'
+            : 'Generando dataset'
+      }}
+    </h3>
+    <p
+      class="mb-2 text-sm lg:text-base"
+      [ngClass]="
+        modalDataset.fase === 'error'
+          ? 'font-medium text-danger dark:text-red-200'
+          : 'text-neutral-strong dark:text-dark-text-muted'
+      "
+    >
+      {{ modalDataset.mensaje }}
+    </p>
+    <p class="mb-6 text-xs text-neutral-muted dark:text-dark-text-muted">
+      Slot {{ modalDataset.slot }} · {{ modalDataset.fileName }}
+    </p>
+    <div class="flex flex-col gap-3 sm:flex-row sm:justify-center" *ngIf="modalDataset.fase === 'listo'">
+      <a
+        [href]="modalDataset.downloadUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-0 bg-secondary px-4 py-3 text-sm font-semibold text-white transition hover:opacity-95 dark:bg-blue-600 sm:w-max"
+      >
+        <span class="rb-logo-chip !p-1">
+          <img src="/iconos/consulta-informacion-azul.png" alt="" width="18" height="18" class="h-5 w-5 object-contain" />
+        </span>
+        Haz clic aquí para descargar
+      </a>
+    </div>
+    <div class="flex justify-center">
+      <button
+        type="button"
+        (click)="cerrarModalDataset()"
+        class="w-full sm:w-max"
+        [ngClass]="modalDataset.fase === 'error' ? 'rb-btn-danger' : 'rb-btn-secondary'"
+      >
+        {{ modalDataset.fase === 'pendiente' ? 'Seguir en el panel' : 'Entendido' }}
+      </button>
     </div>
   </div>
 </div>

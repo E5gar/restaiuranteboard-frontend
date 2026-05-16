@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
-import { environment } from '@env/environment'; 
+import { WebsocketService } from '../../services/websocket.service';
+import { environment } from '@env/environment';
 
 type SlotEstado = 'VACIO' | 'CARGANDO' | 'ACTIVO';
 
@@ -30,8 +32,9 @@ interface IaSlot {
   imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent],
   templateUrl: './admin-modelos-ia.component.html',
 })
-export class AdminModelosIaComponent implements OnInit {
+export class AdminModelosIaComponent implements OnInit, OnDestroy {
   private readonly apiIa = environment.apiUrl + '/ia-modelos';
+  private wsDatasetSub?: Subscription;
 
   cargandoIa = false;
   guardandoIa = false;
@@ -48,11 +51,29 @@ export class AdminModelosIaComponent implements OnInit {
   archivoYScalerSlot3: File | null = null;
   archivoMetaSlot3: File | null = null;
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '' };
+  modalDataset = {
+    visible: false,
+    fase: 'pendiente' as 'pendiente' | 'listo' | 'error',
+    slot: 0,
+    fileName: '',
+    downloadUrl: '',
+    mensaje: '',
+  };
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private websocketService: WebsocketService,
+  ) {}
 
   ngOnInit(): void {
     this.cargarConfiguracionIa();
+    this.wsDatasetSub = this.websocketService
+      .subscribeToTopic('/topic/admin/dataset')
+      .subscribe((raw) => this.onDatasetWs(raw));
+  }
+
+  ngOnDestroy(): void {
+    this.wsDatasetSub?.unsubscribe();
   }
 
   descargarDataset(slotNumber: number) {
@@ -60,26 +81,75 @@ export class AdminModelosIaComponent implements OnInit {
       return;
     }
     this.descargandoDataset = slotNumber;
-    const nombre = `dataset_modelo_${String(slotNumber).padStart(2, '0')}.zip`;
-    this.http.get(`${this.apiIa}/dataset/${slotNumber}`, { responseType: 'blob' }).subscribe({
-      next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = nombre;
-        anchor.click();
-        URL.revokeObjectURL(url);
-        this.descargandoDataset = null;
+    this.http.post<{ message?: string; fileName?: string }>(`${this.apiIa}/dataset/${slotNumber}/solicitar`, {}).subscribe({
+      next: (resp) => {
+        const fileName =
+          resp?.fileName || `dataset_modelo_${String(slotNumber).padStart(2, '0')}.zip`;
+        this.modalDataset = {
+          visible: true,
+          fase: 'pendiente',
+          slot: slotNumber,
+          fileName,
+          downloadUrl: '',
+          mensaje:
+            resp?.message ||
+            'Generando dataset... Te avisaremos cuando esté listo.',
+        };
       },
       error: (err) => {
         this.descargandoDataset = null;
-        const msg =
-          err?.error instanceof Blob
-            ? 'No se pudo generar el dataset de entrenamiento.'
-            : err?.error?.message || 'No se pudo generar el dataset de entrenamiento.';
-        this.abrirModal('error', 'Dataset', msg);
+        this.abrirModal(
+          'error',
+          'Dataset',
+          err?.error?.message || 'No se pudo iniciar la generación del dataset.',
+        );
       },
     });
+  }
+
+  cerrarModalDataset() {
+    this.modalDataset.visible = false;
+  }
+
+  private onDatasetWs(raw: string) {
+    try {
+      const o = JSON.parse(raw) as {
+        kind?: string;
+        slot?: number;
+        fileName?: string;
+        downloadUrl?: string;
+        message?: string;
+      };
+      const slot = Number(o.slot || 0);
+      if (!slot) {
+        return;
+      }
+      if (o.kind === 'dataset_ready' && o.downloadUrl) {
+        this.descargandoDataset = null;
+        this.modalDataset = {
+          visible: true,
+          fase: 'listo',
+          slot,
+          fileName: o.fileName || `dataset_modelo_${String(slot).padStart(2, '0')}.zip`,
+          downloadUrl: o.downloadUrl,
+          mensaje: 'El dataset está listo para descargar.',
+        };
+        return;
+      }
+      if (o.kind === 'dataset_failed') {
+        this.descargandoDataset = null;
+        this.modalDataset = {
+          visible: true,
+          fase: 'error',
+          slot,
+          fileName: o.fileName || `dataset_modelo_${String(slot).padStart(2, '0')}.zip`,
+          downloadUrl: '',
+          mensaje: o.message || 'No se pudo generar el dataset.',
+        };
+      }
+    } catch {
+      return;
+    }
   }
 
   cargarConfiguracionIa() {
