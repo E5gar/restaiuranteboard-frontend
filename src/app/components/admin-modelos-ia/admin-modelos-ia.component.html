@@ -87,7 +87,29 @@
               </div>
             </div>
 
-            
+            <button
+              *ngIf="slot.slotNumber === 1 || slot.slotNumber === 2 || slot.slotNumber === 3"
+              type="button"
+              (click)="descargarDataset(slot.slotNumber)"
+              [disabled]="descargandoDataset === slot.slotNumber || guardandoIa || cargandoIa"
+              class="mb-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-border dark:bg-slate-900 dark:text-dark-text-strong dark:shadow-none dark:hover:bg-slate-800"
+            >
+              <span class="rb-logo-chip !p-1">
+                <img
+                  src="/iconos/consulta-informacion-azul.png"
+                  alt=""
+                  width="18"
+                  height="18"
+                  class="h-5 w-5 object-contain"
+                />
+              </span>
+              {{
+                descargandoDataset === slot.slotNumber
+                  ? 'Preparando descarga...'
+                  : 'Descargar dataset de entrenamiento'
+              }}
+            </button>
+
             <p *ngIf="slot.slotNumber === 2" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
               Rules:
               <strong class="text-gray-800 dark:text-slate-200">{{ slot.rulesFileName || 'Sin archivo' }}</strong>

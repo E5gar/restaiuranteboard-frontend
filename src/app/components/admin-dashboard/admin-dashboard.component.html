@@ -23,7 +23,6 @@
             <app-logout-button variant="on-dark" />
           </div>
         </div>
-
         <div class="-mx-1 flex gap-1 overflow-x-auto border-b border-white/20 px-1 pb-0 text-xs sm:mx-0 sm:px-0 sm:text-sm">
           <button
             type="button"
@@ -41,129 +40,241 @@
           </button>
         </div>
       </div>
-
       <div class="space-y-6 p-4 sm:space-y-8 sm:p-6 lg:p-8">
-        <div *ngIf="pestana !== 'inventario_prediccion'" class="rb-section-muted flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+        <div *ngIf="pestana !== 'inventario_prediccion'" class="rb-section-muted space-y-4">
+          <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
           <div class="min-w-[140px] flex-1">
-            <label class="rb-label !normal-case">Desde</label>
-            <input type="date" [(ngModel)]="fromDate" class="rb-input rb-focus-secondary" name="df" />
+            <label class="rb-label !normal-case flex items-center gap-2">
+              <span class="rb-logo-chip !p-1">
+                <img src="/iconos/documento.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+              </span>
+              Desde
+            </label>
+            <input
+                type="date"
+                [(ngModel)]="fromDate"
+                [min]="fechaMinimaDesdeInput"
+                [max]="fechaHoyInput"
+                (change)="onCambioFechaDesde()"
+                [disabled]="cargandoRangoFechas"
+                class="rb-input rb-focus-secondary"
+                name="df"
+              />
           </div>
           <div class="min-w-[140px] flex-1">
-            <label class="rb-label !normal-case">Hasta</label>
-            <input type="date" [(ngModel)]="toDate" class="rb-input rb-focus-secondary" name="dt" />
+            <label class="rb-label !normal-case flex items-center gap-2">
+              <span class="rb-logo-chip !p-1">
+                <img src="/iconos/documento.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+              </span>
+              Hasta
+            </label>
+            <input
+                type="date"
+                [(ngModel)]="toDate"
+                [min]="fromDate || fechaMinimaDesdeInput"
+                [max]="fechaHoyInput"
+                (change)="onCambioFechaHasta()"
+                [disabled]="cargandoRangoFechas"
+                class="rb-input rb-focus-secondary"
+                name="dt"
+              />
           </div>
-          <button
-            type="button"
-            (click)="aplicarFiltros()"
-            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
-          >
-            Aplicar rango
-          </button>
+            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
+              <button
+                type="button"
+                (click)="desdeElInicio()"
+                [disabled]="cargandoRangoFechas || !fechaMinimaTab || desdeElInicioActivo"
+                class="rb-btn-secondary inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text-muted dark:hover:bg-slate-800 sm:w-max"
+              >
+                <img src="/iconos/consulta-informacion-azul.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                Desde el Inicio
+              </button>
+              <button
+                type="button"
+                (click)="aplicarFiltros()"
+                [disabled]="cargandoRangoFechas"
+                class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
+              >
+                <img src="/iconos/lupa.png" alt="" width="18" height="18" class="h-4 w-4 object-contain opacity-90" />
+                Aplicar rango
+              </button>
+            </div>
+          </div>
+          <p *ngIf="fechaMinimaTab" class="text-xs text-neutral-strong dark:text-dark-text-muted">
+            Datos disponibles desde {{ fechaMinimaTab }} hasta {{ fechaHoyInput }}.
+          </p>
         </div>
-
         <p *ngIf="errorMsg" class="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-950/40 dark:text-red-200">
           {{ errorMsg }}
         </p>
-
         <div *ngIf="cargando" class="text-center text-sm text-neutral-strong dark:text-dark-text-muted">Cargando…</div>
-
         <ng-container *ngIf="!cargando && pestana === 'ventas'">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-4 lg:grid-cols-4">
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Total ventas</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatSol(ventas?.['kpis']?.['totalVentas']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(ventas, 'totalVentas', 'numPedidos'))">{{ kpiSol(ventas, 'totalVentas', 'numPedidos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">N.º pedidos</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(ventas?.['kpis']?.['numPedidos']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(ventas, 'numPedidos', 'numPedidos'))">{{ kpiNum(ventas, 'numPedidos', 'numPedidos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Ticket promedio</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatSol(ventas?.['kpis']?.['ticketPromedio']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(ventas, 'ticketPromedio', 'numPedidos'))">{{ kpiSol(ventas, 'ticketPromedio', 'numPedidos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Tasa cancelación</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(ventas?.['kpis']?.['tasaCancelacionPct']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(ventas, 'tasaCancelacionPct', 'numPedidos'))">{{ kpiPct(ventas, 'tasaCancelacionPct', 'numPedidos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Conversión entrega</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(ventas?.['kpis']?.['conversionPct']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(ventas, 'conversionPct', 'numPedidos'))">{{ kpiPct(ventas, 'conversionPct', 'numPedidos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Pedidos hoy</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(ventas?.['kpis']?.['pedidosHoy']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(ventas, 'pedidosHoy', 'numPedidos'))">{{ kpiNum(ventas, 'pedidosHoy', 'numPedidos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Ingreso hoy</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatSol(ventas?.['kpis']?.['ingresoHoy']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(ventas, 'ingresoHoy', 'numPedidos'))">{{ kpiSol(ventas, 'ingresoHoy', 'numPedidos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Pedidos en curso</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(ventas?.['kpis']?.['pedidosEnCurso']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(ventas, 'pedidosEnCurso', 'numPedidos'))">{{ kpiNum(ventas, 'pedidosEnCurso', 'numPedidos') }}</p>
             </div>
           </div>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div class="rb-section-muted space-y-5">
             <div>
-              <label class="rb-label !normal-case">Estado</label>
-              <input
-                class="rb-input rb-focus-secondary"
-                [(ngModel)]="filtroEstado"
-                name="st"
-                placeholder="Ej. ENTREGADO"
-              />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/plato.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Estado del pedido
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroEstadosPedido"
+                  (click)="seleccionarFiltroEstado(o.value)"
+                  [ngClass]="filtroChipClass(filtroEstado === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
             <div>
-              <label class="rb-label !normal-case">Momento del día</label>
-              <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroMomento" name="md" placeholder="MAÑANA" />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/consulta-informacion-azul.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Momento del día
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroMomentosDia"
+                  (click)="seleccionarFiltroMomento(o.value)"
+                  [ngClass]="filtroChipClass(filtroMomento === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
             <div>
-              <label class="rb-label !normal-case">Día semana (orden)</label>
-              <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroDiaSemana" name="dw" placeholder="LUNES" />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/categoria-entrada.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Día de la semana
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroDiasSemanaOpc"
+                  (click)="seleccionarFiltroDiaSemana(o.value)"
+                  [ngClass]="filtroChipClass(filtroDiaSemana === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
             <div>
-              <label class="rb-label !normal-case">Clima</label>
-              <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroClima" name="wc" placeholder="SOLEADO" />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/advertencia-amarillo.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Condición climática
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroClimaOpc"
+                  (click)="seleccionarFiltroClima(o.value)"
+                  [ngClass]="filtroChipClass(filtroClima === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
           </div>
-          <button
-            type="button"
-            (click)="aplicarFiltros()"
-            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
-          >
-            Aplicar filtros de ventas
-          </button>
-
           <div class="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Ventas por día</h3>
-              <div class="relative h-64 w-full"><canvas id="vx-line-dia"></canvas></div>
+              <div class="relative h-64 w-full"><canvas id="vx-line-dia"></canvas>
+                <p *ngIf="sinDatosChart('vx-line-dia')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Pedidos por estado</h3>
-              <div class="relative mx-auto h-64 max-w-md"><canvas id="vx-donut-estado"></canvas></div>
+              <div class="relative mx-auto h-64 max-w-md"><canvas id="vx-donut-estado"></canvas>
+                <p *ngIf="sinDatosChart('vx-donut-estado')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Ingresos por hora</h3>
-              <div class="relative h-64 w-full"><canvas id="vx-bar-hora"></canvas></div>
+              <div class="relative h-64 w-full"><canvas id="vx-bar-hora"></canvas>
+                <p *ngIf="sinDatosChart('vx-bar-hora')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Pedidos por día de la semana</h3>
-              <div class="relative h-64 w-full"><canvas id="vx-bar-dow"></canvas></div>
+              <div class="relative h-64 w-full"><canvas id="vx-bar-dow"></canvas>
+                <p *ngIf="sinDatosChart('vx-bar-dow')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Evolución ticket promedio</h3>
-              <div class="relative h-64 w-full"><canvas id="vx-line-ticket"></canvas></div>
+              <div class="relative h-64 w-full"><canvas id="vx-line-ticket"></canvas>
+                <p *ngIf="sinDatosChart('vx-line-ticket')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Temperatura vs monto</h3>
-              <div class="relative h-64 w-full"><canvas id="vx-scatter-clima"></canvas></div>
+              <div class="relative h-64 w-full"><canvas id="vx-scatter-clima"></canvas>
+                <p *ngIf="sinDatosChart('vx-scatter-clima')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
           </div>
-
-          <div class="rb-section-muted overflow-x-auto">
+          <section class="rb-section-muted overflow-x-auto">
             <h3 class="rb-heading-accent mb-4 text-base">Mapa hora × día (intensidad ventas S/)</h3>
-            <table class="w-full min-w-[560px] border-collapse text-center text-xs text-gray-900 sm:text-sm dark:text-slate-100">
+            <p *ngIf="heatmapVentasSinDatos()" class="py-8 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+            <table *ngIf="!heatmapVentasSinDatos()" class="w-full min-w-[560px] border-collapse text-center text-xs text-gray-900 sm:text-sm dark:text-slate-100">
               <thead>
                 <tr>
                   <th class="border border-gray-200 p-1 dark:border-dark-border"></th>
@@ -188,216 +299,359 @@
                 </tr>
               </tbody>
             </table>
-          </div>
+          </section>
         </ng-container>
-
         <ng-container *ngIf="!cargando && pestana === 'inventario'">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Stock bajo</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(inventario?.['kpis']?.['insumosStockBajo']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(inventario, 'insumosStockBajo'))">{{ kpiNum(inventario, 'insumosStockBajo') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Valor inventario</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatSol(inventario?.['kpis']?.['valorTotalInventario']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(inventario, 'valorTotalInventario'))">{{ kpiSol(inventario, 'valorTotalInventario') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Costo MP salida</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatSol(inventario?.['kpis']?.['costoMateriaConsumida']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(inventario, 'costoMateriaConsumida'))">{{ kpiSol(inventario, 'costoMateriaConsumida') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Abastecimiento período</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatSol(inventario?.['kpis']?.['totalAbastecidoPeriodo']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(inventario, 'totalAbastecidoPeriodo'))">{{ kpiSol(inventario, 'totalAbastecidoPeriodo') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Sin movimiento reciente</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(inventario?.['kpis']?.['insumosSinMovimiento']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(inventario, 'insumosSinMovimiento'))">{{ kpiNum(inventario, 'insumosSinMovimiento') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Rotación</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(inventario?.['kpis']?.['rotacionInventario']) }}×</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(inventario, 'rotacionInventario'))">{{ kpiNum(inventario, 'rotacionInventario') }}{{ kpiSinDatos(inventario, 'rotacionInventario') ? '' : '×' }}</p>
             </div>
           </div>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <section class="rb-section-muted space-y-5">
             <div>
-              <label class="rb-label !normal-case">Categoría insumo</label>
-              <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroCatInsumo" name="ci" />
-            </div>
-            <div>
-              <label class="rb-label !normal-case">Tipo movimiento</label>
-              <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroMovTipo" name="tm" placeholder="SALIDA" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="rb-label !normal-case">Umbral stock</label>
-              <input type="number" class="rb-input rb-focus-secondary" [(ngModel)]="umbralStock" name="um" />
-              <label class="flex items-center gap-2 text-sm">
-                <input type="checkbox" [(ngModel)]="soloStockBajo" name="ssb" /> Solo stock bajo
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/categoria-verduras.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Categoría insumo
               </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of categoriasInsumoDash"
+                  (click)="seleccionarFiltroCatInsumo(o.value)"
+                  [ngClass]="filtroChipClass(filtroCatInsumo === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
-          </div>
-          <button
-            type="button"
-            (click)="aplicarFiltros()"
-            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
-          >
-            Aplicar filtros inventario
-          </button>
-
+            <div>
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/camion-abastecer-ingrediente.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Tipo movimiento
+              </label>
+              <span class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroTipoMovOpc"
+                  (click)="seleccionarFiltroMovTipo(o.value)"
+                  [ngClass]="filtroChipClass(filtroMovTipo === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </span>
+            </div>
+            <span>
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/advertencia-amarillo.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Umbral stock
+              </label>
+              <span class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of umbralStockOpc"
+                  (click)="seleccionarUmbralStock(o.value)"
+                  [ngClass]="filtroChipClass(umbralStockActivo(o.value))"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </span>
+            </span>
+            <span>
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/consulta-informacion-azul.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Vista de stock
+              </label>
+              <span class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroStockBajoOpc"
+                  (click)="seleccionarStockBajo(o.value)"
+                  [ngClass]="filtroChipClass(stockBajoActivo(o.value))"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </span>
+            </span>
+          </section>
           <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Stock vs umbral (prioridad bajo)</h3>
-              <div class="relative h-72 w-full"><canvas id="ix-bar-stock"></canvas></div>
+              <div class="relative h-72 w-full"><canvas id="ix-bar-stock"></canvas>
+                <p *ngIf="sinDatosChart('ix-bar-stock')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Consumo por categoría</h3>
-              <div class="relative mx-auto h-72 max-w-md"><canvas id="ix-donut-cat"></canvas></div>
+              <div class="relative mx-auto h-72 max-w-md"><canvas id="ix-donut-cat"></canvas>
+                <p *ngIf="sinDatosChart('ix-donut-cat')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Abastecimiento por semana</h3>
-              <div class="relative h-64 w-full"><canvas id="ix-line-abast"></canvas></div>
+              <div class="relative h-64 w-full"><canvas id="ix-line-abast"></canvas>
+                <p *ngIf="sinDatosChart('ix-line-abast')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Margen bruto por producto (receta)</h3>
-              <div class="relative h-72 w-full"><canvas id="ix-bar-margen"></canvas></div>
+              <div class="relative h-72 w-full"><canvas id="ix-bar-margen"></canvas>
+                <p *ngIf="sinDatosChart('ix-bar-margen')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
           </div>
         </ng-container>
-
         <ng-container *ngIf="!cargando && pestana === 'productos'">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Productos activos</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(productos?.['kpis']?.['productosActivos']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(productos, 'productosActivos', 'productosActivos'))">{{ kpiNum(productos, 'productosActivos', 'productosActivos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Más vendido</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ productos?.['kpis']?.['productoMasVendido'] }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(productos, 'productoMasVendido', 'productosActivos', 'text'))">{{ kpiTextoProducto('productoMasVendido') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Más rentable</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ productos?.['kpis']?.['productoMasRentable'] }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(productos, 'productoMasRentable', 'productosActivos', 'text'))">{{ kpiTextoProducto('productoMasRentable') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Calificación media</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(productos?.['kpis']?.['calificacionPromedio']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(productos, 'calificacionPromedio', 'productosActivos'))">{{ kpiNum(productos, 'calificacionPromedio', 'productosActivos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Categoría líder</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ productos?.['kpis']?.['categoriaLiderVentas'] }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(productos, 'categoriaLiderVentas', 'productosActivos', 'text'))">{{ kpiTextoProducto('categoriaLiderVentas') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Pedidos calificados</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(productos?.['kpis']?.['tasaPedidosCalificadosPct']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(productos, 'tasaPedidosCalificadosPct', 'productosActivos'))">{{ kpiPct(productos, 'tasaPedidosCalificadosPct', 'productosActivos') }}</p>
             </div>
           </div>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <section class="rb-section-muted space-y-5">
             <div>
-              <label class="rb-label !normal-case">Categoría</label>
-              <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroCatProducto" name="fcp" />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/categoria-plato-principal.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Categoría
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of categoriasProductoDash"
+                  (click)="seleccionarFiltroCatProducto(o.value)"
+                  [ngClass]="filtroChipClass(filtroCatProducto === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
             <div>
-              <label class="rb-label !normal-case">Estrellas mín.</label>
-              <input type="number" class="rb-input rb-focus-secondary" [(ngModel)]="filtroEstrellasMin" name="esm" />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/like-pulgar.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Estrellas mínimas
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroEstrellasOpc"
+                  (click)="seleccionarFiltroEstrellas(o.value)"
+                  [ngClass]="filtroChipClass(estrellasFiltroActivo(o.value))"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
             <div>
-              <label class="rb-label !normal-case">Precio mín.</label>
-              <input type="number" class="rb-input rb-focus-secondary" [(ngModel)]="precioMin" name="pmin" />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/billetes-soles.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Rango de precio
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroRangoPrecioOpc"
+                  (click)="seleccionarFiltroRangoPrecio(o.value)"
+                  [ngClass]="filtroChipClass(filtroRangoPrecio === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
-            <div>
-              <label class="rb-label !normal-case">Precio máx.</label>
-              <input type="number" class="rb-input rb-focus-secondary" [(ngModel)]="precioMax" name="pmax" />
-            </div>
-          </div>
-          <button
-            type="button"
-            (click)="aplicarFiltros()"
-            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
-          >
-            Aplicar filtros productos
-          </button>
-
+          </section>
           <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Top productos vendidos</h3>
-              <div class="relative h-80 w-full"><canvas id="px-bar-top"></canvas></div>
+              <div class="relative h-80 w-full"><canvas id="px-bar-top"></canvas>
+                <p *ngIf="sinDatosChart('px-bar-top')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Margen estimado por producto</h3>
-              <div class="relative h-80 w-full"><canvas id="px-bar-margen"></canvas></div>
+              <div class="relative h-80 w-full"><canvas id="px-bar-margen"></canvas>
+                <p *ngIf="sinDatosChart('px-bar-margen')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Ingresos por categoría</h3>
-              <div class="relative mx-auto h-72 max-w-md"><canvas id="px-donut-ing"></canvas></div>
+              <div class="relative mx-auto h-72 max-w-md"><canvas id="px-donut-ing"></canvas>
+                <p *ngIf="sinDatosChart('px-donut-ing')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Distribución de estrellas</h3>
-              <div class="relative h-72 w-full"><canvas id="px-bar-stars"></canvas></div>
+              <div class="relative h-72 w-full"><canvas id="px-bar-stars"></canvas>
+                <p *ngIf="sinDatosChart('px-bar-stars')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
           </div>
         </ng-container>
-
         <ng-container *ngIf="!cargando && pestana === 'clientes'">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Total clientes</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(clientes?.['kpis']?.['totalClientes']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(clientes, 'totalClientes', 'totalClientes'))">{{ kpiNum(clientes, 'totalClientes', 'totalClientes') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Nuevos en período</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(clientes?.['kpis']?.['clientesNuevosPeriodo']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(clientes, 'clientesNuevosPeriodo', 'totalClientes'))">{{ kpiNum(clientes, 'clientesNuevosPeriodo', 'totalClientes') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Recurrentes</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(clientes?.['kpis']?.['clientesRecurrentes']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(clientes, 'clientesRecurrentes', 'totalClientes'))">{{ kpiNum(clientes, 'clientesRecurrentes', 'totalClientes') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Tasa recurrencia</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(clientes?.['kpis']?.['tasaRecurrenciaPct']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(clientes, 'tasaRecurrenciaPct', 'totalClientes'))">{{ kpiPct(clientes, 'tasaRecurrenciaPct', 'totalClientes') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Calificación media</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(clientes?.['kpis']?.['calificacionPromedioGeneral']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(clientes, 'calificacionPromedioGeneral', 'totalClientes'))">{{ kpiNum(clientes, 'calificacionPromedioGeneral', 'totalClientes') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Pedidos / cliente</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(clientes?.['kpis']?.['pedidosPromedioPorCliente']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(clientes, 'pedidosPromedioPorCliente', 'totalClientes'))">{{ kpiNum(clientes, 'pedidosPromedioPorCliente', 'totalClientes') }}</p>
             </div>
           </div>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div>
-              <label class="rb-label !normal-case">Registro desde</label>
-              <input type="date" class="rb-input rb-focus-secondary" [(ngModel)]="regDesde" name="rd" />
+          <section class="rb-section-muted space-y-5">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label class="rb-label !normal-case flex items-center gap-2">
+                  <span class="rb-logo-chip !p-1">
+                    <img src="/iconos/documento.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                  </span>
+                  Registro desde
+                </label>
+                <input type="date" class="rb-input rb-focus-secondary" [(ngModel)]="regDesde" name="rd" (change)="aplicarFiltros()" />
+              </div>
+              <div>
+                <label class="rb-label !normal-case flex items-center gap-2">
+                  <span class="rb-logo-chip !p-1">
+                    <img src="/iconos/documento.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                  </span>
+                  Registro hasta
+                </label>
+                <input type="date" class="rb-input rb-focus-secondary" [(ngModel)]="regHasta" name="rh" (change)="aplicarFiltros()" />
+              </div>
             </div>
             <div>
-              <label class="rb-label !normal-case">Registro hasta</label>
-              <input type="date" class="rb-input rb-focus-secondary" [(ngModel)]="regHasta" name="rh" />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/usuarios.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Clientes en ranking
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroRecurrentesOpc"
+                  (click)="seleccionarRecurrentes(o.value)"
+                  [ngClass]="filtroChipClass(recurrentesActivo(o.value))"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
-            <label class="mt-6 flex items-center gap-2 text-sm md:mt-8">
-              <input type="checkbox" [(ngModel)]="soloRecurrentes" name="sr" /> Solo recurrentes en ranking
-            </label>
-          </div>
-          <button
-            type="button"
-            (click)="aplicarFiltros()"
-            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
-          >
-            Aplicar filtros clientes
-          </button>
-
+          </section>
           <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Distribución de estrellas</h3>
-              <div class="relative h-72 w-full"><canvas id="cx-bar-stars"></canvas></div>
+              <div class="relative h-72 w-full"><canvas id="cx-bar-stars"></canvas>
+                <p *ngIf="sinDatosChart('cx-bar-stars')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Frecuencia de pedidos por cliente</h3>
-              <div class="relative h-72 w-full"><canvas id="cx-bar-freq"></canvas></div>
+              <div class="relative h-72 w-full"><canvas id="cx-bar-freq"></canvas>
+                <p *ngIf="sinDatosChart('cx-bar-freq')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
           </div>
-
           <div class="rb-section-muted overflow-x-auto">
             <h3 class="rb-heading-accent mb-4 text-base">Top clientes por gasto</h3>
             <table class="w-full min-w-[520px] text-left text-sm text-gray-900 dark:text-slate-100">
@@ -409,6 +663,10 @@
                 </tr>
               </thead>
               <tbody>
+              <tr *ngIf="tablaSinDatos(clientes?.['topClientesGasto'])">
+                <td colspan="99" class="py-6 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</td>
+              </tr>
+
                 <tr
                   *ngFor="let r of clientes?.['topClientesGasto'] || []"
                   class="border-b border-gray-100 dark:border-slate-700/80"
@@ -421,108 +679,143 @@
             </table>
           </div>
         </ng-container>
-
         <ng-container *ngIf="!cargando && pestana === 'operacion'">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Validación (cancelaciones)</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(operacion?.['kpis']?.['tiempoPromedioValidacionMin']) }} min</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(operacion, 'tiempoPromedioValidacionMin'))">{{ kpiNum(operacion, 'tiempoPromedioValidacionMin') }}{{ kpiSinDatos(operacion, 'tiempoPromedioValidacionMin') ? '' : ' min' }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Cocina (aprox.)</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(operacion?.['kpis']?.['tiempoPromedioCocinaMin']) }} min</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(operacion, 'tiempoPromedioCocinaMin'))">{{ kpiNum(operacion, 'tiempoPromedioCocinaMin') }}{{ kpiSinDatos(operacion, 'tiempoPromedioCocinaMin') ? '' : ' min' }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Entrega</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(operacion?.['kpis']?.['tiempoPromedioEntregaMin']) }} min</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(operacion, 'tiempoPromedioEntregaMin'))">{{ kpiNum(operacion, 'tiempoPromedioEntregaMin') }}{{ kpiSinDatos(operacion, 'tiempoPromedioEntregaMin') ? '' : ' min' }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Superaron validación hoy</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(operacion?.['kpis']?.['pedidosSuperaronValidacionHoy']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(operacion, 'pedidosSuperaronValidacionHoy'))">{{ kpiNum(operacion, 'pedidosSuperaronValidacionHoy') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">En cocina ahora</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(operacion?.['kpis']?.['pedidosEnCocinaAhora']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(operacion, 'pedidosEnCocinaAhora'))">{{ kpiNum(operacion, 'pedidosEnCocinaAhora') }}</p>
             </div>
           </div>
-
           <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Histograma tiempos de entrega (min)</h3>
-              <div class="relative h-64 w-full"><canvas id="ox-bar-hist"></canvas></div>
+              <div class="relative h-64 w-full"><canvas id="ox-bar-hist"></canvas>
+                <p *ngIf="sinDatosChart('ox-bar-hist')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Entregas por repartidor</h3>
-              <div class="relative h-64 w-full"><canvas id="ox-bar-rep"></canvas></div>
+              <div class="relative h-64 w-full"><canvas id="ox-bar-rep"></canvas>
+                <p *ngIf="sinDatosChart('ox-bar-rep')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted xl:col-span-2">
               <h3 class="rb-heading-accent mb-4 text-base">Cajero: validación vs cancelación</h3>
-              <div class="relative h-72 w-full"><canvas id="ox-bar-cajero"></canvas></div>
+              <div class="relative h-72 w-full"><canvas id="ox-bar-cajero"></canvas>
+                <p *ngIf="sinDatosChart('ox-bar-cajero')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted xl:col-span-2">
               <h3 class="rb-heading-accent mb-4 text-base">Pedidos por hora de creación y estado actual</h3>
-              <div class="relative h-80 w-full"><canvas id="ox-line-embudo"></canvas></div>
+              <div class="relative h-80 w-full"><canvas id="ox-line-embudo"></canvas>
+                <p *ngIf="sinDatosChart('ox-line-embudo')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
           </div>
         </ng-container>
-
         <ng-container *ngIf="!cargando && pestana === 'seguridad'">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Intentos totales</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(seguridad?.['kpis']?.['totalIntentos']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(seguridad, 'totalIntentos', 'totalIntentos'))">{{ kpiNum(seguridad, 'totalIntentos', 'totalIntentos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Tasa éxito</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(seguridad?.['kpis']?.['tasaExitoPct']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(seguridad, 'tasaExitoPct', 'totalIntentos'))">{{ kpiPct(seguridad, 'tasaExitoPct', 'totalIntentos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">IPs bloqueadas</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(seguridad?.['kpis']?.['ipsBloqueadasActivas']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(seguridad, 'ipsBloqueadasActivas', 'totalIntentos'))">{{ kpiNum(seguridad, 'ipsBloqueadasActivas', 'totalIntentos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Fallidos</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(seguridad?.['kpis']?.['intentosFallidos']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(seguridad, 'intentosFallidos', 'totalIntentos'))">{{ kpiNum(seguridad, 'intentosFallidos', 'totalIntentos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Usuarios únicos (éxito)</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(seguridad?.['kpis']?.['usuariosUnicosActivos']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(seguridad, 'usuariosUnicosActivos', 'totalIntentos'))">{{ kpiNum(seguridad, 'usuariosUnicosActivos', 'totalIntentos') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Eventos bloqueo</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(seguridad?.['kpis']?.['eventosBloqueo']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(seguridad, 'eventosBloqueo', 'totalIntentos'))">{{ kpiNum(seguridad, 'eventosBloqueo', 'totalIntentos') }}</p>
             </div>
           </div>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <section class="rb-section-muted space-y-5">
             <div>
-              <label class="rb-label !normal-case">Estado intento</label>
-              <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroLoginStatus" name="ls" placeholder="SUCCESS" />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/candado.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Estado del intento
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroLoginStatusOpc"
+                  (click)="seleccionarFiltroLoginStatus(o.value)"
+                  [ngClass]="filtroChipClass(filtroLoginStatus === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
             <div>
-              <label class="rb-label !normal-case">Rol usuario</label>
-              <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroRolLogin" name="lr" placeholder="ADMIN" />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/usuarios.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Rol de usuario
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroRolLoginOpc"
+                  (click)="seleccionarFiltroRolLogin(o.value)"
+                  [ngClass]="filtroChipClass(filtroRolLogin === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
-          </div>
-          <button
-            type="button"
-            (click)="aplicarFiltros()"
-            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
-          >
-            Aplicar filtros seguridad
-          </button>
-
+          </section>
           <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Intentos por hora</h3>
-              <div class="relative h-72 w-full"><canvas id="sx-line-login"></canvas></div>
+              <div class="relative h-72 w-full"><canvas id="sx-line-login"></canvas>
+                <p *ngIf="sinDatosChart('sx-line-login')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Resultado global</h3>
-              <div class="relative mx-auto h-72 max-w-md"><canvas id="sx-donut-res"></canvas></div>
+              <div class="relative mx-auto h-72 max-w-md"><canvas id="sx-donut-res"></canvas>
+                <p *ngIf="sinDatosChart('sx-donut-res')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
           </div>
-
           <div class="rb-section-muted overflow-x-auto">
             <h3 class="rb-heading-accent mb-4 text-base">IPs con más fallos</h3>
             <table class="w-full min-w-[360px] text-left text-sm text-gray-900 dark:text-slate-100">
@@ -533,6 +826,10 @@
                 </tr>
               </thead>
               <tbody>
+              <tr *ngIf="tablaSinDatos(seguridad?.['ipsMasFallos'])">
+                <td colspan="99" class="py-6 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</td>
+              </tr>
+
                 <tr
                   *ngFor="let r of seguridad?.['ipsMasFallos'] || []"
                   class="border-b border-gray-100 dark:border-slate-700/80"
@@ -544,94 +841,147 @@
             </table>
           </div>
         </ng-container>
-
         <ng-container *ngIf="!cargando && pestana === 'interacciones'">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Interacciones</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(interacciones?.['kpis']?.['interaccionesTotales']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(interacciones, 'interaccionesTotales', 'interaccionesTotales'))">{{ kpiNum(interacciones, 'interaccionesTotales', 'interaccionesTotales') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Tasa add to cart</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(interacciones?.['kpis']?.['tasaAddToCartPct']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(interacciones, 'tasaAddToCartPct', 'interaccionesTotales'))">{{ kpiPct(interacciones, 'tasaAddToCartPct', 'interaccionesTotales') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Rechazo recomendación</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatPct(interacciones?.['kpis']?.['tasaRechazoRecomendacionPct']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(interacciones, 'tasaRechazoRecomendacionPct', 'interaccionesTotales'))">{{ kpiPct(interacciones, 'tasaRechazoRecomendacionPct', 'interaccionesTotales') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Dwell medio (s)</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ formatNum(interacciones?.['kpis']?.['dwellTimePromedioSeg']) }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(interacciones, 'dwellTimePromedioSeg', 'interaccionesTotales'))">{{ kpiNum(interacciones, 'dwellTimePromedioSeg', 'interaccionesTotales') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Estado slot 1 IA</p>
-              <p class="mt-1 text-base font-semibold sm:text-lg">{{ interacciones?.['kpis']?.['estadoSlot1Ia'] }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(interacciones, 'interaccionesTotales', 'interaccionesTotales'))">{{ kpiTextoInteracciones('estadoSlot1Ia') }}</p>
             </div>
             <div class="rb-section-muted !shadow-none">
               <p class="text-xs text-neutral-strong lg:text-sm dark:text-dark-text-muted">Producto más visto</p>
-              <p class="mt-1 line-clamp-2 text-base font-semibold sm:text-lg">{{ interacciones?.['productoMasVistoNombre'] }}</p>
+              <p [ngClass]="kpiValorClass(kpiSinDatos(interacciones, 'interaccionesTotales', 'interaccionesTotales'))" class="line-clamp-2">{{ interaccionProductoMasVisto() }}</p>
             </div>
           </div>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <section class="rb-section-muted space-y-5">
             <div>
-              <label class="rb-label !normal-case">Acción</label>
-              <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroAccionIx" name="ia" />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/destellos-recomendaciones.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Acción
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroAccionIxOpc"
+                  (click)="seleccionarFiltroAccionIx(o.value)"
+                  [ngClass]="filtroChipClass(filtroAccionIx === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
             <div>
-              <label class="rb-label !normal-case">Clima</label>
-              <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroClimaIx" name="ic" />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/advertencia-amarillo.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Condición climática
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroClimaOpc"
+                  (click)="seleccionarFiltroClimaIx(o.value)"
+                  [ngClass]="filtroChipClass(filtroClimaIx === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
             <div>
-              <label class="rb-label !normal-case">Segmento</label>
-              <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroSegmentoIx" name="is" />
+              <label class="rb-label !normal-case !mb-1 flex items-center gap-2">
+                <span class="rb-logo-chip !p-1">
+                  <img src="/iconos/consulta-informacion-azul.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                </span>
+                Segmento del día
+              </label>
+              <div class="-mx-1 flex flex-wrap gap-2 px-1">
+                <button
+                  type="button"
+                  *ngFor="let o of filtroSegmentoIxOpc"
+                  (click)="seleccionarFiltroSegmentoIx(o.value)"
+                  [ngClass]="filtroChipClass(filtroSegmentoIx === o.value)"
+                  class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs font-semibold transition sm:gap-2 sm:px-3 sm:text-sm"
+                >
+                  <span class="rb-logo-chip !p-1">
+                    <img [src]="o.img" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                  </span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </div>
             </div>
-            <div>
-              <label class="rb-label !normal-case">Usuario</label>
-              <input class="rb-input rb-focus-secondary" [(ngModel)]="filtroUserIx" name="iu" />
-            </div>
-          </div>
-          <button
-            type="button"
-            (click)="aplicarFiltros()"
-            class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
-          >
-            Aplicar filtros interacciones
-          </button>
-
+          </section>
           <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Distribución de acciones</h3>
-              <div class="relative mx-auto h-72 max-w-md"><canvas id="ux-donut-acc"></canvas></div>
+              <div class="relative mx-auto h-72 max-w-md"><canvas id="ux-donut-acc"></canvas>
+                <p *ngIf="sinDatosChart('ux-donut-acc')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
             <div class="rb-section-muted">
               <h3 class="rb-heading-accent mb-4 text-base">Por segmento del día</h3>
-              <div class="relative h-72 w-full"><canvas id="ux-bar-seg"></canvas></div>
+              <div class="relative h-72 w-full"><canvas id="ux-bar-seg"></canvas>
+                <p *ngIf="sinDatosChart('ux-bar-seg')" class="pointer-events-none absolute inset-0 flex items-center justify-center px-3 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</p>
+              </div>
             </div>
           </div>
-
           <div class="rb-section-muted overflow-x-auto">
-            <h3 class="rb-heading-accent mb-4 text-base">Top productos por interacciones</h3>
-            <table class="w-full min-w-[400px] text-left text-sm text-gray-900 dark:text-slate-100">
+            <h3 class="rb-heading-accent mb-4 flex items-center gap-2 text-base">
+              <span class="rb-logo-chip !p-1">
+                <img src="/iconos/categoria-plato-principal.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+              </span>
+              Top productos por interacciones
+            </h3>
+            <table class="w-full min-w-[480px] text-left text-sm text-gray-900 dark:text-slate-100">
               <thead>
                 <tr class="border-b border-gray-200 dark:border-dark-border">
-                  <th class="py-2 pr-4 font-semibold">Producto ID</th>
-                  <th class="py-2 font-semibold">N.º</th>
+                  <th class="py-2 pr-4 font-semibold">Producto</th>
+                  <th class="py-2 font-semibold">Interacciones</th>
                 </tr>
               </thead>
               <tbody>
+              <tr *ngIf="tablaSinDatos(interacciones?.['topProductosInteraccion'])">
+                <td colspan="99" class="py-6 text-center text-sm text-neutral-strong dark:text-dark-text-muted">No se encontraron datos</td>
+              </tr>
+
                 <tr
                   *ngFor="let r of interacciones?.['topProductosInteraccion'] || []"
                   class="border-b border-gray-100 dark:border-slate-700/80"
                 >
-                  <td class="py-2 pr-4 font-mono text-xs">{{ r['productoId'] }}</td>
-                  <td class="py-2">{{ r['interacciones'] }}</td>
+                  <td class="py-2 pr-4">
+                    <span class="line-clamp-2 font-medium">{{ r['nombre'] }}</span>
+                  </td>
+                  <td class="py-2">{{ formatNum(r['interacciones']) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </ng-container>
-
         <ng-container *ngIf="!cargando && pestana === 'inventario_prediccion'">
           <div class="rb-section-muted flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div class="flex items-start gap-3">
@@ -667,19 +1017,15 @@
               {{ predInvCargando ? 'Generando predicción...' : 'Realizar predicción' }}
             </button>
           </div>
-
           <p *ngIf="predInvCargando" class="text-sm font-medium text-secondary dark:text-blue-300">
             Recuperando información y realizando inferencia, espere...
           </p>
-
           <p *ngIf="predInvError" class="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-950/40 dark:text-red-200">
             {{ predInvError }}
           </p>
-
           <p *ngIf="prediccionInv?.['mensaje'] && prediccionItems().length === 0" class="text-sm text-neutral-strong dark:text-dark-text-muted">
             {{ prediccionInv?.['mensaje'] }}
           </p>
-
           <ng-container *ngIf="prediccionItems().length">
             <div class="flex flex-wrap gap-2">
               <button
@@ -696,7 +1042,6 @@
                 {{ horizonLabel(hk) }}
               </button>
             </div>
-
             <div class="rb-section-muted">
               <div class="mb-3 flex items-center gap-2">
                 <img src="/iconos/advertencia-amarillo.png" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
@@ -716,7 +1061,6 @@
                 </article>
               </div>
             </div>
-
             <div class="rb-section-muted overflow-x-auto">
               <h3 class="rb-heading-accent mb-4 text-base">Tabla de predicción</h3>
               <table class="w-full min-w-[720px] border-collapse text-left text-xs text-gray-900 sm:text-sm dark:text-slate-100">
@@ -758,7 +1102,6 @@
                 </tbody>
               </table>
             </div>
-
             <div class="rb-section-muted overflow-x-auto">
               <h3 class="rb-heading-accent mb-4 text-base">Mapa de calor de riesgos (% del stock consumido)</h3>
               <table class="w-full min-w-[640px] border-collapse text-center text-[11px] text-gray-900 sm:text-xs dark:text-slate-100">

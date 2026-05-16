@@ -12,6 +12,12 @@ import { ChartTester } from '../../utils/chart-tester';
 
 const API = environment.apiUrl + '/admin/dashboard';
 
+export interface DashFiltroOpcion {
+  value: string;
+  label: string;
+  img: string;
+}
+
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -42,6 +48,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   fromDate = '';
   toDate = '';
+  fechaMinimaTab = '';
+  fechaMaximaTab = '';
+  cargandoRangoFechas = false;
 
   filtroEstado = '';
   filtroMomento = '';
@@ -55,8 +64,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 
   filtroCatProducto = '';
   filtroEstrellasMin: number | null = null;
-  precioMin: number | null = null;
-  precioMax: number | null = null;
+  filtroRangoPrecio = '';
 
   regDesde = '';
   regHasta = '';
@@ -68,7 +76,142 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   filtroAccionIx = '';
   filtroClimaIx = '';
   filtroSegmentoIx = '';
-  filtroUserIx = '';
+
+  readonly filtroEstadosPedido: DashFiltroOpcion[] = [
+    { value: '', label: 'Todos', img: '/iconos/lupa.png' },
+    { value: 'PENDIENTE_PAGO', label: 'Pendiente pago', img: '/iconos/documento.png' },
+    { value: 'VALIDANDO_PAGO', label: 'Validando pago', img: '/iconos/consulta-informacion-azul.png' },
+    { value: 'PAGO_VALIDADO', label: 'Pago validado', img: '/iconos/billetes-soles.png' },
+    { value: 'EN_COCINA', label: 'En cocina', img: '/iconos/plato.png' },
+    { value: 'PREPARADO', label: 'Preparado', img: '/iconos/destellos-recomendaciones.png' },
+    { value: 'EN_CAMINO', label: 'En camino', img: '/iconos/camion-abastecer-ingrediente.png' },
+    { value: 'ENTREGADO', label: 'Entregado', img: '/iconos/like-pulgar.png' },
+    { value: 'CANCELADO', label: 'Cancelado', img: '/iconos/error-rojo.png' },
+  ];
+
+  readonly filtroMomentosDia: DashFiltroOpcion[] = [
+    { value: '', label: 'Todos', img: '/iconos/lupa.png' },
+    { value: 'MADRUGADA', label: 'Madrugada', img: '/iconos/candado.png' },
+    { value: 'MAÑANA', label: 'Mañana', img: '/iconos/consulta-informacion-azul.png' },
+    { value: 'TARDE', label: 'Tarde', img: '/iconos/advertencia-amarillo.png' },
+    { value: 'NOCHE', label: 'Noche', img: '/iconos/engranajes.png' },
+  ];
+
+  readonly filtroDiasSemanaOpc: DashFiltroOpcion[] = [
+    { value: '', label: 'Todos', img: '/iconos/lupa.png' },
+    { value: 'LUNES', label: 'Lunes', img: '/iconos/categoria-entrada.png' },
+    { value: 'MARTES', label: 'Martes', img: '/iconos/categoria-plato-principal.png' },
+    { value: 'MIERCOLES', label: 'Miércoles', img: '/iconos/categoria-verduras.png' },
+    { value: 'JUEVES', label: 'Jueves', img: '/iconos/categoria-carnes.png' },
+    { value: 'VIERNES', label: 'Viernes', img: '/iconos/categoria-bebidas.png' },
+    { value: 'SABADO', label: 'Sábado', img: '/iconos/categoria-postres.png' },
+    { value: 'DOMINGO', label: 'Domingo', img: '/iconos/categoria-frutas.png' },
+  ];
+
+  readonly filtroClimaOpc: DashFiltroOpcion[] = [
+    { value: '', label: 'Todos', img: '/iconos/lupa.png' },
+    { value: 'SOLEADO', label: 'Soleado', img: '/iconos/advertencia-amarillo.png' },
+    { value: 'PARCIALMENTE_NUBLADO', label: 'Parcial nublado', img: '/iconos/consulta-informacion-azul.png' },
+    { value: 'NUBLADO', label: 'Nublado', img: '/iconos/engranajes.png' },
+    { value: 'LLUVIOSO', label: 'Lluvioso', img: '/iconos/consulta-informacion-azul.png' },
+    { value: 'TORMENTA', label: 'Tormenta', img: '/iconos/error-rojo.png' },
+    { value: 'OTRO', label: 'Otro', img: '/iconos/lupa.png' },
+  ];
+
+  readonly categoriasInsumoDash: DashFiltroOpcion[] = [
+    { value: '', label: 'Todas', img: '/iconos/lupa.png' },
+    { value: 'Verduras', label: 'Verduras', img: '/iconos/categoria-verduras.png' },
+    { value: 'Carnes', label: 'Carnes', img: '/iconos/categoria-carnes.png' },
+    { value: 'Huevos', label: 'Huevos', img: '/iconos/categoria-huevos.png' },
+    { value: 'Marinos', label: 'Marinos', img: '/iconos/categoria-marinos.png' },
+    { value: 'Abarrotes', label: 'Abarrotes', img: '/iconos/categoria-abarrotes.png' },
+    { value: 'Lácteos', label: 'Lácteos', img: '/iconos/categoria-lacteos.png' },
+    { value: 'Bebidas', label: 'Bebidas', img: '/iconos/categoria-bebidas.png' },
+    { value: 'Frutas', label: 'Frutas', img: '/iconos/categoria-frutas.png' },
+    { value: 'Panadería', label: 'Panadería', img: '/iconos/categoria-panaderia.png' },
+  ];
+
+  readonly filtroTipoMovOpc: DashFiltroOpcion[] = [
+    { value: '', label: 'Todos', img: '/iconos/lupa.png' },
+    { value: 'SALIDA', label: 'Salida', img: '/iconos/tacho.png' },
+    { value: 'ABASTECIMIENTO', label: 'Abastecimiento', img: '/iconos/camion-abastecer-ingrediente.png' },
+  ];
+
+  readonly umbralStockOpc: DashFiltroOpcion[] = [
+    { value: '5', label: '≤ 5', img: '/iconos/advertencia-amarillo.png' },
+    { value: '10', label: '≤ 10', img: '/iconos/advertencia-amarillo.png' },
+    { value: '20', label: '≤ 20', img: '/iconos/consulta-informacion-azul.png' },
+    { value: '50', label: '≤ 50', img: '/iconos/consulta-informacion-azul.png' },
+  ];
+
+  readonly filtroStockBajoOpc: DashFiltroOpcion[] = [
+    { value: 'all', label: 'Todo el inventario', img: '/iconos/categoria-verduras.png' },
+    { value: 'bajo', label: 'Solo stock bajo', img: '/iconos/advertencia-amarillo.png' },
+  ];
+
+  readonly categoriasProductoDash: DashFiltroOpcion[] = [
+    { value: '', label: 'Todas', img: '/iconos/lupa.png' },
+    { value: 'Entrada', label: 'Entrada', img: '/iconos/categoria-entrada.png' },
+    { value: 'Plato Principal', label: 'Plato principal', img: '/iconos/categoria-plato-principal.png' },
+    { value: 'Postres', label: 'Postres', img: '/iconos/categoria-postres.png' },
+    { value: 'Bebidas', label: 'Bebidas', img: '/iconos/categoria-bebidas.png' },
+  ];
+
+  readonly filtroEstrellasOpc: DashFiltroOpcion[] = [
+    { value: '', label: 'Todas', img: '/iconos/lupa.png' },
+    { value: '5', label: '5★', img: '/iconos/like-pulgar.png' },
+    { value: '4', label: '4★+', img: '/iconos/like-pulgar.png' },
+    { value: '3', label: '3★+', img: '/iconos/advertencia-amarillo.png' },
+    { value: '2', label: '2★+', img: '/iconos/advertencia-amarillo.png' },
+    { value: '1', label: '1★+', img: '/iconos/error-rojo.png' },
+  ];
+
+  readonly filtroRangoPrecioOpc: DashFiltroOpcion[] = [
+    { value: '', label: 'Todos', img: '/iconos/lupa.png' },
+    { value: 'LT25', label: 'Hasta S/ 25', img: '/iconos/billetes-soles.png' },
+    { value: '25_50', label: 'S/ 25 – 50', img: '/iconos/billetes-soles.png' },
+    { value: 'GT50', label: 'Más de S/ 50', img: '/iconos/billetes-soles.png' },
+  ];
+
+  readonly filtroRecurrentesOpc: DashFiltroOpcion[] = [
+    { value: 'all', label: 'Todos los clientes', img: '/iconos/usuarios.png' },
+    { value: 'rec', label: 'Solo recurrentes', img: '/iconos/destellos-recomendaciones.png' },
+  ];
+
+  readonly filtroLoginStatusOpc: DashFiltroOpcion[] = [
+    { value: '', label: 'Todos', img: '/iconos/lupa.png' },
+    { value: 'SUCCESS', label: 'Éxito', img: '/iconos/correcto-check-verde.png' },
+    { value: 'FAILED', label: 'Fallido', img: '/iconos/error-rojo.png' },
+    { value: 'BLOCKED', label: 'Bloqueado', img: '/iconos/candado.png' },
+  ];
+
+  readonly filtroRolLoginOpc: DashFiltroOpcion[] = [
+    { value: '', label: 'Todos', img: '/iconos/lupa.png' },
+    { value: 'ADMIN', label: 'Admin', img: '/iconos/engranajes.png' },
+    { value: 'CLIENTE', label: 'Cliente', img: '/iconos/categoria-entrada.png' },
+    { value: 'CAJERO', label: 'Cajero', img: '/iconos/billetes-soles.png' },
+    { value: 'COCINA', label: 'Cocina', img: '/iconos/plato.png' },
+    { value: 'REPARTIDOR', label: 'Repartidor', img: '/iconos/camion-abastecer-ingrediente.png' },
+  ];
+
+  readonly filtroAccionIxOpc: DashFiltroOpcion[] = [
+    { value: '', label: 'Todas', img: '/iconos/lupa.png' },
+    { value: 'VIEW_DETAIL', label: 'Ver detalle', img: '/iconos/consulta-informacion-azul.png' },
+    { value: 'ADD_TO_CART', label: 'Añadir carrito', img: '/iconos/agregar.png' },
+    { value: 'INCREMENT_QUANTITY', label: 'Más cantidad', img: '/iconos/agregar.png' },
+    { value: 'REMOVE_FROM_CART', label: 'Quitar carrito', img: '/iconos/tacho.png' },
+    { value: 'REJECT_RECOMMENDATION', label: 'Rechazar IA', img: '/iconos/error-rojo.png' },
+    { value: 'IMAGE_SWIPE', label: 'Swipe imagen', img: '/iconos/destellos-recomendaciones.png' },
+    { value: 'CLOSE_DETAIL_WITHOUT_ADD', label: 'Cerrar sin comprar', img: '/iconos/logout.png' },
+  ];
+
+  readonly filtroSegmentoIxOpc: DashFiltroOpcion[] = [
+    { value: '', label: 'Todos', img: '/iconos/lupa.png' },
+    { value: 'MADRUGADA', label: 'Madrugada', img: '/iconos/candado.png' },
+    { value: 'MAÑANA', label: 'Mañana', img: '/iconos/consulta-informacion-azul.png' },
+    { value: 'TARDE', label: 'Tarde', img: '/iconos/advertencia-amarillo.png' },
+    { value: 'NOCHE', label: 'Noche', img: '/iconos/engranajes.png' },
+  ];
 
   ventas: any = null;
   inventario: any = null;
@@ -84,8 +227,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   predInvCargando = false;
 
   private charts = new Map<string, Chart>();
+  private sinDatosCharts = new Set<string>();
 
   diasSemanaLabel = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  readonly msgSinDatos = 'No se encontraron datos';
   readonly horasDia = Array.from({ length: 24 }, (_, i) => i);
 
   ngOnInit(): void {
@@ -93,7 +238,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       if (this.charts.size === 0) return;
       queueMicrotask(() => this.refreshChartsForTheme());
     });
-    void this.cargarActual();
+    void this.iniciarDashboard();
   }
 
   ngOnDestroy(): void {
@@ -109,15 +254,210 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.fromDate = this.toYmd(hace30);
   }
 
-  cambiarPestana(id: string): void {
+  async cambiarPestana(id: string): Promise<void> {
     this.pestana = id;
     this.errorMsg = '';
     this.predInvError = '';
-    void this.cargarActual();
+    if (id !== 'inventario_prediccion') {
+      await this.cargarRangoFechasPestana();
+    }
+    await this.cargarActual();
   }
 
   aplicarFiltros(): void {
+    this.ajustarRangoFechas();
     void this.cargarActual();
+  }
+
+  get fechaHoyInput(): string {
+    return this.fechaMaximaTab || this.toYmd(new Date());
+  }
+
+  get fechaMinimaDesdeInput(): string {
+    return this.fechaMinimaTab || this.fechaHoyInput;
+  }
+
+  get desdeElInicioActivo(): boolean {
+    return !!this.fechaMinimaTab && this.fromDate === this.fechaMinimaTab;
+  }
+
+  desdeElInicio(): void {
+    if (!this.fechaMinimaTab) return;
+    this.fromDate = this.fechaMinimaTab;
+    this.ajustarRangoFechas();
+    void this.aplicarFiltros();
+  }
+
+  onCambioFechaDesde(): void {
+    this.ajustarRangoFechas();
+  }
+
+  onCambioFechaHasta(): void {
+    this.ajustarRangoFechas();
+  }
+
+  private async iniciarDashboard(): Promise<void> {
+    if (this.pestana !== 'inventario_prediccion') {
+      await this.cargarRangoFechasPestana();
+    }
+    await this.cargarActual();
+  }
+
+  private ajustarRangoFechas(): void {
+    const min = this.fechaMinimaDesdeInput;
+    const max = this.fechaHoyInput;
+    if (!this.fromDate || this.fromDate < min) {
+      this.fromDate = min;
+    }
+    if (this.fromDate > max) {
+      this.fromDate = max;
+    }
+    if (!this.toDate || this.toDate > max) {
+      this.toDate = max;
+    }
+    if (this.toDate < min) {
+      this.toDate = min;
+    }
+    if (this.fromDate > this.toDate) {
+      this.toDate = this.fromDate;
+    }
+  }
+
+  private cargarRangoFechasPestana(): Promise<void> {
+    return new Promise((resolve) => {
+      this.cargandoRangoFechas = true;
+      this.http
+        .get<{ fechaMinima: string; fechaMaxima: string }>(`${API}/rango-fechas`, {
+          params: new HttpParams().set('pestana', this.pestana),
+        })
+        .subscribe({
+          next: (r) => {
+            this.fechaMinimaTab = r.fechaMinima || this.toYmd(new Date());
+            this.fechaMaximaTab = r.fechaMaxima || this.toYmd(new Date());
+            this.ajustarRangoFechas();
+            this.cargandoRangoFechas = false;
+            this.cdr.detectChanges();
+            resolve();
+          },
+          error: () => {
+            const hoy = this.toYmd(new Date());
+            this.fechaMinimaTab = hoy;
+            this.fechaMaximaTab = hoy;
+            this.ajustarRangoFechas();
+            this.cargandoRangoFechas = false;
+            this.cdr.detectChanges();
+            resolve();
+          },
+        });
+    });
+  }
+
+  filtroChipClass(active: boolean): string {
+    return active
+      ? 'border-secondary bg-secondary text-white dark:ring-2 dark:ring-blue-400/35'
+      : 'border-gray-200 bg-white text-neutral-strong hover:bg-gray-50 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text-muted dark:hover:bg-slate-800';
+  }
+
+  seleccionarFiltroEstado(v: string): void {
+    this.filtroEstado = v;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroMomento(v: string): void {
+    this.filtroMomento = v;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroDiaSemana(v: string): void {
+    this.filtroDiaSemana = v;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroClima(v: string): void {
+    this.filtroClima = v;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroCatInsumo(v: string): void {
+    this.filtroCatInsumo = v;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroMovTipo(v: string): void {
+    this.filtroMovTipo = v;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarUmbralStock(v: string): void {
+    this.umbralStock = parseInt(v, 10) || 10;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarStockBajo(modo: string): void {
+    this.soloStockBajo = modo === 'bajo';
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroCatProducto(v: string): void {
+    this.filtroCatProducto = v;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroEstrellas(v: string): void {
+    this.filtroEstrellasMin = v === '' ? null : parseInt(v, 10);
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroRangoPrecio(v: string): void {
+    this.filtroRangoPrecio = v;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarRecurrentes(modo: string): void {
+    this.soloRecurrentes = modo === 'rec';
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroLoginStatus(v: string): void {
+    this.filtroLoginStatus = v;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroRolLogin(v: string): void {
+    this.filtroRolLogin = v;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroAccionIx(v: string): void {
+    this.filtroAccionIx = v;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroClimaIx(v: string): void {
+    this.filtroClimaIx = v;
+    void this.aplicarFiltros();
+  }
+
+  seleccionarFiltroSegmentoIx(v: string): void {
+    this.filtroSegmentoIx = v;
+    void this.aplicarFiltros();
+  }
+
+  estrellasFiltroActivo(v: string): boolean {
+    if (v === '') return this.filtroEstrellasMin == null;
+    return this.filtroEstrellasMin === parseInt(v, 10);
+  }
+
+  umbralStockActivo(v: string): boolean {
+    return String(this.umbralStock) === v;
+  }
+
+  recurrentesActivo(modo: string): boolean {
+    return modo === 'rec' ? this.soloRecurrentes : !this.soloRecurrentes;
+  }
+
+  stockBajoActivo(modo: string): boolean {
+    return modo === 'bajo' ? this.soloStockBajo : !this.soloStockBajo;
   }
 
   private toYmd(d: Date): string {
@@ -164,7 +504,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
 
     if (!this.errorMsg) {
-      setTimeout(() => this.renderizarGraficosSegunPestana(), 0);
+      setTimeout(() => {
+        this.renderizarGraficosSegunPestana();
+        this.cdr.detectChanges();
+      }, 0);
     }
   }
 
@@ -221,8 +564,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     let p = this.baseParams();
     if (this.filtroCatProducto) p = p.set('categoriaProducto', this.filtroCatProducto);
     if (this.filtroEstrellasMin != null) p = p.set('estrellasMin', String(this.filtroEstrellasMin));
-    if (this.precioMin != null) p = p.set('precioMin', String(this.precioMin));
-    if (this.precioMax != null) p = p.set('precioMax', String(this.precioMax));
+    if (this.filtroRangoPrecio === 'LT25') p = p.set('precioMax', '25');
+    else if (this.filtroRangoPrecio === '25_50') {
+      p = p.set('precioMin', '25');
+      p = p.set('precioMax', '50');
+    } else if (this.filtroRangoPrecio === 'GT50') p = p.set('precioMin', '50');
     return new Promise((resolve, reject) => {
       this.http.get(`${API}/productos`, { params: p }).subscribe({
         next: (d) => {
@@ -287,7 +633,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     if (this.filtroAccionIx) p = p.set('action', this.filtroAccionIx);
     if (this.filtroClimaIx) p = p.set('condicionClima', this.filtroClimaIx);
     if (this.filtroSegmentoIx) p = p.set('segmento', this.filtroSegmentoIx);
-    if (this.filtroUserIx) p = p.set('userId', this.filtroUserIx);
     return new Promise((resolve, reject) => {
       this.http.get(`${API}/interacciones`, { params: p }).subscribe({
         next: (d) => {
@@ -339,11 +684,164 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  private prepararChartsSinDatos(ids: string[]): void {
+    this.sinDatosCharts = new Set(ids);
+  }
+
+  sinDatosChart(id: string): boolean {
+    return this.sinDatosCharts.has(id);
+  }
+
+  private seriesTieneDatos(values: number[]): boolean {
+    return values.length > 0 && values.some((v) => Number(v) > 0);
+  }
+
+  private recordTieneDatos(rec?: Record<string, number> | null): boolean {
+    if (!rec || !Object.keys(rec).length) return false;
+    return Object.values(rec).some((v) => Number(v) > 0);
+  }
+
+  private listaTieneDatos<T>(list?: T[] | null): boolean {
+    return (list?.length ?? 0) > 0;
+  }
+
+  private tabSinActividad(bloque: Record<string, unknown> | null | undefined, actividadKey: string): boolean {
+    const kpis = bloque?.['kpis'] as Record<string, unknown> | undefined;
+    if (!kpis) return true;
+    const a = Number(kpis[actividadKey] ?? 0);
+    return Number.isNaN(a) || a <= 0;
+  }
+
+  private operacionSinDatosPeriodo(): boolean {
+    if (!this.operacion) return true;
+    const hist = this.operacion['histogramaTiemposEntrega'] as Record<string, number> | undefined;
+    if (this.recordTieneDatos(hist)) return false;
+    const ent = this.operacion['entregasPorRepartidor'] as Record<string, number> | undefined;
+    if (this.recordTieneDatos(ent)) return false;
+    const emb = this.operacion['embudoPorHora'] as { porEstado?: Record<string, number> }[] | undefined;
+    if (emb?.length) {
+      const hay = emb.some((row) =>
+        Object.values(row.porEstado ?? {}).some((v) => Number(v) > 0),
+      );
+      if (hay) return false;
+    }
+    const caj = this.operacion['cajeroValidadosVsRechazados'] as unknown[] | undefined;
+    return !this.listaTieneDatos(caj);
+  }
+
+  private inventarioSinDatosPeriodo(): boolean {
+    if (!this.inventario) return true;
+    const stock = this.inventario['stockPorInsumo'] as unknown[] | undefined;
+    if (this.listaTieneDatos(stock)) return false;
+    const consumo = this.inventario['consumoPorCategoria'] as Record<string, number> | undefined;
+    if (this.recordTieneDatos(consumo)) return false;
+    const abast = this.inventario['movimientosAbastecimientoPorSemana'] as
+      | Record<string, number>
+      | undefined;
+    if (this.recordTieneDatos(abast)) return false;
+    const marg = this.inventario['margenBrutoProductos'] as unknown[] | undefined;
+    return !this.listaTieneDatos(marg);
+  }
+
+  kpiSinDatos(
+    bloque: Record<string, unknown> | null | undefined,
+    key: string,
+    actividadKey?: string,
+    modo: 'num' | 'text' = 'num',
+  ): boolean {
+    if (!bloque?.['kpis']) return true;
+    if (bloque === this.operacion && this.operacionSinDatosPeriodo()) return true;
+    if (bloque === this.inventario && this.inventarioSinDatosPeriodo()) return true;
+    if (actividadKey && this.tabSinActividad(bloque, actividadKey)) return true;
+    const v = (bloque['kpis'] as Record<string, unknown>)[key];
+    if (v == null) return true;
+    if (modo === 'text') return String(v).trim() === '';
+    const n = typeof v === 'number' ? v : parseFloat(String(v));
+    return Number.isNaN(n);
+  }
+
+  kpiValorClass(sinDatos: boolean): string {
+    return sinDatos
+      ? 'mt-1 text-sm text-neutral-strong dark:text-dark-text-muted'
+      : 'mt-1 text-base font-semibold sm:text-lg';
+  }
+
+  private kpiDisplay(
+    bloque: Record<string, unknown> | null | undefined,
+    key: string,
+    actividadKey: string | undefined,
+    fmt: (v: unknown) => string,
+    modo: 'num' | 'text' = 'num',
+  ): string {
+    if (this.kpiSinDatos(bloque, key, actividadKey, modo)) return this.msgSinDatos;
+    const v = (bloque?.['kpis'] as Record<string, unknown> | undefined)?.[key];
+    return fmt(v);
+  }
+
+  kpiSol(bloque: Record<string, unknown> | null | undefined, key: string, actividadKey?: string): string {
+    return this.kpiDisplay(bloque, key, actividadKey, (v) => this.formatSol(v));
+  }
+
+  kpiNum(bloque: Record<string, unknown> | null | undefined, key: string, actividadKey?: string): string {
+    return this.kpiDisplay(bloque, key, actividadKey, (v) => this.formatNum(v));
+  }
+
+  kpiPct(bloque: Record<string, unknown> | null | undefined, key: string, actividadKey?: string): string {
+    return this.kpiDisplay(bloque, key, actividadKey, (v) => this.formatPct(v));
+  }
+
+  kpiTexto(bloque: Record<string, unknown> | null | undefined, key: string, actividadKey?: string): string {
+    return this.kpiDisplay(
+      bloque,
+      key,
+      actividadKey,
+      (v) => String(v ?? ''),
+      'text',
+    );
+  }
+
+  kpiTextoInteracciones(key: string): string {
+    if (!this.interacciones?.['kpis']) return this.msgSinDatos;
+    if (this.kpiSinDatos(this.interacciones, 'interaccionesTotales', 'interaccionesTotales')) {
+      return this.msgSinDatos;
+    }
+    const v = (this.interacciones['kpis'] as Record<string, unknown>)[key];
+    if (v == null || String(v).trim() === '') return this.msgSinDatos;
+    return String(v);
+  }
+
+  interaccionProductoMasVisto(): string {
+    if (this.kpiSinDatos(this.interacciones, 'interaccionesTotales', 'interaccionesTotales')) {
+      return this.msgSinDatos;
+    }
+    const n = this.interacciones?.['productoMasVistoNombre'];
+    if (n == null || String(n).trim() === '') return this.msgSinDatos;
+    return String(n);
+  }
+
+  kpiTextoProducto(campo: string): string {
+    return this.kpiTexto(this.productos, campo, 'productosActivos');
+  }
+
+  tablaSinDatos(rows: unknown[] | null | undefined): boolean {
+    return !rows?.length;
+  }
+
+  heatmapVentasSinDatos(): boolean {
+    const list = this.ventas?.['heatmapHoraDia'] as { valor: number }[] | undefined;
+    if (!list?.length) return true;
+    return !list.some((x) => Number(x.valor) > 0);
+  }
+
   private chartRegister(key: string, canvas: HTMLCanvasElement | null, config: any): void {
-    if (!canvas) return;
+    if (!canvas) {
+      this.sinDatosCharts.add(key);
+      return;
+    }
     this.patchChartOptions(config.options);
     ChartTester.logChart(key, config);
     this.charts.set(key, new Chart(canvas, config));
+    this.sinDatosCharts.delete(key);
   }
 
   private refreshChartsForTheme(): void {
@@ -365,11 +863,20 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private destroyAllCharts(): void {
     for (const c of this.charts.values()) c.destroy();
     this.charts.clear();
+    this.sinDatosCharts.clear();
   }
 
   private renderVentasCharts(): void {
     if (!this.ventas) return;
     this.destroyPrefix('vx-');
+    this.prepararChartsSinDatos([
+      'vx-line-dia',
+      'vx-donut-estado',
+      'vx-bar-hora',
+      'vx-bar-dow',
+      'vx-line-ticket',
+      'vx-scatter-clima',
+    ]);
     const t = this.tc();
 
     const ventasPorDia = this.ventas['ventasPorDia'] as Record<string, number> | undefined;
@@ -377,7 +884,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       const labels = Object.keys(ventasPorDia);
       const data = labels.map((k) => Number(ventasPorDia[k]));
       const el = document.getElementById('vx-line-dia') as HTMLCanvasElement | null;
-      if (el) {
+      if (el && this.seriesTieneDatos(data)) {
         const config: any = {
           type: 'line',
           data: {
@@ -400,9 +907,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const pedidosPorEstado = this.ventas['pedidosPorEstado'] as Record<string, number> | undefined;
     if (pedidosPorEstado) {
       const el = document.getElementById('vx-donut-estado') as HTMLCanvasElement | null;
-      if (el) {
-        const labels = Object.keys(pedidosPorEstado);
-        const data = labels.map((k) => pedidosPorEstado[k]);
+      const labels = Object.keys(pedidosPorEstado);
+      const data = labels.map((k) => Number(pedidosPorEstado[k]));
+      if (el && this.seriesTieneDatos(data)) {
         const config: any = {
           type: 'doughnut',
           data: {
@@ -428,9 +935,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       | undefined;
     if (ingresoPorHora?.length) {
       const el = document.getElementById('vx-bar-hora') as HTMLCanvasElement | null;
-      if (el) {
+      const data = ingresoPorHora.map((x) => x.monto);
+      if (el && this.seriesTieneDatos(data)) {
         const labels = ingresoPorHora.map((x) => String(x.hora));
-        const data = ingresoPorHora.map((x) => x.monto);
         const config: any = {
           type: 'bar',
           data: { labels, datasets: [{ label: 'S/', data, backgroundColor: '#ea580c' }] },
@@ -455,7 +962,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       const labels = this.diasSemanaLabel;
       const data = orderKeys.map((k) => pedidosPorDiaSemana[k] ?? 0);
       const el = document.getElementById('vx-bar-dow') as HTMLCanvasElement | null;
-      if (el) {
+      if (el && this.seriesTieneDatos(data)) {
         const config: any = {
           type: 'bar',
           data: { labels, datasets: [{ label: 'Pedidos', data, backgroundColor: '#1d4ed8' }] },
@@ -477,9 +984,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       | undefined;
     if (ticketSem?.length) {
       const el = document.getElementById('vx-line-ticket') as HTMLCanvasElement | null;
-      if (el) {
+      const data = ticketSem.map((x) => x.ticketPromedio);
+      if (el && this.seriesTieneDatos(data)) {
         const labels = ticketSem.map((x) => x.semana);
-        const data = ticketSem.map((x) => x.ticketPromedio);
         const config: any = {
           type: 'line',
           data: {
@@ -502,7 +1009,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const clima = this.ventas['climaTemperaturaVsMonto'] as
       | { tempC: number; monto: number }[]
       | undefined;
-    if (clima?.length) {
+    if (clima?.length && clima.some((p) => p.monto > 0)) {
       const el = document.getElementById('vx-scatter-clima') as HTMLCanvasElement | null;
       if (el) {
         const config: any = {
@@ -557,6 +1064,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       return;
     }
     this.destroyPrefix('ix-');
+    this.prepararChartsSinDatos(['ix-bar-stock', 'ix-donut-cat', 'ix-line-abast', 'ix-bar-margen']);
     const t = this.tc();
 
     const stock = this.inventario['stockPorInsumo'] as any[];
@@ -586,9 +1094,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.chartRegister('ix-bar-stock', elStock, config);
     }
 
-    const consumoCat = this.inventario['consumoPorCategoria'];
+    const consumoCat = this.inventario['consumoPorCategoria'] as Record<string, number> | undefined;
     const elConsumo = document.getElementById('ix-donut-cat') as HTMLCanvasElement | null;
-    if (elConsumo && consumoCat && Object.keys(consumoCat).length) {
+    if (elConsumo && consumoCat && this.recordTieneDatos(consumoCat)) {
       const labels = Object.keys(consumoCat);
       const data = labels.map((k) => Number(consumoCat[k]));
       const config: any = {
@@ -608,11 +1116,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       this.chartRegister('ix-donut-cat', elConsumo, config);
     }
 
-    const abastSem = this.inventario['movimientosAbastecimientoPorSemana'];
+    const abastSem = this.inventario['movimientosAbastecimientoPorSemana'] as
+      | Record<string, number>
+      | undefined;
     const elAbast = document.getElementById('ix-line-abast') as HTMLCanvasElement | null;
-    if (elAbast && abastSem && Object.keys(abastSem).length) {
+    if (elAbast && abastSem) {
       const labels = Object.keys(abastSem);
       const data = labels.map((k) => Number(abastSem[k]));
+      if (this.seriesTieneDatos(data)) {
       const config: any = {
         type: 'line',
         data: {
@@ -630,6 +1141,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         },
       };
       this.chartRegister('ix-line-abast', elAbast, config);
+      }
     }
 
     const marg = this.inventario['margenBrutoProductos'] as any[];
@@ -666,6 +1178,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private renderProductosCharts(): void {
     if (!this.productos) return;
     this.destroyPrefix('px-');
+    this.prepararChartsSinDatos(['px-bar-top', 'px-bar-margen', 'px-donut-ing', 'px-bar-stars']);
     const t = this.tc();
 
     const top = this.productos['topProductos'] as
@@ -706,10 +1219,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       | undefined;
     if (topMargen?.length) {
       const elM = document.getElementById('px-bar-margen') as HTMLCanvasElement | null;
-      if (elM) {
-        const sorted = [...topMargen]
-          .sort((a, b) => b.margenEstimado - a.margenEstimado)
-          .slice(0, 10);
+      const sorted = [...topMargen]
+        .sort((a, b) => b.margenEstimado - a.margenEstimado)
+        .slice(0, 10);
+      const margenData = sorted.map((x) => x.margenEstimado);
+      if (elM && this.seriesTieneDatos(margenData)) {
         const config: any = {
           type: 'bar',
           data: {
@@ -737,11 +1251,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
 
     const ingCat = this.productos['ingresosPorCategoria'] as Record<string, number> | undefined;
-    if (ingCat && Object.keys(ingCat).length) {
+    if (ingCat) {
       const el = document.getElementById('px-donut-ing') as HTMLCanvasElement | null;
-      if (el) {
-        const labels = Object.keys(ingCat);
-        const data = labels.map((k) => Number(ingCat[k]));
+      const labels = Object.keys(ingCat);
+      const data = labels.map((k) => Number(ingCat[k]));
+      if (el && this.seriesTieneDatos(data)) {
         const config: any = {
           type: 'doughnut',
           data: {
@@ -760,9 +1274,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const dist = this.productos['distribucionEstrellas'] as Record<string, number> | undefined;
     if (dist) {
       const el = document.getElementById('px-bar-stars') as HTMLCanvasElement | null;
-      if (el) {
-        const labels = ['1', '2', '3', '4', '5'];
-        const data = labels.map((k) => Number(dist[k] ?? 0));
+      const labels = ['1', '2', '3', '4', '5'];
+      const data = labels.map((k) => Number(dist[k] ?? 0));
+      if (el && this.seriesTieneDatos(data)) {
         const config: any = {
           type: 'bar',
           data: { labels, datasets: [{ label: 'Cantidad', data, backgroundColor: '#eab308' }] },
@@ -783,14 +1297,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private renderClientesCharts(): void {
     if (!this.clientes) return;
     this.destroyPrefix('cx-');
+    this.prepararChartsSinDatos(['cx-bar-stars', 'cx-bar-freq']);
     const t = this.tc();
 
     const dist = this.clientes['distribucionEstrellas'] as Record<string, number> | undefined;
     if (dist) {
       const el = document.getElementById('cx-bar-stars') as HTMLCanvasElement | null;
-      if (el) {
-        const labels = ['1', '2', '3', '4', '5'];
-        const data = labels.map((k) => Number(dist[k] ?? 0));
+      const labels = ['1', '2', '3', '4', '5'];
+      const data = labels.map((k) => Number(dist[k] ?? 0));
+      if (el && this.seriesTieneDatos(data)) {
         const config: any = {
           type: 'bar',
           data: { labels, datasets: [{ label: 'Valoraciones', data, backgroundColor: '#38bdf8' }] },
@@ -810,9 +1325,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const hist = this.clientes['frecuenciaPedidosHistograma'] as Record<string, number> | undefined;
     if (hist) {
       const el = document.getElementById('cx-bar-freq') as HTMLCanvasElement | null;
-      if (el) {
-        const labels = Object.keys(hist);
-        const data = labels.map((k) => hist[k]);
+      const labels = Object.keys(hist);
+      const data = labels.map((k) => Number(hist[k]));
+      if (el && this.seriesTieneDatos(data)) {
         const config: any = {
           type: 'bar',
           data: { labels, datasets: [{ label: 'Clientes', data, backgroundColor: '#4f46e5' }] },
@@ -833,6 +1348,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private renderOperacionCharts(): void {
     if (!this.operacion) return;
     this.destroyPrefix('ox-');
+    this.prepararChartsSinDatos(['ox-bar-hist', 'ox-bar-rep', 'ox-bar-cajero', 'ox-line-embudo']);
     const t = this.tc();
 
     const histEnt = this.operacion['histogramaTiemposEntrega'] as
@@ -959,6 +1475,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private renderSeguridadCharts(): void {
     if (!this.seguridad) return;
     this.destroyPrefix('sx-');
+    this.prepararChartsSinDatos(['sx-line-login', 'sx-donut-res']);
     const t = this.tc();
 
     const porHora = this.seguridad['intentosPorHora'] as
@@ -966,7 +1483,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       | undefined;
     if (porHora?.length) {
       const el = document.getElementById('sx-line-login') as HTMLCanvasElement | null;
-      if (el) {
+      const totalIntentos = porHora.reduce(
+        (s, x) => s + x.success + x.failed + x.blocked,
+        0,
+      );
+      if (el && totalIntentos > 0) {
         const labels = porHora.map((x) => String(x.hora));
         const config: any = {
           type: 'line',
@@ -1035,14 +1556,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private renderInteraccionesCharts(): void {
     if (!this.interacciones) return;
     this.destroyPrefix('ux-');
+    this.prepararChartsSinDatos(['ux-donut-acc', 'ux-bar-seg']);
     const t = this.tc();
 
     const dist = this.interacciones['distribucionAcciones'] as Record<string, number> | undefined;
-    if (dist && Object.keys(dist).length) {
+    if (dist) {
       const el = document.getElementById('ux-donut-acc') as HTMLCanvasElement | null;
-      if (el) {
-        const labels = Object.keys(dist);
-        const data = labels.map((k) => dist[k]);
+      const labels = Object.keys(dist);
+      const data = labels.map((k) => Number(dist[k]));
+      if (el && this.seriesTieneDatos(data)) {
         const config: any = {
           type: 'doughnut',
           data: {
@@ -1061,11 +1583,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     }
 
     const seg = this.interacciones['porSegmentoDia'] as Record<string, number> | undefined;
-    if (seg && Object.keys(seg).length) {
+    if (seg) {
       const el = document.getElementById('ux-bar-seg') as HTMLCanvasElement | null;
-      if (el) {
-        const labels = Object.keys(seg);
-        const data = labels.map((k) => seg[k]);
+      const labels = Object.keys(seg);
+      const data = labels.map((k) => Number(seg[k]));
+      if (el && this.seriesTieneDatos(data)) {
         const config: any = {
           type: 'bar',
           data: {

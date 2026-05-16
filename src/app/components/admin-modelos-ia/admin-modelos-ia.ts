@@ -35,6 +35,7 @@ export class AdminModelosIaComponent implements OnInit {
 
   cargandoIa = false;
   guardandoIa = false;
+  descargandoDataset: number | null = null;
   iaActiva = false;
   slotsIa: IaSlot[] = [];
   archivoModeloIa: File | null = null;
@@ -52,6 +53,33 @@ export class AdminModelosIaComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarConfiguracionIa();
+  }
+
+  descargarDataset(slotNumber: number) {
+    if (slotNumber < 1 || slotNumber > 3) {
+      return;
+    }
+    this.descargandoDataset = slotNumber;
+    const nombre = `dataset_modelo_${String(slotNumber).padStart(2, '0')}.zip`;
+    this.http.get(`${this.apiIa}/dataset/${slotNumber}`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = nombre;
+        anchor.click();
+        URL.revokeObjectURL(url);
+        this.descargandoDataset = null;
+      },
+      error: (err) => {
+        this.descargandoDataset = null;
+        const msg =
+          err?.error instanceof Blob
+            ? 'No se pudo generar el dataset de entrenamiento.'
+            : err?.error?.message || 'No se pudo generar el dataset de entrenamiento.';
+        this.abrirModal('error', 'Dataset', msg);
+      },
+    });
   }
 
   cargarConfiguracionIa() {
