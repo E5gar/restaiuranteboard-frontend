@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
+import { CompradorNavComponent } from '../comprador-nav/comprador-nav';
 import { AuthService } from '../../services/auth.service';
 import { WebsocketService } from '../../services/websocket.service';
 import { environment } from '@env/environment'; 
@@ -39,7 +40,7 @@ interface SeguimientoListasResp {
 @Component({
   selector: 'app-seguimiento-pedido',
   standalone: true,
-  imports: [CommonModule, RouterModule, LogoutButtonComponent],
+  imports: [CommonModule, RouterModule, LogoutButtonComponent, CompradorNavComponent],
   templateUrl: './seguimiento-pedido.component.html',
 })
 export class SeguimientoPedidoComponent implements OnInit {

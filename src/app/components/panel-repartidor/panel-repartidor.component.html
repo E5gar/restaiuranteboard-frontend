@@ -1,7 +1,8 @@
 <div class="rb-page flex min-h-screen flex-col pb-24 sm:pb-20">
   <nav class="rb-nav sticky top-0 z-50 bg-secondary text-white shadow-sm dark:shadow-none">
     <h1 class="rb-nav-title text-white">Panel Repartidor</h1>
-    <div class="flex items-center gap-2 sm:gap-3">
+    <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+      <app-comprador-nav variant="secondary" />
       <app-theme-toggle mode="inline" />
       <app-logout-button variant="on-dark" />
     </div>

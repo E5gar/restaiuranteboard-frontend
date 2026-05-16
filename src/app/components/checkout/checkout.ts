@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
+import { CompradorNavComponent } from '../comprador-nav/comprador-nav';
 import { AuthService } from '../../services/auth.service';
 import { CartService } from '../../services/cart.service';
 import { ConfigService, type ConfiguracionNegocioDto } from '../../services/config.service';
@@ -17,7 +18,7 @@ const MIME_OK = ['image/jpeg', 'image/jpg', 'image/png'];
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent],
+  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent, CompradorNavComponent],
   templateUrl: './checkout.component.html',
 })
 export class CheckoutComponent implements OnInit {

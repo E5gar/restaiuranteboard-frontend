@@ -87,6 +87,28 @@ export class AuthService {
     return undefined;
   }
 
+  getWorkPanelPath(): string | null {
+    const role = this.getSession()?.role;
+    switch (role) {
+      case 'ADMIN':
+        return '/gestion-administrador';
+      case 'CAJERO':
+        return '/caja';
+      case 'COCINERO':
+        return '/cocina';
+      case 'REPARTIDOR':
+        return '/entregas';
+      case 'CLIENTE':
+        return '/menu';
+      default:
+        return null;
+    }
+  }
+
+  puedeComprar(): boolean {
+    return this.isLoggedIn();
+  }
+
   private isTokenExpired(token: string): boolean {
     try {
       const decoded = jwtDecode<{ exp?: number }>(token);

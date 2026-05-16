@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { interval } from 'rxjs';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
+import { CompradorNavComponent } from '../comprador-nav/comprador-nav';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { AuthService } from '../../services/auth.service';
 import { WebsocketService } from '../../services/websocket.service';
@@ -49,7 +50,14 @@ interface RepartidorOrdenDetalle {
 @Component({
   selector: 'app-panel-repartidor',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent, ThemeToggleComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    LogoutButtonComponent,
+    ThemeToggleComponent,
+    CompradorNavComponent,
+  ],
   templateUrl: './panel-repartidor.component.html',
   styleUrl: './panel-repartidor.css',
 })

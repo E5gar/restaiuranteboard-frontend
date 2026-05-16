@@ -2,17 +2,18 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
-export const clienteGuard: CanActivateFn = () => {
+export const clienteGuard: CanActivateFn = (_route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
   if (!auth.isLoggedIn()) {
-    return router.createUrlTree(['/login'], { queryParams: { returnUrl: '/checkout' } });
+    const returnUrl = state.url || '/checkout';
+    return router.createUrlTree(['/login'], { queryParams: { returnUrl } });
   }
   const s = auth.getSession();
-  if (s?.role === 'CLIENTE') {
-    return true;
+  if (s?.firstLogin === true) {
+    return router.createUrlTree(['/confirmar-cuenta'], {
+      queryParams: auth.getPostLoginQueryParams(),
+    });
   }
-  return router.createUrlTree([auth.getPostLoginPath()], {
-    queryParams: auth.getPostLoginQueryParams(),
-  });
+  return true;
 };

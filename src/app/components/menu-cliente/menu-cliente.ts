@@ -7,6 +7,7 @@ import { Router, RouterModule } from '@angular/router';
 import { Observable, of, switchMap } from 'rxjs';
 import { filter, map, tap, catchError } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
+import { CompradorNavComponent } from '../comprador-nav/comprador-nav';
 import {
   CartService,
   MAX_UNIDADES_POR_PRODUCTO,
@@ -54,7 +55,7 @@ interface MenuRecomendacionesResponse {
 @Component({
   selector: 'app-menu-cliente',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent],
+  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent, CompradorNavComponent],
   templateUrl: './menu-cliente.component.html',
   styleUrl: './menu-cliente.css',
 })

@@ -83,14 +83,14 @@ export class CartService {
   }
 
   applyFromLoginPayload(
-    user: { role?: string; cart?: CarritoResponseDto } | null | undefined,
+    user: { role?: string; cart?: CarritoResponseDto; userId?: string } | null | undefined,
   ): void {
-    if (!user || user.role !== 'CLIENTE') {
+    if (!user?.userId && !this.auth.getSession()?.userId) {
       this.lines.set([]);
       this.clearPriceSnapshot();
       return;
     }
-    this.applyCarritoResponse(user.cart ?? { items: [] });
+    this.applyCarritoResponse(user?.cart ?? { items: [] });
   }
 
   limpiarLocal(): void {
@@ -118,7 +118,7 @@ export class CartService {
   private persistPriceSnapshot(): void {
     try {
       const s = this.auth.getSession();
-      if (s?.role !== 'CLIENTE' || !s.userId) {
+      if (!s?.userId) {
         return;
       }
       const lines = this.lines();
@@ -136,13 +136,13 @@ export class CartService {
 
   puedeSincronizar(): boolean {
     const s = this.auth.getSession();
-    return s?.role === 'CLIENTE' && !!s?.userId;
+    return this.auth.isLoggedIn() && !!s?.userId;
   }
 
   private requireClienteUserId(): string {
     const s = this.auth.getSession();
-    if (s?.role !== 'CLIENTE' || !s.userId) {
-      throw new Error('Sesión de cliente no disponible.');
+    if (!this.auth.isLoggedIn() || !s?.userId) {
+      throw new Error('Sesión no disponible.');
     }
     return s.userId;
   }
@@ -176,7 +176,7 @@ export class CartService {
 
   agregarUno(p: ProductoCarritoInput): Observable<void> {
     if (!this.puedeSincronizar()) {
-      return throwError(() => new Error('Carrito solo para clientes.'));
+      return throwError(() => new Error('Inicia sesión para usar el carrito.'));
     }
     const uid = this.requireClienteUserId();
     return this.postMutation(
@@ -189,7 +189,7 @@ export class CartService {
 
   incrementar(productId: string): Observable<void> {
     if (!this.puedeSincronizar()) {
-      return throwError(() => new Error('Carrito solo para clientes.'));
+      return throwError(() => new Error('Inicia sesión para usar el carrito.'));
     }
     const uid = this.requireClienteUserId();
     return this.postMutation(
@@ -202,7 +202,7 @@ export class CartService {
 
   decrementar(productId: string): Observable<void> {
     if (!this.puedeSincronizar()) {
-      return throwError(() => new Error('Carrito solo para clientes.'));
+      return throwError(() => new Error('Inicia sesión para usar el carrito.'));
     }
     const uid = this.requireClienteUserId();
     return this.postMutation(
@@ -215,7 +215,7 @@ export class CartService {
 
   quitar(productId: string): Observable<void> {
     if (!this.puedeSincronizar()) {
-      return throwError(() => new Error('Carrito solo para clientes.'));
+      return throwError(() => new Error('Inicia sesión para usar el carrito.'));
     }
     const uid = this.requireClienteUserId();
     return this.postMutation(

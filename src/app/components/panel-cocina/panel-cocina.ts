@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { interval } from 'rxjs';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
+import { CompradorNavComponent } from '../comprador-nav/comprador-nav';
 import { AuthService } from '../../services/auth.service';
 import { WebsocketService } from '../../services/websocket.service';
 import { environment } from '@env/environment'; 
@@ -37,7 +38,7 @@ interface CocinaOrdenCard {
 @Component({
   selector: 'app-panel-cocina',
   standalone: true,
-  imports: [CommonModule, RouterModule, LogoutButtonComponent],
+  imports: [CommonModule, RouterModule, LogoutButtonComponent, CompradorNavComponent],
   templateUrl: './panel-cocina.component.html',
   styleUrl: './panel-cocina.css',
 })

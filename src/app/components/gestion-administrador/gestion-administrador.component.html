@@ -7,7 +7,8 @@
         <h1 class="rb-heading">Panel de Administración</h1>
         <p class="rb-kicker mt-2">Bienvenido. ¿Qué deseas gestionar hoy?</p>
       </div>
-      <div class="flex shrink-0 justify-center sm:justify-end">
+      <div class="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
+        <app-comprador-nav variant="primary" />
         <app-logout-button />
       </div>
     </header>
@@ -15,6 +16,23 @@
     <div
       class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6"
     >
+      <a
+        routerLink="/menu"
+        class="rb-card rb-card-pad group transition hover:border-primary/35 hover:shadow-md dark:hover:border-blue-400/40 dark:hover:shadow-none"
+      >
+        <div
+          class="mb-4 flex h-13 w-13 items-center justify-center rounded-full bg-gray-100 transition group-hover:scale-[1.02] sm:mb-5 sm:h-14 sm:w-14"
+        >
+          <img src="/iconos/carrito-compras.png" alt="" width="36" height="36" class="h-9 w-9 object-contain" />
+        </div>
+        <h2 class="text-base font-semibold text-gray-900 dark:text-dark-text-strong sm:text-lg">
+          Realizar pedido
+        </h2>
+        <p class="rb-kicker mt-2">
+          Compra como cliente desde el menú, con carrito persistente y seguimiento de tu orden.
+        </p>
+      </a>
+
       <a
         routerLink="/dashboard"
         class="rb-card rb-card-pad group transition hover:border-secondary/30 hover:shadow-md dark:hover:border-blue-400/40 dark:hover:shadow-none"

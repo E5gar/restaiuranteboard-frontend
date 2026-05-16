@@ -3,38 +3,8 @@
     class="rb-nav sticky top-0 z-50 flex flex-col items-stretch gap-3 bg-primary text-white shadow-sm dark:shadow-none sm:flex-row sm:items-center sm:justify-between"
   >
     <h1 class="rb-nav-title text-white">Restaiuranteboard</h1>
-    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-      <a
-        routerLink="/seguimiento-pedido"
-        class="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white/15 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/25 sm:w-max"
-      >
-        Mis pedidos
-      </a>
-      <button
-        type="button"
-        (click)="abrirCarrito()"
-        class="relative inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-white/15 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/25 sm:w-max"
-        aria-label="Abrir carrito de compras"
-      >
-        <span class="rb-logo-chip !p-1">
-          <img
-            src="/iconos/carrito-compras.png"
-            alt=""
-            width="22"
-            height="22"
-            class="h-5 w-5 shrink-0 object-contain"
-          />
-        </span>
-        <span class="hidden sm:inline">Carrito</span>
-        @if (cart.totalUnidades() > 0) {
-          <span
-            class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold leading-none text-white shadow-sm"
-            aria-live="polite"
-          >
-            {{ cart.totalUnidades() }}
-          </span>
-        }
-      </button>
+    <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+      <app-comprador-nav variant="primary" (carritoClick)="abrirCarrito()" />
       <app-logout-button variant="on-dark" />
     </div>
   </nav>

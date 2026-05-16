@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
+import { CompradorNavComponent } from '../comprador-nav/comprador-nav';
 import { AuthService } from '../../services/auth.service';
 import { WebsocketService } from '../../services/websocket.service';
 import { environment } from '@env/environment'; 
@@ -43,7 +44,7 @@ export interface CajaOrdenDetalle {
 @Component({
   selector: 'app-panel-caja',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent],
+  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent, CompradorNavComponent],
   templateUrl: './panel-caja.component.html',
   styleUrl: './panel-caja.css',
 })
