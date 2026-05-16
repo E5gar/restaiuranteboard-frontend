@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, inject } from '@angular/core';
+import { Subscription, finalize } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -21,6 +21,8 @@ const API = environment.apiUrl + '/admin/dashboard';
 export class AdminDashboardComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly theme = inject(ThemeService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly ngZone = inject(NgZone);
   private themeSub?: Subscription;
 
   readonly tabs: { id: string; label: string; icon: string }[] = [
@@ -76,7 +78,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   seguridad: any = null;
   interacciones: any = null;
 
-  prediccionInv: any = null;
+  prediccionInv: Record<string, unknown> | null = null;
   horizonteInv = '1_semana';
   predInvError = '';
   predInvCargando = false;
@@ -154,12 +156,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       else if (this.pestana === 'inventario_prediccion') {
         await Promise.resolve();
       }
-      setTimeout(() => {
-        this.renderizarGraficosSegunPestana();
-      }, 150);
     } catch {
       this.errorMsg = 'No se pudo cargar el panel.';
+    } finally {
       this.cargando = false;
+      this.cdr.detectChanges();
+    }
+
+    if (!this.errorMsg) {
+      setTimeout(() => this.renderizarGraficosSegunPestana(), 0);
     }
   }
 
@@ -187,7 +192,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: (d) => {
           this.ventas = d;
           ChartTester.logPayload('Ventas y Pedidos', d);
-          setTimeout(() => this.renderVentasCharts(), 1000);
           resolve();
         },
         error: () => reject(),
@@ -206,7 +210,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: (d) => {
           this.inventario = d;
           ChartTester.logPayload('Inventario', d);
-          setTimeout(() => this.renderInventarioCharts(), 0);
           resolve();
         },
         error: () => reject(),
@@ -225,7 +228,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: (d) => {
           this.productos = d;
           ChartTester.logPayload('Productos', d);
-          setTimeout(() => this.renderProductosCharts(), 0);
           resolve();
         },
         error: () => reject(),
@@ -243,7 +245,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: (d) => {
           this.clientes = d;
           ChartTester.logPayload('Clientes', d);
-          setTimeout(() => this.renderClientesCharts(), 0);
           resolve();
         },
         error: () => reject(),
@@ -258,7 +259,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: (d) => {
           this.operacion = d;
           ChartTester.logPayload('Operación', d);
-          setTimeout(() => this.renderOperacionCharts(), 0);
           resolve();
         },
         error: () => reject(),
@@ -275,7 +275,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: (d) => {
           this.seguridad = d;
           ChartTester.logPayload('Seguridad', d);
-          setTimeout(() => this.renderSeguridadCharts(), 0);
           resolve();
         },
         error: () => reject(),
@@ -294,7 +293,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
         next: (d) => {
           this.interacciones = d;
           ChartTester.logPayload('Interacciones', d);
-          setTimeout(() => this.renderInteraccionesCharts(), 0);
           resolve();
         },
         error: () => reject(),
@@ -1108,45 +1106,172 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   realizarPrediccionInv(): void {
     this.predInvCargando = true;
     this.predInvError = '';
-    this.http.post<any>(`${API}/inventario-prediccion`, {}).subscribe({
-      next: (d) => {
-        this.prediccionInv = d;
-        if (d?.defaultHorizon) this.horizonteInv = d.defaultHorizon;
-        this.predInvCargando = false;
-      },
-      error: (err) => {
-        this.predInvCargando = false;
-        this.predInvError = err?.error?.message || 'No se pudo ejecutar la predicción.';
-      },
+    this.prediccionInv = null;
+    this.cdr.detectChanges();
+    this.http
+      .post<Record<string, unknown>>(`${API}/inventario-prediccion`, {})
+      .pipe(finalize(() => this.finishPrediccionInvRequest()))
+      .subscribe({
+        next: (d) =>
+          this.ngZone.run(() => {
+            this.prediccionInv = this.normalizePrediccionPayload(d);
+            const def = this.prediccionInv?.['defaultHorizon'];
+            if (typeof def === 'string') this.horizonteInv = def;
+            this.cdr.detectChanges();
+          }),
+        error: (err) =>
+          this.ngZone.run(() => {
+            const msg = err?.error?.message;
+            this.predInvError =
+              typeof msg === 'string' ? msg : 'No se pudo ejecutar la predicción.';
+            this.cdr.detectChanges();
+          }),
+      });
+  }
+
+  private finishPrediccionInvRequest(): void {
+    this.ngZone.run(() => {
+      this.predInvCargando = false;
+      this.cdr.markForCheck();
+      this.cdr.detectChanges();
     });
+  }
+
+  private normalizePrediccionPayload(raw: Record<string, unknown> | null | undefined): Record<string, unknown> | null {
+    if (raw == null || typeof raw !== 'object') return null;
+    const o = { ...raw };
+    o['items'] = this.coerceArray(o['items']);
+    o['horizonKeys'] = this.coerceArray(o['horizonKeys']).map(String);
+    const hm = o['heatmap'];
+    if (hm != null && typeof hm === 'object' && !Array.isArray(hm)) {
+      const h = hm as Record<string, unknown>;
+      o['heatmap'] = {
+        ...h,
+        filas: this.coerceArray(h['filas']).map(String),
+        columnas: this.coerceArray(h['columnas']).map(String),
+        valores: this.coerceNestedNumberArray(h['valores']),
+        keys: this.coerceArray(h['keys']).map(String),
+      };
+    }
+    return o;
+  }
+
+  private coerceArray(v: unknown): unknown[] {
+    if (v == null) return [];
+    if (Array.isArray(v)) return v;
+    if (typeof v === 'object') return Object.values(v as object);
+    return [];
+  }
+
+  private coerceNestedNumberArray(v: unknown): number[][] {
+    const rows = this.coerceArray(v);
+    const out: number[][] = [];
+    for (const row of rows) {
+      const r = this.coerceArray(row);
+      out.push(
+        r.map((x) =>
+          typeof x === 'number' && !Number.isNaN(x)
+            ? x
+            : parseFloat(String(x ?? '0'))
+        )
+      );
+    }
+    return out;
   }
 
   setHorizonteInv(k: string): void {
     this.horizonteInv = k;
   }
 
+  prediccionItems(): Record<string, unknown>[] {
+    const raw = this.prediccionInv?.['items'];
+    if (!Array.isArray(raw)) return [];
+    return raw.filter((x): x is Record<string, unknown> => x != null && typeof x === 'object' && !Array.isArray(x));
+  }
+
+  horizonKeysList(): string[] {
+    const raw = this.prediccionInv?.['horizonKeys'];
+    if (!Array.isArray(raw)) return [];
+    return raw.map(String);
+  }
+
+  horizonLabel(hk: string): string {
+    const labels = this.prediccionInv?.['horizonLabels'];
+    if (labels != null && typeof labels === 'object' && !Array.isArray(labels)) {
+      const v = (labels as Record<string, unknown>)[hk];
+      if (typeof v === 'string') return v;
+    }
+    return hk;
+  }
+
+  private heatmapBucket(): Record<string, unknown> | null {
+    const h = this.prediccionInv?.['heatmap'];
+    if (h == null || typeof h !== 'object' || Array.isArray(h)) return null;
+    return h as Record<string, unknown>;
+  }
+
+  heatmapColumnas(): string[] {
+    const c = this.heatmapBucket()?.['columnas'];
+    if (!Array.isArray(c)) return [];
+    return c.map(String);
+  }
+
+  heatmapFilas(): string[] {
+    const c = this.heatmapBucket()?.['filas'];
+    if (!Array.isArray(c)) return [];
+    return c.map(String);
+  }
+
+  heatmapValoresRow(rowIndex: number): number[] {
+    const v = this.heatmapBucket()?.['valores'];
+    if (!Array.isArray(v)) return [];
+    const row = v[rowIndex];
+    if (!Array.isArray(row)) return [];
+    return row.map((x) => (typeof x === 'number' && !Number.isNaN(x) ? x : parseFloat(String(x ?? '0'))));
+  }
+
+  private bloqueHorizonteActual(it: Record<string, unknown>): Record<string, unknown> | null {
+    const preds = it['predicciones'];
+    if (preds == null || typeof preds !== 'object' || Array.isArray(preds)) return null;
+    const blk = (preds as Record<string, unknown>)[this.horizonteInv];
+    if (blk == null || typeof blk !== 'object' || Array.isArray(blk)) return null;
+    return blk as Record<string, unknown>;
+  }
+
+  predInvCampo(it: Record<string, unknown>, key: string): unknown {
+    return this.bloqueHorizonteActual(it)?.[key];
+  }
+
+  numPredInv(it: Record<string, unknown>, key: string): number | null {
+    const v = this.predInvCampo(it, key);
+    if (typeof v === 'number' && !Number.isNaN(v)) return v;
+    const n = parseFloat(String(v ?? ''));
+    return Number.isNaN(n) ? null : n;
+  }
+
   alertasInv(): { name: string; mensaje: string }[] {
-    const items = this.prediccionInv?.items as any[] | undefined;
-    if (!items?.length) return [];
-    const h = this.horizonteInv;
+    const items = this.prediccionItems();
+    if (!items.length) return [];
     const rows = items
       .map((it) => {
-        const p = it?.predicciones?.[h];
-        return { it, p };
+        const blk = this.bloqueHorizonteActual(it);
+        return { it, p: blk };
       })
-      .filter((x) => x.p?.alerta)
+      .filter((x): x is { it: Record<string, unknown>; p: Record<string, unknown> } => {
+        return x.p != null && Boolean(x.p['alerta']);
+      })
       .sort(
         (a, b) =>
-          (Number(a.p?.diasHastaAgotamiento) || 9999) - (Number(b.p?.diasHastaAgotamiento) || 9999)
+          (Number(a.p['diasHastaAgotamiento']) || 9999) - (Number(b.p['diasHastaAgotamiento']) || 9999)
       )
       .slice(0, 12)
       .map(({ it, p }) => {
-        const dias = Number(p?.diasHastaAgotamiento) || 0;
+        const dias = Number(p['diasHastaAgotamiento']) || 0;
         const mensaje =
           dias >= 9980
             ? 'Riesgo alto de agotamiento en el horizonte seleccionado.'
             : `Te quedan ${this.formatNum(dias)} días para que se agote este ingrediente.`;
-        return { name: String(it?.name ?? ''), mensaje };
+        return { name: String(it['name'] ?? ''), mensaje };
       });
     return rows;
   }

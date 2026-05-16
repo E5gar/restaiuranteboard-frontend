@@ -652,26 +652,39 @@
               type="button"
               (click)="realizarPrediccionInv()"
               [disabled]="predInvCargando"
-              class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
+              [attr.aria-busy]="predInvCargando"
+              class="rb-btn-primary sm:w-max disabled:!cursor-wait disabled:!border disabled:!border-neutral-300 disabled:!bg-neutral-200 disabled:!text-neutral-700 disabled:!opacity-100 disabled:!shadow-none disabled:hover:!bg-neutral-200 dark:disabled:!border-slate-500 dark:disabled:!bg-slate-600 dark:disabled:!text-slate-100 dark:disabled:hover:!bg-slate-600"
             >
-              <img src="/iconos/lupa.png" alt="" width="18" height="18" class="h-4 w-4 object-contain opacity-90" />
-              {{ predInvCargando ? 'Ejecutando…' : 'Realizar predicción' }}
+              <img
+                src="/iconos/lupa.png"
+                alt=""
+                width="18"
+                height="18"
+                class="h-4 w-4 object-contain"
+                [class.opacity-70]="predInvCargando"
+                [class.opacity-90]="!predInvCargando"
+              />
+              {{ predInvCargando ? 'Generando predicción...' : 'Realizar predicción' }}
             </button>
           </div>
+
+          <p *ngIf="predInvCargando" class="text-sm font-medium text-secondary dark:text-blue-300">
+            Recuperando información y realizando inferencia, espere...
+          </p>
 
           <p *ngIf="predInvError" class="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-950/40 dark:text-red-200">
             {{ predInvError }}
           </p>
 
-          <p *ngIf="prediccionInv?.['mensaje'] && !(prediccionInv?.['items']?.length)" class="text-sm text-neutral-strong dark:text-dark-text-muted">
-            {{ prediccionInv['mensaje'] }}
+          <p *ngIf="prediccionInv?.['mensaje'] && prediccionItems().length === 0" class="text-sm text-neutral-strong dark:text-dark-text-muted">
+            {{ prediccionInv?.['mensaje'] }}
           </p>
 
-          <ng-container *ngIf="prediccionInv?.['items']?.length">
+          <ng-container *ngIf="prediccionItems().length">
             <div class="flex flex-wrap gap-2">
               <button
                 type="button"
-                *ngFor="let hk of prediccionInv['horizonKeys']"
+                *ngFor="let hk of horizonKeysList()"
                 (click)="setHorizonteInv(hk)"
                 [ngClass]="
                   horizonteInv === hk
@@ -680,7 +693,7 @@
                 "
                 class="inline-flex min-h-10 items-center rounded-xl border px-3 py-2 text-xs font-semibold sm:text-sm"
               >
-                {{ prediccionInv['horizonLabels']?.[hk] || hk }}
+                {{ horizonLabel(hk) }}
               </button>
             </div>
 
@@ -718,28 +731,28 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let it of prediccionInv['items']" class="border-b border-gray-100 dark:border-slate-700/80">
+                  <tr *ngFor="let it of prediccionItems()" class="border-b border-gray-100 dark:border-slate-700/80">
                     <td class="py-2 pr-3 font-medium">{{ it['name'] }}</td>
                     <td class="py-2 pr-3">{{ formatNum(it['stockActual']) }} {{ it['unit'] }}</td>
-                    <td class="py-2 pr-3">{{ formatNum(it['predicciones']?.[horizonteInv]?.['consumoEstimado']) }} {{ it['unit'] }}</td>
-                    <td class="py-2 pr-3">{{ formatNum(it['predicciones']?.[horizonteInv]?.['stockRestanteEstimado']) }} {{ it['unit'] }}</td>
+                    <td class="py-2 pr-3">{{ formatNum(predInvCampo(it, 'consumoEstimado')) }} {{ it['unit'] }}</td>
+                    <td class="py-2 pr-3">{{ formatNum(predInvCampo(it, 'stockRestanteEstimado')) }} {{ it['unit'] }}</td>
                     <td class="py-2 pr-3">
                       <div class="flex items-center gap-2">
                         <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-slate-700">
                           <div
                             class="h-full rounded-full transition-all"
-                            [ngClass]="barClassPct(it['predicciones']?.[horizonteInv]?.['pctConsumido'])"
-                            [style.width.%]="min100(it['predicciones']?.[horizonteInv]?.['pctConsumido'])"
+                            [ngClass]="barClassPct(predInvCampo(it, 'pctConsumido'))"
+                            [style.width.%]="min100(predInvCampo(it, 'pctConsumido'))"
                           ></div>
                         </div>
-                        <span class="w-12 shrink-0 text-right font-medium">{{ formatNum(it['predicciones']?.[horizonteInv]?.['pctConsumido']) }}%</span>
+                        <span class="w-12 shrink-0 text-right font-medium">{{ formatNum(predInvCampo(it, 'pctConsumido')) }}%</span>
                       </div>
                     </td>
                     <td class="py-2">
-                      <span *ngIf="(it['predicciones']?.[horizonteInv]?.['diasHastaAgotamiento'] ?? 9999) < 9980">{{
-                        formatNum(it['predicciones']?.[horizonteInv]?.['diasHastaAgotamiento'])
+                      <span *ngIf="(numPredInv(it, 'diasHastaAgotamiento') ?? 9999) < 9980">{{
+                        formatNum(predInvCampo(it, 'diasHastaAgotamiento'))
                       }}</span>
-                      <span *ngIf="(it['predicciones']?.[horizonteInv]?.['diasHastaAgotamiento'] ?? 0) >= 9980">—</span>
+                      <span *ngIf="(numPredInv(it, 'diasHastaAgotamiento') ?? 0) >= 9980">—</span>
                     </td>
                   </tr>
                 </tbody>
@@ -753,7 +766,7 @@
                   <tr>
                     <th class="border border-gray-200 p-2 text-left font-semibold dark:border-dark-border">Insumo</th>
                     <th
-                      *ngFor="let col of prediccionInv['heatmap']?.['columnas']; let ci = index"
+                      *ngFor="let col of heatmapColumnas()"
                       class="border border-gray-200 p-2 font-semibold dark:border-dark-border"
                     >
                       {{ col }}
@@ -761,10 +774,10 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let fila of prediccionInv['heatmap']?.['filas']; let ri = index">
+                  <tr *ngFor="let fila of heatmapFilas(); let ri = index">
                     <td class="border border-gray-200 p-2 text-left font-medium dark:border-dark-border">{{ fila }}</td>
                     <td
-                      *ngFor="let pct of prediccionInv['heatmap']?.['valores']?.[ri]; let ci = index"
+                      *ngFor="let pct of heatmapValoresRow(ri)"
                       class="border border-gray-200 p-2 font-medium dark:border-dark-border"
                       [style.backgroundColor]="heatColor(pct)"
                     >

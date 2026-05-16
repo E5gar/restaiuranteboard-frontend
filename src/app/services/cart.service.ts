@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
-import { environment } from '@env/environment'; 
+import { environment } from '@env/environment';
 
 export const MAX_UNIDADES_POR_PRODUCTO = 10;
 
@@ -82,7 +82,9 @@ export class CartService {
     this.persistPriceSnapshot();
   }
 
-  applyFromLoginPayload(user: { role?: string; cart?: CarritoResponseDto } | null | undefined): void {
+  applyFromLoginPayload(
+    user: { role?: string; cart?: CarritoResponseDto } | null | undefined,
+  ): void {
     if (!user || user.role !== 'CLIENTE') {
       this.lines.set([]);
       this.clearPriceSnapshot();
@@ -110,9 +112,7 @@ export class CartService {
   clearPriceSnapshot(): void {
     try {
       localStorage.removeItem(SNAPSHOT_PRECIOS_KEY);
-    } catch {
-      /* ignore */
-    }
+    } catch {}
   }
 
   private persistPriceSnapshot(): void {
@@ -126,11 +126,12 @@ export class CartService {
         localStorage.removeItem(SNAPSHOT_PRECIOS_KEY);
         return;
       }
-      const payload: PersistedCartSnapshot = { userId: s.userId, lines: lines.map((l) => ({ ...l })) };
+      const payload: PersistedCartSnapshot = {
+        userId: s.userId,
+        lines: lines.map((l) => ({ ...l })),
+      };
       localStorage.setItem(SNAPSHOT_PRECIOS_KEY, JSON.stringify(payload));
-    } catch {
-      /* ignore */
-    }
+    } catch {}
   }
 
   puedeSincronizar(): boolean {
