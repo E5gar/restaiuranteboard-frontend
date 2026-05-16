@@ -72,7 +72,7 @@
                   {{ textoEstadoSlot(slot.status) }}
                 </span>
                 <label
-                  *ngIf="slot.slotNumber === 1 || slot.slotNumber === 2"
+                  *ngIf="slot.slotNumber === 1 || slot.slotNumber === 2 || slot.slotNumber === 3"
                   class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[10px] font-semibold dark:border-dark-border dark:bg-slate-900 dark:text-dark-text-muted"
                 >
                   <span>On</span>
@@ -99,6 +99,22 @@
             <p *ngIf="slot.slotNumber === 2" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
               Config:
               <strong class="text-gray-800 dark:text-slate-200">{{ slot.configFileName || 'Sin archivo' }}</strong>
+            </p>
+            <p *ngIf="slot.slotNumber === 3" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+              Modelo:
+              <strong class="text-gray-800 dark:text-slate-200">{{ slot.modelFileName || 'Sin archivo' }}</strong>
+            </p>
+            <p *ngIf="slot.slotNumber === 3" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+              feat_scaler:
+              <strong class="text-gray-800 dark:text-slate-200">{{ slot.featScalerFileName || 'Sin archivo' }}</strong>
+            </p>
+            <p *ngIf="slot.slotNumber === 3" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+              y_scaler:
+              <strong class="text-gray-800 dark:text-slate-200">{{ slot.yScalerFileName || 'Sin archivo' }}</strong>
+            </p>
+            <p *ngIf="slot.slotNumber === 3" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+              meta:
+              <strong class="text-gray-800 dark:text-slate-200">{{ slot.metaModeloFileName || 'Sin archivo' }}</strong>
             </p>
             <p class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
               Última versión:
@@ -187,12 +203,53 @@
                 {{ guardandoIa ? 'Cargando...' : 'Subir paquete Slot 2' }}
               </button>
             </div>
-            <p
-              *ngIf="slot.slotNumber === 3"
-              class="mt-4 rounded-lg border border-dashed border-gray-200 p-3 text-xs text-neutral-muted dark:border-dark-border dark:text-dark-text-muted"
-            >
-              Slot reservado para siguientes versiones del sistema de IA.
-            </p>
+            <div *ngIf="slot.slotNumber === 3" class="mt-4 space-y-3">
+              <div>
+                <label class="rb-label !normal-case !mb-1">Modelo (.keras)</label>
+                <input
+                  type="file"
+                  accept=".keras"
+                  (change)="onArchivoModeloSlot3($event)"
+                  class="rb-input py-2 text-sm"
+                />
+                <p *ngIf="archivoModeloSlot3" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+                  {{ archivoModeloSlot3.name }}
+                </p>
+              </div>
+              <div>
+                <label class="rb-label !normal-case !mb-1">feat_scaler.pkl</label>
+                <input type="file" accept=".pkl" (change)="onArchivoFeatScalerSlot3($event)" class="rb-input py-2 text-sm" />
+                <p *ngIf="archivoFeatScalerSlot3" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+                  {{ archivoFeatScalerSlot3.name }}
+                </p>
+              </div>
+              <div>
+                <label class="rb-label !normal-case !mb-1">y_scaler.pkl</label>
+                <input type="file" accept=".pkl" (change)="onArchivoYScalerSlot3($event)" class="rb-input py-2 text-sm" />
+                <p *ngIf="archivoYScalerSlot3" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+                  {{ archivoYScalerSlot3.name }}
+                </p>
+              </div>
+              <div>
+                <label class="rb-label !normal-case !mb-1">meta_modelo.json</label>
+                <input type="file" accept=".json" (change)="onArchivoMetaSlot3($event)" class="rb-input py-2 text-sm" />
+                <p *ngIf="archivoMetaSlot3" class="mt-1 text-xs text-neutral-muted dark:text-dark-text-muted">
+                  {{ archivoMetaSlot3.name }}
+                </p>
+              </div>
+              <p class="text-xs text-neutral-muted dark:text-dark-text-muted">
+                meta_modelo.json debe incluir feat_data_min, feat_data_max, y_data_min y y_data_max exportados del
+                entrenamiento.
+              </p>
+              <button
+                type="button"
+                (click)="guardarSlot3()"
+                [disabled]="guardandoIa"
+                class="rb-btn-secondary w-full border-0 bg-secondary text-white dark:bg-blue-600"
+              >
+                {{ guardandoIa ? 'Cargando...' : 'Subir paquete Slot 3' }}
+              </button>
+            </div>
           </article>
         </div>
       </div>

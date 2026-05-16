@@ -43,7 +43,7 @@
       </div>
 
       <div class="space-y-6 p-4 sm:space-y-8 sm:p-6 lg:p-8">
-        <div class="rb-section-muted flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+        <div *ngIf="pestana !== 'inventario_prediccion'" class="rb-section-muted flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
           <div class="min-w-[140px] flex-1">
             <label class="rb-label !normal-case">Desde</label>
             <input type="date" [(ngModel)]="fromDate" class="rb-input rb-focus-secondary" name="df" />
@@ -630,6 +630,151 @@
               </tbody>
             </table>
           </div>
+        </ng-container>
+
+        <ng-container *ngIf="!cargando && pestana === 'inventario_prediccion'">
+          <div class="rb-section-muted flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div class="flex items-start gap-3">
+              <span class="rb-logo-chip !p-1.5">
+                <img src="/iconos/consulta-informacion-azul.png" alt="" width="22" height="22" class="h-6 w-6 object-contain" />
+              </span>
+              <div>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-dark-text-strong sm:text-lg">
+                  Predicción de demanda con IA
+                </h3>
+                <p class="mt-1 text-xs text-neutral-strong sm:text-sm dark:text-dark-text-muted">
+                  Se usan los últimos 60 días por insumo, clima histórico y patrón semanal. Active el Slot 3 en Configuración
+                  de modelos y cargue el paquete del modelo.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              (click)="realizarPrediccionInv()"
+              [disabled]="predInvCargando"
+              class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold sm:w-max"
+            >
+              <img src="/iconos/lupa.png" alt="" width="18" height="18" class="h-4 w-4 object-contain opacity-90" />
+              {{ predInvCargando ? 'Ejecutando…' : 'Realizar predicción' }}
+            </button>
+          </div>
+
+          <p *ngIf="predInvError" class="rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-950/40 dark:text-red-200">
+            {{ predInvError }}
+          </p>
+
+          <p *ngIf="prediccionInv?.['mensaje'] && !(prediccionInv?.['items']?.length)" class="text-sm text-neutral-strong dark:text-dark-text-muted">
+            {{ prediccionInv['mensaje'] }}
+          </p>
+
+          <ng-container *ngIf="prediccionInv?.['items']?.length">
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                *ngFor="let hk of prediccionInv['horizonKeys']"
+                (click)="setHorizonteInv(hk)"
+                [ngClass]="
+                  horizonteInv === hk
+                    ? 'border-secondary bg-secondary/15 text-secondary ring-1 ring-secondary/40 dark:border-blue-400 dark:bg-slate-800 dark:text-slate-100'
+                    : 'border-gray-200 bg-white text-gray-800 hover:border-secondary/40 dark:border-dark-border dark:bg-slate-900 dark:text-slate-200'
+                "
+                class="inline-flex min-h-10 items-center rounded-xl border px-3 py-2 text-xs font-semibold sm:text-sm"
+              >
+                {{ prediccionInv['horizonLabels']?.[hk] || hk }}
+              </button>
+            </div>
+
+            <div class="rb-section-muted">
+              <div class="mb-3 flex items-center gap-2">
+                <img src="/iconos/advertencia-amarillo.png" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                <h3 class="rb-heading-accent text-base">Alertas críticas</h3>
+              </div>
+              <p *ngIf="!alertasInv().length" class="text-sm text-neutral-strong dark:text-dark-text-muted">
+                Sin alertas en el horizonte seleccionado (consumo estimado menor al 80% del stock actual).
+              </p>
+              <div *ngIf="alertasInv().length" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <article
+                  *ngFor="let a of alertasInv()"
+                  class="rounded-xl border border-red-300 bg-red-50/90 p-4 shadow-sm dark:border-red-500/40 dark:bg-red-950/35 dark:shadow-none"
+                >
+                  <p class="text-xs font-bold uppercase tracking-wide text-red-700 dark:text-red-300">Alerta</p>
+                  <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-slate-100">{{ a.name }}</p>
+                  <p class="mt-2 text-sm text-red-900/90 dark:text-red-100/90">{{ a.mensaje }}</p>
+                </article>
+              </div>
+            </div>
+
+            <div class="rb-section-muted overflow-x-auto">
+              <h3 class="rb-heading-accent mb-4 text-base">Tabla de predicción</h3>
+              <table class="w-full min-w-[720px] border-collapse text-left text-xs text-gray-900 sm:text-sm dark:text-slate-100">
+                <thead>
+                  <tr class="border-b border-gray-200 dark:border-dark-border">
+                    <th class="py-2 pr-3 font-semibold">Insumo</th>
+                    <th class="py-2 pr-3 font-semibold">Stock actual</th>
+                    <th class="py-2 pr-3 font-semibold">Consumo estimado</th>
+                    <th class="py-2 pr-3 font-semibold">Stock restante est.</th>
+                    <th class="min-w-[140px] py-2 pr-3 font-semibold">% consumido</th>
+                    <th class="py-2 font-semibold">Días agotamiento</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let it of prediccionInv['items']" class="border-b border-gray-100 dark:border-slate-700/80">
+                    <td class="py-2 pr-3 font-medium">{{ it['name'] }}</td>
+                    <td class="py-2 pr-3">{{ formatNum(it['stockActual']) }} {{ it['unit'] }}</td>
+                    <td class="py-2 pr-3">{{ formatNum(it['predicciones']?.[horizonteInv]?.['consumoEstimado']) }} {{ it['unit'] }}</td>
+                    <td class="py-2 pr-3">{{ formatNum(it['predicciones']?.[horizonteInv]?.['stockRestanteEstimado']) }} {{ it['unit'] }}</td>
+                    <td class="py-2 pr-3">
+                      <div class="flex items-center gap-2">
+                        <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-slate-700">
+                          <div
+                            class="h-full rounded-full transition-all"
+                            [ngClass]="barClassPct(it['predicciones']?.[horizonteInv]?.['pctConsumido'])"
+                            [style.width.%]="min100(it['predicciones']?.[horizonteInv]?.['pctConsumido'])"
+                          ></div>
+                        </div>
+                        <span class="w-12 shrink-0 text-right font-medium">{{ formatNum(it['predicciones']?.[horizonteInv]?.['pctConsumido']) }}%</span>
+                      </div>
+                    </td>
+                    <td class="py-2">
+                      <span *ngIf="(it['predicciones']?.[horizonteInv]?.['diasHastaAgotamiento'] ?? 9999) < 9980">{{
+                        formatNum(it['predicciones']?.[horizonteInv]?.['diasHastaAgotamiento'])
+                      }}</span>
+                      <span *ngIf="(it['predicciones']?.[horizonteInv]?.['diasHastaAgotamiento'] ?? 0) >= 9980">—</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="rb-section-muted overflow-x-auto">
+              <h3 class="rb-heading-accent mb-4 text-base">Mapa de calor de riesgos (% del stock consumido)</h3>
+              <table class="w-full min-w-[640px] border-collapse text-center text-[11px] text-gray-900 sm:text-xs dark:text-slate-100">
+                <thead>
+                  <tr>
+                    <th class="border border-gray-200 p-2 text-left font-semibold dark:border-dark-border">Insumo</th>
+                    <th
+                      *ngFor="let col of prediccionInv['heatmap']?.['columnas']; let ci = index"
+                      class="border border-gray-200 p-2 font-semibold dark:border-dark-border"
+                    >
+                      {{ col }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let fila of prediccionInv['heatmap']?.['filas']; let ri = index">
+                    <td class="border border-gray-200 p-2 text-left font-medium dark:border-dark-border">{{ fila }}</td>
+                    <td
+                      *ngFor="let pct of prediccionInv['heatmap']?.['valores']?.[ri]; let ci = index"
+                      class="border border-gray-200 p-2 font-medium dark:border-dark-border"
+                      [style.backgroundColor]="heatColor(pct)"
+                    >
+                      {{ formatNum(pct) }}%
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </ng-container>
         </ng-container>
       </div>
     </div>

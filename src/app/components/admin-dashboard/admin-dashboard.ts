@@ -26,6 +26,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   readonly tabs: { id: string; label: string; icon: string }[] = [
     { id: 'ventas', label: 'Ventas y Pedidos', icon: '/iconos/billetes-soles.png' },
     { id: 'inventario', label: 'Inventario y Costos', icon: '/iconos/categoria-verduras.png' },
+    { id: 'inventario_prediccion', label: 'Predicción de Inventario', icon: '/iconos/consulta-informacion-azul.png' },
     { id: 'productos', label: 'Productos', icon: '/iconos/categoria-plato-principal.png' },
     { id: 'clientes', label: 'Clientes', icon: '/iconos/categoria-entrada.png' },
     { id: 'operacion', label: 'Operación', icon: '/iconos/camion-abastecer-ingrediente.png' },
@@ -75,6 +76,11 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   seguridad: any = null;
   interacciones: any = null;
 
+  prediccionInv: any = null;
+  horizonteInv = '1_semana';
+  predInvError = '';
+  predInvCargando = false;
+
   private charts = new Map<string, Chart>();
 
   diasSemanaLabel = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -104,6 +110,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   cambiarPestana(id: string): void {
     this.pestana = id;
     this.errorMsg = '';
+    this.predInvError = '';
     void this.cargarActual();
   }
 
@@ -144,8 +151,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       else if (this.pestana === 'operacion') await this.cargarOperacion();
       else if (this.pestana === 'seguridad') await this.cargarSeguridad();
       else if (this.pestana === 'interacciones') await this.cargarInteracciones();
-
-      this.cargando = false;
+      else if (this.pestana === 'inventario_prediccion') {
+        await Promise.resolve();
+      }
       setTimeout(() => {
         this.renderizarGraficosSegunPestana();
       }, 150);
@@ -163,6 +171,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     else if (this.pestana === 'operacion') this.renderOperacionCharts();
     else if (this.pestana === 'seguridad') this.renderSeguridadCharts();
     else if (this.pestana === 'interacciones') this.renderInteraccionesCharts();
+    else if (this.pestana === 'inventario_prediccion') {
+      return;
+    }
   }
 
   private cargarVentas(): Promise<void> {
@@ -1092,5 +1103,71 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   formatNum(n: unknown): string {
     const v = typeof n === 'number' ? n : parseFloat(String(n ?? 0));
     return v.toLocaleString('es-PE', { maximumFractionDigits: 2 });
+  }
+
+  realizarPrediccionInv(): void {
+    this.predInvCargando = true;
+    this.predInvError = '';
+    this.http.post<any>(`${API}/inventario-prediccion`, {}).subscribe({
+      next: (d) => {
+        this.prediccionInv = d;
+        if (d?.defaultHorizon) this.horizonteInv = d.defaultHorizon;
+        this.predInvCargando = false;
+      },
+      error: (err) => {
+        this.predInvCargando = false;
+        this.predInvError = err?.error?.message || 'No se pudo ejecutar la predicción.';
+      },
+    });
+  }
+
+  setHorizonteInv(k: string): void {
+    this.horizonteInv = k;
+  }
+
+  alertasInv(): { name: string; mensaje: string }[] {
+    const items = this.prediccionInv?.items as any[] | undefined;
+    if (!items?.length) return [];
+    const h = this.horizonteInv;
+    const rows = items
+      .map((it) => {
+        const p = it?.predicciones?.[h];
+        return { it, p };
+      })
+      .filter((x) => x.p?.alerta)
+      .sort(
+        (a, b) =>
+          (Number(a.p?.diasHastaAgotamiento) || 9999) - (Number(b.p?.diasHastaAgotamiento) || 9999)
+      )
+      .slice(0, 12)
+      .map(({ it, p }) => {
+        const dias = Number(p?.diasHastaAgotamiento) || 0;
+        const mensaje =
+          dias >= 9980
+            ? 'Riesgo alto de agotamiento en el horizonte seleccionado.'
+            : `Te quedan ${this.formatNum(dias)} días para que se agote este ingrediente.`;
+        return { name: String(it?.name ?? ''), mensaje };
+      });
+    return rows;
+  }
+
+  barClassPct(pct: unknown): string {
+    const v = typeof pct === 'number' ? pct : parseFloat(String(pct ?? 0));
+    if (v >= 80) return 'bg-red-600';
+    if (v >= 50) return 'bg-amber-500';
+    return 'bg-emerald-600';
+  }
+
+  min100(pct: unknown): number {
+    const v = typeof pct === 'number' ? pct : parseFloat(String(pct ?? 0));
+    return Math.max(0, Math.min(100, v));
+  }
+
+  heatColor(pct: unknown): string {
+    const v = typeof pct === 'number' ? pct : parseFloat(String(pct ?? 0));
+    const dark = this.theme.isDark();
+    if (v >= 80) return dark ? 'rgba(185, 28, 28, 0.88)' : 'rgba(220, 38, 38, 0.78)';
+    if (v >= 50) return dark ? 'rgba(202, 138, 4, 0.55)' : 'rgba(234, 179, 8, 0.5)';
+    return dark ? 'rgba(22, 163, 74, 0.5)' : 'rgba(34, 197, 94, 0.42)';
   }
 }

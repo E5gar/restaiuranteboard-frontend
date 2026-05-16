@@ -18,6 +18,9 @@ interface IaSlot {
   rulesFileName?: string;
   frequencyFileName?: string;
   configFileName?: string;
+  featScalerFileName?: string;
+  yScalerFileName?: string;
+  metaModeloFileName?: string;
   uploadedAt?: string;
 }
 
@@ -39,6 +42,10 @@ export class AdminModelosIaComponent implements OnInit {
   archivoRulesSlot2: File | null = null;
   archivoFrequencySlot2: File | null = null;
   archivoConfigSlot2: File | null = null;
+  archivoModeloSlot3: File | null = null;
+  archivoFeatScalerSlot3: File | null = null;
+  archivoYScalerSlot3: File | null = null;
+  archivoMetaSlot3: File | null = null;
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '' };
 
   constructor(private http: HttpClient) {}
@@ -214,6 +221,92 @@ export class AdminModelosIaComponent implements OnInit {
       this.guardandoIa = false;
       this.abrirModal('error', 'Slot 2', 'No se pudo procesar el archivo seleccionado.');
     }
+  }
+
+  async guardarSlot3() {
+    if (
+      !this.archivoModeloSlot3 ||
+      !this.archivoFeatScalerSlot3 ||
+      !this.archivoYScalerSlot3 ||
+      !this.archivoMetaSlot3
+    ) {
+      this.abrirModal('error', 'Archivos requeridos', 'Debes cargar los cuatro archivos del Slot 3.');
+      return;
+    }
+    this.guardandoIa = true;
+    try {
+      const modelFileBase64 = await this.fileToBase64(this.archivoModeloSlot3);
+      const featScalerBase64 = await this.fileToBase64(this.archivoFeatScalerSlot3);
+      const yScalerBase64 = await this.fileToBase64(this.archivoYScalerSlot3);
+      const metaModeloBase64 = await this.fileToBase64(this.archivoMetaSlot3);
+      this.http
+        .post<any>(`${this.apiIa}/slot-3/upload`, {
+          modelFileName: this.archivoModeloSlot3.name,
+          modelFileBase64,
+          featScalerFileName: this.archivoFeatScalerSlot3.name,
+          featScalerBase64,
+          yScalerFileName: this.archivoYScalerSlot3.name,
+          yScalerBase64,
+          metaModeloFileName: this.archivoMetaSlot3.name,
+          metaModeloBase64,
+        })
+        .subscribe({
+          next: (resp) => {
+            this.guardandoIa = false;
+            this.iaActiva = !!resp?.iaActiva;
+            this.slotsIa = Array.isArray(resp?.slots) ? resp.slots : [];
+            this.archivoModeloSlot3 = null;
+            this.archivoFeatScalerSlot3 = null;
+            this.archivoYScalerSlot3 = null;
+            this.archivoMetaSlot3 = null;
+            this.abrirModal('exito', 'Slot 3', 'Paquete de predicción de inventario cargado correctamente.');
+          },
+          error: (err) => {
+            this.guardandoIa = false;
+            this.abrirModal('error', 'Slot 3', err?.error?.message || 'No se pudo cargar el paquete.');
+          },
+        });
+    } catch {
+      this.guardandoIa = false;
+      this.abrirModal('error', 'Slot 3', 'No se pudo procesar el archivo seleccionado.');
+    }
+  }
+
+  onArchivoModeloSlot3(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.keras')) {
+      this.abrirModal('error', 'Archivo inválido', 'Solo se permite archivo .keras.');
+      input.value = '';
+      this.archivoModeloSlot3 = null;
+      return;
+    }
+    this.archivoModeloSlot3 = file;
+  }
+
+  onArchivoFeatScalerSlot3(event: Event) {
+    this.archivoFeatScalerSlot3 = this.validarPklFile(event, 'feat_scaler.pkl');
+  }
+
+  onArchivoYScalerSlot3(event: Event) {
+    this.archivoYScalerSlot3 = this.validarPklFile(event, 'y_scaler.pkl');
+  }
+
+  onArchivoMetaSlot3(event: Event) {
+    this.archivoMetaSlot3 = this.validarJsonFile(event, 'meta_modelo.json');
+  }
+
+  private validarPklFile(event: Event, etiqueta: string): File | null {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (!file) return null;
+    if (!file.name.toLowerCase().endsWith('.pkl')) {
+      this.abrirModal('error', 'Archivo inválido', `${etiqueta} debe ser .pkl.`);
+      input.value = '';
+      return null;
+    }
+    return file;
   }
 
   textoEstadoSlot(status: SlotEstado): string {
