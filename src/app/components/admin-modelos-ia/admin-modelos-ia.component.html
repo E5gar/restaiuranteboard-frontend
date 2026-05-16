@@ -318,7 +318,7 @@
     <p class="mb-6 text-xs text-neutral-muted dark:text-dark-text-muted">
       Slot {{ modalDataset.slot }} · {{ modalDataset.fileName }}
     </p>
-    <div class="flex flex-col gap-3 sm:flex-row sm:justify-center" *ngIf="modalDataset.fase === 'listo'">
+    <div class="flex flex-col gap-3 sm:flex-row sm:justify-center mb-4" *ngIf="modalDataset.fase === 'listo'">
       <a
         [href]="modalDataset.downloadUrl"
         target="_blank"
@@ -338,7 +338,7 @@
         class="w-full sm:w-max"
         [ngClass]="modalDataset.fase === 'error' ? 'rb-btn-danger' : 'rb-btn-secondary'"
       >
-        {{ modalDataset.fase === 'pendiente' ? 'Seguir en el panel' : 'Entendido' }}
+        {{ modalDataset.fase === 'pendiente' ? 'Entendido' : 'Entendido' }}
       </button>
     </div>
   </div>
