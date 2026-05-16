@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -35,6 +35,8 @@ interface IaSlot {
 export class AdminModelosIaComponent implements OnInit, OnDestroy {
   private readonly apiIa = environment.apiUrl + '/ia-modelos';
   private wsDatasetSub?: Subscription;
+  private pollDatasetTimer: ReturnType<typeof setInterval> | null = null;
+  private datasetJobId: string | null = null;
 
   cargandoIa = false;
   guardandoIa = false;
@@ -63,6 +65,8 @@ export class AdminModelosIaComponent implements OnInit, OnDestroy {
   constructor(
     private http: HttpClient,
     private websocketService: WebsocketService,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
@@ -73,6 +77,7 @@ export class AdminModelosIaComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.detenerPollingDataset();
     this.wsDatasetSub?.unsubscribe();
   }
 
@@ -80,76 +85,187 @@ export class AdminModelosIaComponent implements OnInit, OnDestroy {
     if (slotNumber < 1 || slotNumber > 3) {
       return;
     }
+    this.detenerPollingDataset();
     this.descargandoDataset = slotNumber;
-    this.http.post<{ message?: string; fileName?: string }>(`${this.apiIa}/dataset/${slotNumber}/solicitar`, {}).subscribe({
-      next: (resp) => {
-        const fileName =
-          resp?.fileName || `dataset_modelo_${String(slotNumber).padStart(2, '0')}.zip`;
-        this.modalDataset = {
-          visible: true,
-          fase: 'pendiente',
-          slot: slotNumber,
-          fileName,
-          downloadUrl: '',
-          mensaje:
-            resp?.message ||
-            'Generando dataset... Te avisaremos cuando esté listo.',
-        };
-      },
-      error: (err) => {
-        this.descargandoDataset = null;
-        this.abrirModal(
-          'error',
-          'Dataset',
-          err?.error?.message || 'No se pudo iniciar la generación del dataset.',
-        );
-      },
-    });
+    this.http
+      .post<{ message?: string; fileName?: string; jobId?: string }>(
+        `${this.apiIa}/dataset/${slotNumber}/solicitar`,
+        {},
+      )
+      .subscribe({
+        next: (resp) => {
+          this.ngZone.run(() => {
+            this.datasetJobId = resp?.jobId ?? null;
+            const fileName =
+              resp?.fileName || `dataset_modelo_${String(slotNumber).padStart(2, '0')}.zip`;
+            this.modalDataset = {
+              visible: true,
+              fase: 'pendiente',
+              slot: slotNumber,
+              fileName,
+              downloadUrl: '',
+              mensaje:
+                resp?.message ||
+                'Generando dataset... Te avisaremos cuando esté listo.',
+            };
+            this.iniciarPollingDataset();
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => {
+          this.ngZone.run(() => {
+            this.descargandoDataset = null;
+            this.datasetJobId = null;
+            this.abrirModal(
+              'error',
+              'Dataset',
+              err?.error?.message || 'No se pudo iniciar la generación del dataset.',
+            );
+            this.cdr.detectChanges();
+          });
+        },
+      });
   }
 
   cerrarModalDataset() {
     this.modalDataset.visible = false;
+    if (this.modalDataset.fase !== 'pendiente') {
+      this.descargandoDataset = null;
+      this.datasetJobId = null;
+      this.detenerPollingDataset();
+    }
+    this.cdr.detectChanges();
   }
 
-  private onDatasetWs(raw: string) {
-    try {
-      const o = JSON.parse(raw) as {
-        kind?: string;
+  private iniciarPollingDataset() {
+    this.detenerPollingDataset();
+    if (!this.datasetJobId) {
+      return;
+    }
+    this.consultarEstadoDataset();
+    this.pollDatasetTimer = setInterval(() => this.consultarEstadoDataset(), 3000);
+  }
+
+  private detenerPollingDataset() {
+    if (this.pollDatasetTimer != null) {
+      clearInterval(this.pollDatasetTimer);
+      this.pollDatasetTimer = null;
+    }
+  }
+
+  private consultarEstadoDataset() {
+    if (!this.datasetJobId) {
+      return;
+    }
+    this.http
+      .get<{
+        status?: string;
         slot?: number;
         fileName?: string;
         downloadUrl?: string;
         message?: string;
+      }>(`${this.apiIa}/dataset/jobs/${this.datasetJobId}`)
+      .subscribe({
+        next: (estado) => {
+          this.ngZone.run(() => {
+            this.aplicarEstadoDataset(estado);
+            this.cdr.detectChanges();
+          });
+        },
+        error: () => {},
+      });
+  }
+
+  private aplicarEstadoDataset(estado: {
+    status?: string;
+    slot?: number;
+    fileName?: string;
+    downloadUrl?: string;
+    message?: string;
+  }) {
+    const status = String(estado?.status || '').toUpperCase();
+    const slot = Number(estado?.slot || this.modalDataset.slot || 0);
+    const fileName =
+      estado?.fileName ||
+      `dataset_modelo_${String(slot || 1).padStart(2, '0')}.zip`;
+
+    if (status === 'READY' && estado?.downloadUrl) {
+      this.detenerPollingDataset();
+      this.descargandoDataset = null;
+      this.modalDataset = {
+        visible: true,
+        fase: 'listo',
+        slot,
+        fileName,
+        downloadUrl: estado.downloadUrl,
+        mensaje: 'El dataset está listo para descargar.',
       };
-      const slot = Number(o.slot || 0);
-      if (!slot) {
-        return;
-      }
-      if (o.kind === 'dataset_ready' && o.downloadUrl) {
-        this.descargandoDataset = null;
-        this.modalDataset = {
-          visible: true,
-          fase: 'listo',
-          slot,
-          fileName: o.fileName || `dataset_modelo_${String(slot).padStart(2, '0')}.zip`,
-          downloadUrl: o.downloadUrl,
-          mensaje: 'El dataset está listo para descargar.',
-        };
-        return;
-      }
-      if (o.kind === 'dataset_failed') {
-        this.descargandoDataset = null;
-        this.modalDataset = {
-          visible: true,
-          fase: 'error',
-          slot,
-          fileName: o.fileName || `dataset_modelo_${String(slot).padStart(2, '0')}.zip`,
-          downloadUrl: '',
-          mensaje: o.message || 'No se pudo generar el dataset.',
-        };
-      }
-    } catch {
       return;
     }
+
+    if (status === 'FAILED') {
+      this.detenerPollingDataset();
+      this.descargandoDataset = null;
+      this.modalDataset = {
+        visible: true,
+        fase: 'error',
+        slot,
+        fileName,
+        downloadUrl: '',
+        mensaje: estado?.message || 'No se pudo generar el dataset.',
+      };
+    }
+  }
+
+  private onDatasetWs(raw: string) {
+    this.ngZone.run(() => {
+      try {
+        const o = JSON.parse(raw) as {
+          kind?: string;
+          jobId?: string;
+          slot?: number;
+          fileName?: string;
+          downloadUrl?: string;
+          message?: string;
+        };
+        if (this.datasetJobId && o.jobId && o.jobId !== this.datasetJobId) {
+          return;
+        }
+        const slot = Number(o.slot || 0);
+        if (!slot) {
+          return;
+        }
+        if (o.kind === 'dataset_ready' && o.downloadUrl) {
+          this.detenerPollingDataset();
+          this.descargandoDataset = null;
+          this.modalDataset = {
+            visible: true,
+            fase: 'listo',
+            slot,
+            fileName: o.fileName || `dataset_modelo_${String(slot).padStart(2, '0')}.zip`,
+            downloadUrl: o.downloadUrl,
+            mensaje: 'El dataset está listo para descargar.',
+          };
+          this.cdr.detectChanges();
+          return;
+        }
+        if (o.kind === 'dataset_failed') {
+          this.detenerPollingDataset();
+          this.descargandoDataset = null;
+          this.modalDataset = {
+            visible: true,
+            fase: 'error',
+            slot,
+            fileName: o.fileName || `dataset_modelo_${String(slot).padStart(2, '0')}.zip`,
+            downloadUrl: '',
+            mensaje: o.message || 'No se pudo generar el dataset.',
+          };
+          this.cdr.detectChanges();
+        }
+      } catch {
+        return;
+      }
+    });
   }
 
   cargarConfiguracionIa() {
