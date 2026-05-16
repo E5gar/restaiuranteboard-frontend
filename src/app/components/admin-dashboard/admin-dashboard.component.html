@@ -98,6 +98,15 @@
                 <img src="/iconos/lupa.png" alt="" width="18" height="18" class="h-4 w-4 object-contain opacity-90" />
                 Aplicar rango
               </button>
+              <button
+                type="button"
+                (click)="abrirModalExportar()"
+                [disabled]="exportandoReporte || cargandoRangoFechas"
+                class="rb-btn-secondary inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text-muted dark:hover:bg-slate-800 sm:w-max"
+              >
+                <img src="/iconos/documento.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+                {{ exportandoReporte ? 'Generando reporte...' : 'Exportar' }}
+              </button>
             </div>
           </div>
           <p *ngIf="fechaMinimaTab" class="text-xs text-neutral-strong dark:text-dark-text-muted">
@@ -998,12 +1007,13 @@
                 </p>
               </div>
             </div>
+            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
             <button
               type="button"
               (click)="realizarPrediccionInv()"
               [disabled]="predInvCargando"
               [attr.aria-busy]="predInvCargando"
-              class="rb-btn-primary sm:w-max disabled:!cursor-wait disabled:!border disabled:!border-neutral-300 disabled:!bg-neutral-200 disabled:!text-neutral-700 disabled:!opacity-100 disabled:!shadow-none disabled:hover:!bg-neutral-200 dark:disabled:!border-slate-500 dark:disabled:!bg-slate-600 dark:disabled:!text-slate-100 dark:disabled:hover:!bg-slate-600"
+              class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center gap-2 sm:w-max disabled:!cursor-wait disabled:!border disabled:!border-neutral-300 disabled:!bg-neutral-200 disabled:!text-neutral-700 disabled:!opacity-100 disabled:!shadow-none disabled:hover:!bg-neutral-200 dark:disabled:!border-slate-500 dark:disabled:!bg-slate-600 dark:disabled:!text-slate-100 dark:disabled:hover:!bg-slate-600"
             >
               <img
                 src="/iconos/lupa.png"
@@ -1016,6 +1026,16 @@
               />
               {{ predInvCargando ? 'Generando predicción...' : 'Realizar predicción' }}
             </button>
+            <button
+              type="button"
+              (click)="abrirModalExportar()"
+              [disabled]="exportandoReporte || predInvCargando"
+              class="rb-btn-secondary inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text-muted dark:hover:bg-slate-800 sm:w-max"
+            >
+              <img src="/iconos/documento.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+              {{ exportandoReporte ? 'Generando reporte...' : 'Exportar' }}
+            </button>
+            </div>
           </div>
           <p *ngIf="predInvCargando" class="text-sm font-medium text-secondary dark:text-blue-300">
             Recuperando información y realizando inferencia, espere...
@@ -1136,3 +1156,142 @@
     </div>
   </div>
 </div>
+
+<div *ngIf="modalExportOpciones.visible" class="rb-modal-backdrop z-[84]">
+  <div class="rb-modal max-w-md !p-5 sm:!p-8" (click)="$event.stopPropagation()">
+    <div class="mb-4 flex items-center gap-3">
+      <span class="rb-logo-chip !p-1.5">
+        <img src="/iconos/documento.png" alt="" width="24" height="24" class="h-6 w-6 object-contain" />
+      </span>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-dark-text-strong">Exportar reporte</h3>
+    </div>
+    <p class="mb-4 text-sm text-neutral-strong dark:text-dark-text-muted">
+      Pestaña actual: {{ pestanaLabelActual }}
+    </p>
+    <div class="mb-4 space-y-3">
+      <p class="text-xs font-semibold uppercase tracking-wide text-neutral-muted dark:text-dark-text-muted">Formato</p>
+      <div class="flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          (click)="modalExportOpciones.format = 'PDF'"
+          [ngClass]="
+            modalExportOpciones.format === 'PDF'
+              ? 'border-secondary bg-secondary text-white dark:ring-2 dark:ring-blue-400/35'
+              : 'border-gray-200 bg-white text-neutral-strong hover:bg-gray-50 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text-muted dark:hover:bg-slate-800'
+          "
+          class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold"
+        >
+          <img src="/iconos/documento.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+          PDF
+        </button>
+        <button
+          type="button"
+          (click)="modalExportOpciones.format = 'EXCEL'"
+          [ngClass]="
+            modalExportOpciones.format === 'EXCEL'
+              ? 'border-secondary bg-secondary text-white dark:ring-2 dark:ring-blue-400/35'
+              : 'border-gray-200 bg-white text-neutral-strong hover:bg-gray-50 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text-muted dark:hover:bg-slate-800'
+          "
+          class="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold"
+        >
+          <img src="/iconos/consulta-informacion-azul.png" alt="" width="18" height="18" class="h-4 w-4 object-contain" />
+          Excel
+        </button>
+      </div>
+    </div>
+    <div class="mb-6 space-y-3">
+      <p class="text-xs font-semibold uppercase tracking-wide text-neutral-muted dark:text-dark-text-muted">¿Qué incluir?</p>
+      <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 dark:border-dark-border dark:bg-dark-surface">
+        <input type="checkbox" [(ngModel)]="modalExportOpciones.includeKpis" class="h-4 w-4 rounded border-gray-300 text-secondary focus:ring-secondary dark:border-slate-500 dark:bg-slate-900" />
+        <span class="text-sm font-medium text-gray-900 dark:text-dark-text-strong">Incluir KPIs</span>
+      </label>
+      <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 dark:border-dark-border dark:bg-dark-surface">
+        <input type="checkbox" [(ngModel)]="modalExportOpciones.includeCharts" class="h-4 w-4 rounded border-gray-300 text-secondary focus:ring-secondary dark:border-slate-500 dark:bg-slate-900" />
+        <span class="text-sm font-medium text-gray-900 dark:text-dark-text-strong">Incluir gráficos</span>
+      </label>
+      <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-4 py-3 dark:border-dark-border dark:bg-dark-surface">
+        <input type="checkbox" [(ngModel)]="modalExportOpciones.includeTables" class="h-4 w-4 rounded border-gray-300 text-secondary focus:ring-secondary dark:border-slate-500 dark:bg-slate-900" />
+        <span class="text-sm font-medium text-gray-900 dark:text-dark-text-strong">Incluir tablas</span>
+      </label>
+    </div>
+    <div class="flex flex-col gap-3 sm:flex-row sm:justify-end">
+      <button type="button" (click)="cerrarModalExportOpciones()" class="rb-btn-secondary min-h-11 w-full sm:w-max">Cancelar</button>
+      <button
+        type="button"
+        (click)="confirmarExportar()"
+        [disabled]="!modalExportOpciones.includeKpis && !modalExportOpciones.includeCharts && !modalExportOpciones.includeTables"
+        class="rb-btn-primary inline-flex min-h-11 w-full items-center justify-center gap-2 sm:w-max disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <img src="/iconos/documento.png" alt="" width="18" height="18" class="h-4 w-4 object-contain opacity-90" />
+        Generar reporte
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="modalReporte.visible" class="rb-modal-backdrop z-[85]">
+  <div class="rb-modal max-w-md !p-5 text-center sm:!p-8" (click)="$event.stopPropagation()">
+    <div class="rb-modal-icon !mb-6 !text-3xl">
+      <img
+        [src]="
+          modalReporte.fase === 'listo'
+            ? '/iconos/correcto-check-verde.png'
+            : modalReporte.fase === 'error'
+              ? '/iconos/error-rojo.png'
+              : '/iconos/consulta-informacion-azul.png'
+        "
+        alt=""
+        width="48"
+        height="48"
+        class="h-12 w-12 object-contain"
+      />
+    </div>
+    <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">
+      {{
+        modalReporte.fase === 'listo'
+          ? 'Reporte generado'
+          : modalReporte.fase === 'error'
+            ? 'Error en reporte'
+            : 'Generando reporte'
+      }}
+    </h3>
+    <p
+      class="mb-2 text-sm lg:text-base"
+      [ngClass]="
+        modalReporte.fase === 'error'
+          ? 'font-medium text-danger dark:text-red-200'
+          : 'text-neutral-strong dark:text-dark-text-muted'
+      "
+    >
+      {{ modalReporte.mensaje }}
+    </p>
+    <p class="mb-6 text-xs text-neutral-muted dark:text-dark-text-muted">
+      {{ modalReporte.tabLabel }} · {{ modalReporte.fileName }}
+    </p>
+    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:justify-center" *ngIf="modalReporte.fase === 'listo'">
+      <a
+        [href]="modalReporte.downloadUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-0 bg-secondary px-4 py-3 text-sm font-semibold text-white transition hover:opacity-95 dark:bg-blue-600 sm:w-max"
+      >
+        <span class="rb-logo-chip !p-1">
+          <img src="/iconos/consulta-informacion-azul.png" alt="" width="18" height="18" class="h-5 w-5 object-contain" />
+        </span>
+        Haz clic aquí para descargar
+      </a>
+    </div>
+    <div class="flex justify-center">
+      <button
+        type="button"
+        (click)="cerrarModalReporte()"
+        class="w-full sm:w-max"
+        [ngClass]="modalReporte.fase === 'error' ? 'rb-btn-danger' : 'rb-btn-secondary'"
+      >
+        Entendido
+      </button>
+    </div>
+  </div>
+</div>
+
+

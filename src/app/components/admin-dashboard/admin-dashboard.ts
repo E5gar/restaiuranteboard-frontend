@@ -6,6 +6,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import Chart from 'chart.js/auto';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
+import { WebsocketService } from '../../services/websocket.service';
 import { ThemeService } from '../../services/theme.service';
 import { environment } from '@env/environment';
 import { ChartTester } from '../../utils/chart-tester';
@@ -27,9 +28,30 @@ export interface DashFiltroOpcion {
 export class AdminDashboardComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly theme = inject(ThemeService);
+  private readonly websocketService = inject(WebsocketService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly ngZone = inject(NgZone);
   private themeSub?: Subscription;
+  private wsReportSub?: Subscription;
+  private pollReportTimer: ReturnType<typeof setInterval> | null = null;
+  private reportJobId: string | null = null;
+
+  exportandoReporte = false;
+  modalExportOpciones = {
+    visible: false,
+    format: 'PDF' as 'PDF' | 'EXCEL',
+    includeKpis: true,
+    includeCharts: true,
+    includeTables: true,
+  };
+  modalReporte = {
+    visible: false,
+    fase: 'pendiente' as 'pendiente' | 'listo' | 'error',
+    tabLabel: '',
+    fileName: '',
+    downloadUrl: '',
+    mensaje: '',
+  };
 
   readonly tabs: { id: string; label: string; icon: string }[] = [
     { id: 'ventas', label: 'Ventas y Pedidos', icon: '/iconos/billetes-soles.png' },
@@ -238,10 +260,15 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       if (this.charts.size === 0) return;
       queueMicrotask(() => this.refreshChartsForTheme());
     });
+    this.wsReportSub = this.websocketService
+      .subscribeToTopic('/topic/admin/dashboard-report')
+      .subscribe((raw) => this.onReporteWs(raw));
     void this.iniciarDashboard();
   }
 
   ngOnDestroy(): void {
+    this.detenerPollingReporte();
+    this.wsReportSub?.unsubscribe();
     this.themeSub?.unsubscribe();
     this.destroyAllCharts();
   }
@@ -1623,6 +1650,264 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   formatNum(n: unknown): string {
     const v = typeof n === 'number' ? n : parseFloat(String(n ?? 0));
     return v.toLocaleString('es-PE', { maximumFractionDigits: 2 });
+  }
+
+  get pestanaLabelActual(): string {
+    return this.tabs.find((t) => t.id === this.pestana)?.label ?? this.pestana;
+  }
+
+  abrirModalExportar(): void {
+    if (this.exportandoReporte) {
+      return;
+    }
+    this.modalExportOpciones = {
+      visible: true,
+      format: 'PDF',
+      includeKpis: true,
+      includeCharts: true,
+      includeTables: true,
+    };
+    this.cdr.detectChanges();
+  }
+
+  cerrarModalExportOpciones(): void {
+    this.modalExportOpciones.visible = false;
+    this.cdr.detectChanges();
+  }
+
+  confirmarExportar(): void {
+    if (this.exportandoReporte) {
+      return;
+    }
+    const tab = this.pestana;
+    const tabInfo = this.tabs.find((t) => t.id === tab);
+    const tabLabel = tabInfo?.label ?? tab;
+    this.modalExportOpciones.visible = false;
+    this.exportandoReporte = true;
+    this.detenerPollingReporte();
+    this.reportJobId = null;
+
+    const body = {
+      tab,
+      format: this.modalExportOpciones.format,
+      includeKpis: this.modalExportOpciones.includeKpis,
+      includeCharts: this.modalExportOpciones.includeCharts,
+      includeTables: this.modalExportOpciones.includeTables,
+      filters: this.buildExportFilters(),
+    };
+
+    this.http
+      .post<{
+        message?: string;
+        fileName?: string;
+        jobId?: string;
+        tabLabel?: string;
+      }>(`${API}/export/solicitar`, body)
+      .subscribe({
+        next: (resp) => {
+          this.ngZone.run(() => {
+            this.reportJobId = resp?.jobId ?? null;
+            const fileName = resp?.fileName || `reporte_dashboard_${tab}.pdf`;
+            this.modalReporte = {
+              visible: true,
+              fase: 'pendiente',
+              tabLabel: resp?.tabLabel || tabLabel,
+              fileName,
+              downloadUrl: '',
+              mensaje:
+                resp?.message || 'Generando reporte... Te avisaremos cuando esté listo.',
+            };
+            this.iniciarPollingReporte();
+            this.cdr.detectChanges();
+          });
+        },
+        error: (err) => {
+          this.ngZone.run(() => {
+            this.exportandoReporte = false;
+            this.reportJobId = null;
+            this.errorMsg =
+              err?.error?.message || 'No se pudo iniciar la generación del reporte.';
+            this.cdr.detectChanges();
+          });
+        },
+      });
+  }
+
+  cerrarModalReporte(): void {
+    this.modalReporte.visible = false;
+    if (this.modalReporte.fase !== 'pendiente') {
+      this.exportandoReporte = false;
+      this.reportJobId = null;
+      this.detenerPollingReporte();
+    }
+    this.cdr.detectChanges();
+  }
+
+  private buildExportFilters(): Record<string, unknown> {
+    const f: Record<string, unknown> = {};
+    if (this.pestana !== 'inventario_prediccion') {
+      f['fromDate'] = this.fromDate;
+      f['toDate'] = this.toDate;
+    }
+    if (this.pestana === 'ventas') {
+      if (this.filtroEstado) f['status'] = this.filtroEstado;
+      if (this.filtroMomento) f['momentOfDay'] = this.filtroMomento;
+      if (this.filtroDiaSemana) f['dayOfWeek'] = this.filtroDiaSemana;
+      if (this.filtroClima) f['weatherCondition'] = this.filtroClima;
+    } else if (this.pestana === 'inventario') {
+      if (this.filtroCatInsumo) f['categoriaInsumo'] = this.filtroCatInsumo;
+      if (this.filtroMovTipo) f['tipoMovimiento'] = this.filtroMovTipo;
+      f['soloStockBajo'] = this.soloStockBajo;
+      f['umbralStockBajo'] = this.umbralStock;
+    } else if (this.pestana === 'productos') {
+      if (this.filtroCatProducto) f['categoriaProducto'] = this.filtroCatProducto;
+      if (this.filtroEstrellasMin != null) f['estrellasMin'] = this.filtroEstrellasMin;
+      if (this.filtroRangoPrecio) f['rangoPrecio'] = this.filtroRangoPrecio;
+      if (this.filtroRangoPrecio === 'LT25') f['precioMax'] = 25;
+      else if (this.filtroRangoPrecio === '25_50') {
+        f['precioMin'] = 25;
+        f['precioMax'] = 50;
+      } else if (this.filtroRangoPrecio === 'GT50') f['precioMin'] = 50;
+    } else if (this.pestana === 'clientes') {
+      if (this.regDesde) f['regFrom'] = this.regDesde;
+      if (this.regHasta) f['regTo'] = this.regHasta;
+      f['soloRecurrentes'] = this.soloRecurrentes;
+    } else if (this.pestana === 'seguridad') {
+      if (this.filtroLoginStatus) f['loginStatus'] = this.filtroLoginStatus;
+      if (this.filtroRolLogin) f['rol'] = this.filtroRolLogin;
+    } else if (this.pestana === 'interacciones') {
+      if (this.filtroAccionIx) f['action'] = this.filtroAccionIx;
+      if (this.filtroClimaIx) f['condicionClima'] = this.filtroClimaIx;
+      if (this.filtroSegmentoIx) f['segmento'] = this.filtroSegmentoIx;
+    } else if (this.pestana === 'inventario_prediccion') {
+      f['horizonteInv'] = this.horizonteInv;
+    }
+    return f;
+  }
+
+  private iniciarPollingReporte(): void {
+    this.detenerPollingReporte();
+    if (!this.reportJobId) {
+      return;
+    }
+    this.consultarEstadoReporte();
+    this.pollReportTimer = setInterval(() => this.consultarEstadoReporte(), 3000);
+  }
+
+  private detenerPollingReporte(): void {
+    if (this.pollReportTimer != null) {
+      clearInterval(this.pollReportTimer);
+      this.pollReportTimer = null;
+    }
+  }
+
+  private consultarEstadoReporte(): void {
+    if (!this.reportJobId) {
+      return;
+    }
+    this.http
+      .get<{
+        status?: string;
+        tabLabel?: string;
+        fileName?: string;
+        downloadUrl?: string;
+        message?: string;
+      }>(`${API}/export/jobs/${this.reportJobId}`)
+      .subscribe({
+        next: (estado) => {
+          this.ngZone.run(() => {
+            this.aplicarEstadoReporte(estado);
+            this.cdr.detectChanges();
+          });
+        },
+        error: () => {},
+      });
+  }
+
+  private aplicarEstadoReporte(estado: {
+    status?: string;
+    tabLabel?: string;
+    fileName?: string;
+    downloadUrl?: string;
+    message?: string;
+  }): void {
+    const status = String(estado?.status || '').toUpperCase();
+    const tabLabel = estado?.tabLabel || this.modalReporte.tabLabel;
+    const fileName = estado?.fileName || this.modalReporte.fileName;
+
+    if (status === 'READY' && estado?.downloadUrl) {
+      this.detenerPollingReporte();
+      this.exportandoReporte = false;
+      this.modalReporte = {
+        visible: true,
+        fase: 'listo',
+        tabLabel,
+        fileName,
+        downloadUrl: estado.downloadUrl,
+        mensaje: 'El reporte está listo para descargar.',
+      };
+      return;
+    }
+
+    if (status === 'FAILED') {
+      this.detenerPollingReporte();
+      this.exportandoReporte = false;
+      this.modalReporte = {
+        visible: true,
+        fase: 'error',
+        tabLabel,
+        fileName,
+        downloadUrl: '',
+        mensaje: estado?.message || 'No se pudo generar el reporte.',
+      };
+    }
+  }
+
+  private onReporteWs(raw: string): void {
+    this.ngZone.run(() => {
+      try {
+        const o = JSON.parse(raw) as {
+          kind?: string;
+          jobId?: string;
+          tabLabel?: string;
+          fileName?: string;
+          downloadUrl?: string;
+          message?: string;
+        };
+        if (this.reportJobId && o.jobId && o.jobId !== this.reportJobId) {
+          return;
+        }
+        if (o.kind === 'dashboard_report_ready' && o.downloadUrl) {
+          this.detenerPollingReporte();
+          this.exportandoReporte = false;
+          this.modalReporte = {
+            visible: true,
+            fase: 'listo',
+            tabLabel: o.tabLabel || this.modalReporte.tabLabel,
+            fileName: o.fileName || this.modalReporte.fileName,
+            downloadUrl: o.downloadUrl,
+            mensaje: 'El reporte está listo para descargar.',
+          };
+          this.cdr.detectChanges();
+          return;
+        }
+        if (o.kind === 'dashboard_report_failed') {
+          this.detenerPollingReporte();
+          this.exportandoReporte = false;
+          this.modalReporte = {
+            visible: true,
+            fase: 'error',
+            tabLabel: o.tabLabel || this.modalReporte.tabLabel,
+            fileName: o.fileName || this.modalReporte.fileName,
+            downloadUrl: '',
+            mensaje: o.message || 'No se pudo generar el reporte.',
+          };
+          this.cdr.detectChanges();
+        }
+      } catch {
+        return;
+      }
+    });
   }
 
   realizarPrediccionInv(): void {
