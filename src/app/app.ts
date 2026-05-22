@@ -130,6 +130,7 @@ export class App implements OnInit, OnDestroy {
   hideThemeFab = false;
 
   private readonly patroScript = /script/i;
+  private readonly patroSql = /\b(union\s+select|select\s+.+\s+from|drop\s+table|insert\s+into|delete\s+from|update\s+.+\s+set)\b|'\s*(or|and)\s+.*=.*|--|\/\*/i;
 
   private readonly onDocumentInput = (event: Event) => this.validarEntradaGlobal(event);
 
@@ -217,7 +218,7 @@ export class App implements OnInit, OnDestroy {
     const el = target as HTMLInputElement | HTMLTextAreaElement;
     if (!this.esCampoTexto(el)) return;
     const v = el.value ?? '';
-    if (!this.patroScript.test(v)) return;
+    if (!this.patroScript.test(v) || this.patroSql.test(v)) return;
     el.value = '';
     el.dispatchEvent(new Event('input', { bubbles: true }));
     this.entradaInvalidaModal = true;
