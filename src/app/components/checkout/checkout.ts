@@ -42,7 +42,7 @@ export class CheckoutComponent implements OnInit {
 
   ngOnInit(): void {
     const s = this.auth.getSession();
-    if (s?.role !== 'CLIENTE' || !s.userId) {
+    if (!s?.userId) {
       void this.router.navigate(['/login'], { queryParams: { returnUrl: '/checkout' } });
       return;
     }

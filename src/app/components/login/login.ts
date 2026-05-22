@@ -110,7 +110,7 @@ export class LoginComponent implements OnInit {
 
           const continuarTrasCarrito = (verifyResp: VerificarPreciosResponseDto | null) => {
             const removed: string[] = Array.isArray(user.removedItems) ? user.removedItems : [];
-            if (user.role === 'CLIENTE' && removed.length > 0) {
+            if (removed.length > 0) {
               this.modalDisponibilidad = { visible: true, items: removed };
               if (verifyResp?.preciosCambiaron) {
                 this.pendingVerifyTrasDisponibilidadLogin = verifyResp;
@@ -129,7 +129,6 @@ export class LoginComponent implements OnInit {
           };
 
           const snapOk =
-            user.role === 'CLIENTE' &&
             user.userId &&
             snap &&
             snap.userId === user.userId &&
@@ -243,7 +242,7 @@ export class LoginComponent implements OnInit {
       return;
     }
     const ret = this.route.snapshot.queryParamMap.get('returnUrl')?.trim();
-    if (ret && ret.startsWith('/') && !ret.startsWith('//') && s.role === 'CLIENTE') {
+    if (ret && ret.startsWith('/') && !ret.startsWith('//')) {
       void this.router.navigateByUrl(ret);
       return;
     }
