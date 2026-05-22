@@ -80,7 +80,7 @@
                     type="checkbox"
                     [ngModel]="slot.slotEnabled"
                     (ngModelChange)="actualizarSwitchSlot(slot.slotNumber, !!$event)"
-                    [disabled]="guardandoIa || cargandoIa"
+                    [disabled]="guardandoIa || cargandoIa || !iaActiva"
                     class="h-3.5 w-3.5 accent-secondary"
                   />
                 </label>

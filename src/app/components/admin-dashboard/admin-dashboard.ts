@@ -12,6 +12,7 @@ import { environment } from '@env/environment';
 import { ChartTester } from '../../utils/chart-tester';
 
 const API = environment.apiUrl + '/admin/dashboard';
+const API_IA_PUBLICO = environment.apiUrl + '/ia-modelos/publico';
 
 export interface DashFiltroOpcion {
   value: string;
@@ -52,6 +53,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     downloadUrl: '',
     mensaje: '',
   };
+
+  slot3Activo = false;
 
   readonly tabs: { id: string; label: string; icon: string }[] = [
     { id: 'ventas', label: 'Ventas y Pedidos', icon: '/iconos/billetes-soles.png' },
@@ -255,6 +258,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   readonly msgSinDatos = 'No se encontraron datos';
   readonly horasDia = Array.from({ length: 24 }, (_, i) => i);
 
+  get tabsVisibles(): { id: string; label: string; icon: string }[] {
+    return this.tabs.filter(
+      (t) => t.id !== 'inventario_prediccion' || this.slot3Activo,
+    );
+  }
+
   ngOnInit(): void {
     this.themeSub = this.theme.themeChanged.subscribe(() => {
       if (this.charts.size === 0) return;
@@ -263,7 +272,29 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.wsReportSub = this.websocketService
       .subscribeToTopic('/topic/admin/dashboard-report')
       .subscribe((raw) => this.onReporteWs(raw));
+    this.cargarConfigIaPublica();
     void this.iniciarDashboard();
+  }
+
+  private cargarConfigIaPublica(): void {
+    this.http
+      .get<{ slot3Activo?: boolean }>(API_IA_PUBLICO)
+      .subscribe({
+        next: (r) => {
+          this.slot3Activo = !!r?.slot3Activo;
+          if (this.pestana === 'inventario_prediccion' && !this.slot3Activo) {
+            this.pestana = 'ventas';
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.slot3Activo = false;
+          if (this.pestana === 'inventario_prediccion') {
+            this.pestana = 'ventas';
+          }
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   ngOnDestroy(): void {
@@ -282,6 +313,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
 
   async cambiarPestana(id: string): Promise<void> {
+    if (id === 'inventario_prediccion' && !this.slot3Activo) {
+      return;
+    }
     this.pestana = id;
     this.errorMsg = '';
     this.predInvError = '';
