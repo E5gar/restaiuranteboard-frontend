@@ -218,7 +218,7 @@ export class App implements OnInit, OnDestroy {
     const el = target as HTMLInputElement | HTMLTextAreaElement;
     if (!this.esCampoTexto(el)) return;
     const v = el.value ?? '';
-    if (!this.patroScript.test(v) || this.patroSql.test(v)) return;
+    if (!this.patroScript.test(v) || !this.patroSql.test(v)) return;
     el.value = '';
     el.dispatchEvent(new Event('input', { bubbles: true }));
     this.entradaInvalidaModal = true;
