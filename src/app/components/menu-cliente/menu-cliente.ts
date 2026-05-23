@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { Observable, of, switchMap } from 'rxjs';
-import { filter, map, tap, catchError } from 'rxjs/operators';
+import { filter, map, tap, catchError, finalize } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { CompradorNavComponent } from '../comprador-nav/comprador-nav';
 import {
@@ -93,6 +93,8 @@ export class MenuClienteComponent implements OnInit {
   >([]);
   recomendacionesTitulo = signal('Sugerencias para ti');
   mostrarRecomendaciones = signal(false);
+  cargandoRecomendaciones = signal(false);
+  cargandoCrossSell = signal(false);
 
   busqueda = '';
   filtroCategoria: string | 'ALL' = 'ALL';
@@ -153,14 +155,24 @@ export class MenuClienteComponent implements OnInit {
     return this.mostrarRecomendaciones() && this.recomendaciones().length > 0;
   }
 
+  get mostrarSeccionRecomendaciones(): boolean {
+    return this.cargandoRecomendaciones() || this.tieneRecomendaciones;
+  }
+
+  get mostrarSeccionCrossSell(): boolean {
+    return (
+      this.carritoAbierto() &&
+      this.cart.items().length > 0 &&
+      (this.cargandoCrossSell() || this.sugerenciasCrossSell().length > 0)
+    );
+  }
+
   ngOnInit(): void {
     this.cargarProductos();
     const s = this.auth.getSession();
     this.iniciarEscuchaCambiosTiempoReal(s?.userId ?? null);
     if (s?.role === 'CLIENTE' && s.userId) {
-      this.cart.cargarDesdeServidor(s.userId).subscribe({
-        next: () => this.cargarSugerenciasCrossSell(),
-      });
+      this.cart.cargarDesdeServidor(s.userId).subscribe();
     }
   }
 
@@ -284,7 +296,6 @@ export class MenuClienteComponent implements OnInit {
     const maxDbPrevio = this.precioDbMax();
 
     const uid = this.auth.getSession()?.userId;
-    const query = uid ? `?userId=${encodeURIComponent(uid)}` : '';
     this.http.get<MenuBaseResponse>(`${this.apiCatalogo}/productos/menu/base`).subscribe({
       next: (data) => {
         const sourceRows = Array.isArray(data?.productos) ? data.productos : [];
@@ -333,33 +344,7 @@ export class MenuClienteComponent implements OnInit {
           }
         }
 
-        this.http
-          .get<MenuRecomendacionesResponse>(
-            `${this.apiCatalogo}/productos/menu/recomendaciones${query}`,
-          )
-          .subscribe({
-            next: (r) => {
-              const highlighted = Array.isArray(r?.highlightedProducts)
-                ? r.highlightedProducts
-                : [];
-              const normalizedRecommended = highlighted
-                .map((p) => ({
-                  ...p,
-                  imagesBase64: Array.isArray(p.imagesBase64) ? p.imagesBase64 : [],
-                  description: p.description ?? '',
-                }))
-                .filter((p) => rows.some((row) => row.id === p.id));
-              this.recomendaciones.set(normalizedRecommended);
-              this.recomendacionesTitulo.set(r?.recommendationsTitle || 'Sugerencias para ti');
-              this.mostrarRecomendaciones.set(
-                !!r?.showRecommendations && normalizedRecommended.length > 0,
-              );
-            },
-            error: () => {
-              this.recomendaciones.set([]);
-              this.mostrarRecomendaciones.set(false);
-            },
-          });
+        this.cargarRecomendacionesMenu(uid, silent);
       },
       error: () => {
         if (!silent) {
@@ -455,6 +440,8 @@ export class MenuClienteComponent implements OnInit {
 
   cerrarCarrito(): void {
     this.carritoAbierto.set(false);
+    this.cargandoCrossSell.set(false);
+    this.sugerenciasCrossSell.set([]);
   }
 
   agregarAlCarrito(p: MenuProducto, cerrarModalDetalle = false): void {
@@ -469,7 +456,9 @@ export class MenuClienteComponent implements OnInit {
       next: () => {
         this.detalleAgregoCarrito = true;
         this.agregandoProductId.set(null);
-        this.cargarSugerenciasCrossSell();
+        if (this.carritoAbierto()) {
+          this.cargarSugerenciasCrossSell();
+        }
         if (cerrarModalDetalle) {
           this.cerrarDetalle();
         }
@@ -483,7 +472,11 @@ export class MenuClienteComponent implements OnInit {
       return;
     }
     this.cart.incrementar(productId).subscribe({
-      next: () => this.cargarSugerenciasCrossSell(),
+      next: () => {
+        if (this.carritoAbierto()) {
+          this.cargarSugerenciasCrossSell();
+        }
+      },
       error: () => {},
     });
   }
@@ -493,7 +486,11 @@ export class MenuClienteComponent implements OnInit {
       return;
     }
     this.cart.decrementar(productId).subscribe({
-      next: () => this.cargarSugerenciasCrossSell(),
+      next: () => {
+        if (this.carritoAbierto()) {
+          this.cargarSugerenciasCrossSell();
+        }
+      },
       error: () => {},
     });
   }
@@ -503,7 +500,11 @@ export class MenuClienteComponent implements OnInit {
       return;
     }
     this.cart.quitar(productId).subscribe({
-      next: () => this.cargarSugerenciasCrossSell(),
+      next: () => {
+        if (this.carritoAbierto()) {
+          this.cargarSugerenciasCrossSell();
+        }
+      },
       error: () => {},
     });
   }
@@ -601,24 +602,67 @@ export class MenuClienteComponent implements OnInit {
     return this.recomendaciones().some((p) => p.id === productId);
   }
 
+  private cargarRecomendacionesMenu(userId: string | undefined, silent = false): void {
+    if (!silent) {
+      this.cargandoRecomendaciones.set(true);
+    }
+    const query = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+    const rows = this.productos();
+    this.http
+      .get<MenuRecomendacionesResponse>(
+        `${this.apiCatalogo}/productos/menu/recomendaciones${query}`,
+      )
+      .pipe(finalize(() => this.cargandoRecomendaciones.set(false)))
+      .subscribe({
+        next: (r) => {
+          const highlighted = Array.isArray(r?.highlightedProducts) ? r.highlightedProducts : [];
+          const normalizedRecommended = highlighted
+            .map((p) => ({
+              ...p,
+              imagesBase64: Array.isArray(p.imagesBase64) ? p.imagesBase64 : [],
+              description: p.description ?? '',
+            }))
+            .filter((p) => rows.some((row) => row.id === p.id));
+          this.recomendaciones.set(normalizedRecommended);
+          this.recomendacionesTitulo.set(r?.recommendationsTitle || 'Sugerencias para ti');
+          this.mostrarRecomendaciones.set(
+            !!r?.showRecommendations && normalizedRecommended.length > 0,
+          );
+        },
+        error: () => {
+          this.recomendaciones.set([]);
+          this.mostrarRecomendaciones.set(false);
+        },
+      });
+  }
+
   private cargarSugerenciasCrossSell(): void {
+    if (!this.carritoAbierto()) {
+      return;
+    }
     if (!this.esClienteConCarrito() || this.cart.items().length === 0) {
+      this.cargandoCrossSell.set(false);
       this.sugerenciasCrossSell.set([]);
       return;
     }
-    this.cart.obtenerSugerenciasCrossSell().subscribe({
-      next: (items) => {
-        const normalized = (items ?? [])
-          .map((x) => ({
-            productId: String(x.productId ?? ''),
-            name: String(x.name ?? ''),
-            unitPrice: Number(x.unitPrice) || 0,
-            thumbSrc: String(x.thumbSrc ?? 'assets/no-image.png'),
-          }))
-          .filter((x) => !!x.productId && !!x.name);
-        this.sugerenciasCrossSell.set(normalized.slice(0, 3));
-      },
-      error: () => this.sugerenciasCrossSell.set([]),
-    });
+    this.cargandoCrossSell.set(true);
+    this.sugerenciasCrossSell.set([]);
+    this.cart
+      .obtenerSugerenciasCrossSell()
+      .pipe(finalize(() => this.cargandoCrossSell.set(false)))
+      .subscribe({
+        next: (items) => {
+          const normalized = (items ?? [])
+            .map((x) => ({
+              productId: String(x.productId ?? ''),
+              name: String(x.name ?? ''),
+              unitPrice: Number(x.unitPrice) || 0,
+              thumbSrc: String(x.thumbSrc ?? 'assets/no-image.png'),
+            }))
+            .filter((x) => !!x.productId && !!x.name);
+          this.sugerenciasCrossSell.set(normalized.slice(0, 3));
+        },
+        error: () => this.sugerenciasCrossSell.set([]),
+      });
   }
 }
