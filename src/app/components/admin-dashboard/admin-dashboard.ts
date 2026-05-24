@@ -6,6 +6,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import Chart from 'chart.js/auto';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
+import { ChatWidgetComponent } from '../chat-widget/chat-widget.component';
 import { WebsocketService } from '../../services/websocket.service';
 import { ThemeService } from '../../services/theme.service';
 import { environment } from '@env/environment';
@@ -23,7 +24,7 @@ export interface DashFiltroOpcion {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent],
+  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent, ChatWidgetComponent],
   templateUrl: './admin-dashboard.component.html',
 })
 export class AdminDashboardComponent implements OnInit, OnDestroy {

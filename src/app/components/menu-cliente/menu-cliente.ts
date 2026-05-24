@@ -8,6 +8,7 @@ import { Observable, of, switchMap } from 'rxjs';
 import { filter, map, tap, catchError, finalize } from 'rxjs/operators';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { CompradorNavComponent } from '../comprador-nav/comprador-nav';
+import { ChatWidgetComponent } from '../chat-widget/chat-widget.component';
 import {
   CartService,
   MAX_UNIDADES_POR_PRODUCTO,
@@ -55,7 +56,14 @@ interface MenuRecomendacionesResponse {
 @Component({
   selector: 'app-menu-cliente',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent, CompradorNavComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    LogoutButtonComponent,
+    CompradorNavComponent,
+    ChatWidgetComponent,
+  ],
   templateUrl: './menu-cliente.component.html',
   styleUrl: './menu-cliente.css',
 })
@@ -173,7 +181,17 @@ export class MenuClienteComponent implements OnInit {
     this.iniciarEscuchaCambiosTiempoReal(s?.userId ?? null);
     if (s?.role === 'CLIENTE' && s.userId) {
       this.cart.cargarDesdeServidor(s.userId).subscribe();
+      this.iniciarEscuchaCarritoChat(s.userId);
     }
+  }
+
+  private iniciarEscuchaCarritoChat(userId: string): void {
+    this.ws
+      .subscribeToTopic('/topic/carrito/' + userId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.cart.cargarDesdeServidor(userId).subscribe();
+      });
   }
 
   private iniciarEscuchaCambiosTiempoReal(userId: string | null): void {
