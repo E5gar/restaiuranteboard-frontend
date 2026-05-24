@@ -49,6 +49,11 @@ export class AuthService {
     sessionStorage.removeItem(AUTH_KEY);
   }
 
+  destroyAllStorage(): void {
+    sessionStorage.clear();
+    localStorage.clear();
+  }
+
   getToken(): string | null {
     const s = this.getSession();
     if (!s?.token) return null;

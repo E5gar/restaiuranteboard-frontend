@@ -1,0 +1,104 @@
+<div class="rb-page">
+  <div class="rb-container">
+    <header class="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-start gap-3">
+        <img src="/iconos/advertencia-amarillo.png" alt="" width="36" height="36" class="h-9 w-9 object-contain" />
+        <div>
+          <h1 class="rb-heading">Tickets de soporte</h1>
+          <p class="rb-kicker mt-1">Reclamos de clientes</p>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <app-comprador-nav variant="primary" />
+        <a routerLink="/gestion-administrador" class="rb-btn-secondary min-h-11 text-center">Volver al panel</a>
+        <app-logout-button />
+      </div>
+    </header>
+
+    <p *ngIf="cargando()" class="text-sm text-neutral-muted dark:text-dark-text-muted">Cargando...</p>
+
+    <div *ngIf="!cargando() && tickets().length === 0" class="rb-card rb-card-pad text-center text-sm text-neutral-muted dark:text-dark-text-muted">
+      No hay tickets registrados.
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div class="space-y-3">
+        <article
+          *ngFor="let t of tickets()"
+          class="rb-card rb-card-pad cursor-pointer transition hover:border-secondary/30 dark:hover:border-blue-400/40"
+          (click)="abrirDetalle(t)"
+        >
+          <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <span class="font-semibold text-gray-900 dark:text-dark-text-strong">{{ t.ticketCode }}</span>
+            <span
+              class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase sm:text-xs"
+              [ngClass]="
+                esPendiente(t)
+                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200'
+                  : 'bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-dark-text-muted'
+              "
+            >
+              {{ t.status }}
+            </span>
+          </div>
+          <p class="text-xs text-neutral-muted dark:text-dark-text-muted">{{ t.clientName }} · {{ t.clientEmail }}</p>
+          <p class="mt-1 text-sm font-medium text-gray-900 dark:text-dark-text-strong">{{ t.categoriaLabel }}</p>
+          <p class="mt-1 line-clamp-2 text-xs text-neutral-strong dark:text-dark-text-muted">{{ t.descripcion }}</p>
+          <button
+            *ngIf="esPendiente(t)"
+            type="button"
+            (click)="abrirModalCerrar(t); $event.stopPropagation()"
+            class="rb-btn-primary mt-3 min-h-9 w-full text-xs sm:w-auto"
+          >
+            Cerrar ticket
+          </button>
+        </article>
+      </div>
+
+      <aside *ngIf="ticketSeleccionado() as sel" class="rb-card rb-card-pad lg:sticky lg:top-24 lg:self-start">
+        <div class="mb-4 flex items-center justify-between gap-2">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-dark-text-strong">{{ sel.ticketCode }}</h2>
+          <button type="button" (click)="cerrarDetalle()" class="text-sm text-secondary dark:text-blue-300">Cerrar</button>
+        </div>
+        <dl class="space-y-2 text-sm">
+          <div><dt class="text-neutral-muted dark:text-dark-text-muted">Cliente</dt><dd>{{ sel.clientName }}</dd></div>
+          <div><dt class="text-neutral-muted dark:text-dark-text-muted">Correo</dt><dd>{{ sel.clientEmail }}</dd></div>
+          <div><dt class="text-neutral-muted dark:text-dark-text-muted">Pedido</dt><dd>{{ sel.orderResumen }}</dd></div>
+          <div><dt class="text-neutral-muted dark:text-dark-text-muted">Categoria</dt><dd>{{ sel.categoriaLabel }}</dd></div>
+          <div><dt class="text-neutral-muted dark:text-dark-text-muted">Descripcion</dt><dd class="whitespace-pre-wrap">{{ sel.descripcion }}</dd></div>
+          <div *ngIf="sel.cierreMensaje"><dt class="text-neutral-muted dark:text-dark-text-muted">Cierre</dt><dd class="whitespace-pre-wrap">{{ sel.cierreMensaje }}</dd></div>
+        </dl>
+        <img
+          *ngIf="evidenciaUrl()"
+          [src]="evidenciaUrl()"
+          alt="Evidencia"
+          class="mt-4 max-h-64 w-full rounded-lg border border-gray-200 object-contain dark:border-dark-border"
+        />
+      </aside>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="modalCerrar()" class="rb-modal-backdrop z-[90]">
+  <div class="rb-modal max-w-md border-gray-200 dark:border-dark-border">
+    <h3 class="mb-3 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">Cerrar ticket</h3>
+    <p *ngIf="error()" class="mb-3 text-sm text-danger dark:text-red-200">{{ error() }}</p>
+    <label class="rb-label">Justificacion para el cliente</label>
+    <textarea
+      class="rb-input mb-4 min-h-[6rem] w-full"
+      [(ngModel)]="mensajeCierre"
+      placeholder="Explica la resolucion..."
+    ></textarea>
+    <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+      <button type="button" (click)="modalCerrar.set(false)" class="rb-btn-secondary min-h-10">Cancelar</button>
+      <button
+        type="button"
+        (click)="confirmarCierre()"
+        [disabled]="cerrando()"
+        class="rb-btn-primary min-h-10 disabled:opacity-45"
+      >
+        {{ cerrando() ? 'Cerrando...' : 'Confirmar cierre' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -21,6 +21,8 @@ import { InicioRedirectComponent } from './components/inicio-redirect/inicio-red
 import { PresentacionComponent } from './components/presentacion/presentacion';
 import { RetenidoComponent } from './components/retenido/retenido';
 import { MiPerfilComponent } from './components/mi-perfil/mi-perfil';
+import { AtencionClienteComponent } from './components/atencion-cliente/atencion-cliente';
+import { AdminSoporteComponent } from './components/admin-soporte/admin-soporte';
 import { MantenimientoComponent } from './components/mantenimiento/mantenimiento';
 import { authGuard } from './guards/auth.guard';
 import { guestGuard } from './guards/guest.guard';
@@ -74,6 +76,11 @@ export const routes: Routes = [
     canActivate: [ipBlockGuard, configRequiredGuard, clienteGuard],
   },
   {
+    path: 'atencion-cliente',
+    component: AtencionClienteComponent,
+    canActivate: [ipBlockGuard, configRequiredGuard, clienteGuard],
+  },
+  {
     path: 'dashboard',
     component: AdminDashboardComponent,
     canActivate: [ipBlockGuard, configRequiredGuard, authGuard, adminGuard],
@@ -91,6 +98,11 @@ export const routes: Routes = [
   {
     path: 'admin-modelos-ia',
     component: AdminModelosIaComponent,
+    canActivate: [ipBlockGuard, configRequiredGuard, authGuard, adminGuard],
+  },
+  {
+    path: 'admin-soporte',
+    component: AdminSoporteComponent,
     canActivate: [ipBlockGuard, configRequiredGuard, authGuard, adminGuard],
   },
   { path: 'caja', component: PanelCajaComponent, canActivate: [ipBlockGuard, configRequiredGuard, cajaGuard] },

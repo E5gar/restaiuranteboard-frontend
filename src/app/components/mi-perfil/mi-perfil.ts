@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { AuthService } from '../../services/auth.service';
+import { CartService } from '../../services/cart.service';
 import { bloquearTeclasNoNumericas, errorTelefono9, filtrarSoloDigitos } from '../../utils/form-validators';
 import { environment } from '@env/environment'; 
 
@@ -28,6 +29,7 @@ type PerfilResponse = {
 export class MiPerfilComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly cart = inject(CartService);
   private readonly router = inject(Router);
   private readonly apiPerfil = environment.apiUrl + '/perfil';
 
@@ -36,6 +38,10 @@ export class MiPerfilComponent implements OnInit {
   enviandoCodigo = signal(false);
   canEditAddress = signal(true);
   roleVisible = signal(false);
+  esCliente = signal(false);
+  modalEliminar = signal(false);
+  eliminando = signal(false);
+  passwordEliminar = '';
 
   form = {
     fullName: '',
@@ -137,6 +143,49 @@ export class MiPerfilComponent implements OnInit {
     this.modal.set(null);
   }
 
+  abrirModalEliminar(): void {
+    this.passwordEliminar = '';
+    this.modalEliminar.set(true);
+  }
+
+  cerrarModalEliminar(): void {
+    if (this.eliminando()) return;
+    this.modalEliminar.set(false);
+    this.passwordEliminar = '';
+  }
+
+  puedeConfirmarEliminar(): boolean {
+    return this.passwordEliminar.trim().length > 0 && !this.eliminando();
+  }
+
+  confirmarEliminarCuenta(): void {
+    const password = this.passwordEliminar.trim();
+    if (!password) {
+      this.modal.set({ tipo: 'error', titulo: 'Eliminar cuenta', mensaje: 'Debes ingresar tu contraseña actual.' });
+      return;
+    }
+    this.eliminando.set(true);
+    this.http.post<{ message: string }>(`${this.apiPerfil}/me/eliminar-cuenta`, { password }).subscribe({
+      next: () => {
+        this.eliminando.set(false);
+        this.modalEliminar.set(false);
+        this.cart.limpiarLocal();
+        this.cart.clearPriceSnapshot();
+        this.auth.destroyAllStorage();
+        void this.router.navigate(['/presentacion']);
+      },
+      error: (err) => {
+        this.eliminando.set(false);
+        this.modalEliminar.set(false);
+        this.modal.set({
+          tipo: 'error',
+          titulo: 'Eliminar cuenta',
+          mensaje: err?.error?.message || 'No se pudo eliminar la cuenta.',
+        });
+      },
+    });
+  }
+
   private cargarPerfil(): void {
     this.cargando.set(true);
     this.http.get<PerfilResponse>(`${this.apiPerfil}/me`).subscribe({
@@ -164,5 +213,6 @@ export class MiPerfilComponent implements OnInit {
     this.form.role = String(resp?.role || '');
     this.canEditAddress.set(!!resp?.canEditAddress);
     this.roleVisible.set(this.form.role !== 'CLIENTE');
+    this.esCliente.set(this.form.role === 'CLIENTE');
   }
 }

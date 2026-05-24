@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import {
   ChatService,
@@ -27,6 +28,7 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
   @Input({ required: true }) mode!: ChatMode;
 
   private readonly chat = inject(ChatService);
+  private readonly router = inject(Router);
 
   abierto = signal(false);
   vistaLista = signal(false);
@@ -40,7 +42,7 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
   procesando = signal(false);
   textoProcesando = signal('Procesando.');
   textoEntrada = '';
-  modalAtencion = signal(false);
+  mostrarBotonAtencion = signal(false);
 
   private procesandoTimer: ReturnType<typeof setInterval> | null = null;
   private procesandoPaso = 0;
@@ -125,7 +127,7 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
           const userCount = (r.messages ?? this.mensajes()).filter((x) => x.sender === 'USER').length;
           this.userMessageCount.set(userCount);
           if (r.uiAction === 'ATENCION_CLIENTE') {
-            this.modalAtencion.set(true);
+            this.mostrarBotonAtencion.set(true);
           }
         },
         error: () => {
@@ -137,8 +139,10 @@ export class ChatWidgetComponent implements OnInit, OnDestroy {
       });
   }
 
-  cerrarAtencion(): void {
-    this.modalAtencion.set(false);
+  abrirFormularioAtencion(): void {
+    this.abierto.set(false);
+    this.mostrarBotonAtencion.set(false);
+    void this.router.navigate(['/atencion-cliente']);
   }
 
   tituloPanel(): string {

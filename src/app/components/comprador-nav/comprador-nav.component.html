@@ -51,11 +51,36 @@
     </span>
     Mis pedidos
   </a>
+  <a *ngIf="mostrarAtencionCliente" routerLink="/atencion-cliente" [ngClass]="claseEnlace()">
+    <span class="rb-logo-chip !p-1">
+      <img src="/iconos/consulta-informacion-azul.png" alt="" width="18" height="18" class="h-5 w-5 object-contain" />
+    </span>
+    Atencion al cliente
+  </a>
   <a *ngIf="mostrarMiPerfil" routerLink="/mi-perfil" [ngClass]="claseEnlace()">
     <span class="rb-logo-chip !p-1">
       <img src="/iconos/usuarios.png" alt="" width="18" height="18" class="h-5 w-5 object-contain" />
     </span>
     Mi perfil
+  </a>
+  <a
+    *ngIf="mostrarSoporteAdmin"
+    routerLink="/admin-soporte"
+    [ngClass]="claseEnlace()"
+    class="relative"
+  >
+    <span class="rb-logo-chip !p-1">
+      <img src="/iconos/advertencia-amarillo.png" alt="" width="18" height="18" class="h-5 w-5 object-contain" />
+    </span>
+    Soporte
+    @if (soportePendientes > 0) {
+      <span
+        class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold leading-none text-white"
+        aria-live="polite"
+      >
+        {{ soportePendientes }}
+      </span>
+    }
   </a>
   <a
     *ngIf="mostrarPanelTrabajo && rutaPanelTrabajo"
