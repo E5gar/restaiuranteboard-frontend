@@ -233,11 +233,31 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.cargando = false;
-        this.abrirModal(
-          'Verificación fallida',
-          err.error?.message || 'El código ingresado no es válido o ha expirado.',
-          true,
-        );
+        const status = err.status;
+        const mensaje = err.error?.message || 'El código ingresado no es válido o ha expirado.';
+        const intentos = Number(err.error?.failedAttempts ?? 0);
+        const restantes = Number(err.error?.remainingAttempts ?? 0);
+
+        if (status === 423 || err.error?.blocked === true) {
+          this.redirectAlCerrarModal = true;
+          this.abrirModal(
+            'Acceso restringido',
+            `${mensaje} Serás redirigido a la vista de retención.`,
+            true,
+          );
+          return;
+        }
+
+        if (status === 401 && intentos > 0) {
+          this.abrirModal(
+            'Intento fallido',
+            `Código incorrecto. Intento ${intentos}/3. Te quedan ${restantes} intento(s).`,
+            true,
+          );
+          return;
+        }
+
+        this.abrirModal('Verificación fallida', mensaje, true);
       },
     });
   }
