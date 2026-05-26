@@ -4,12 +4,18 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { catchError, of } from 'rxjs';
-import { errorEmailHistoriaUsuario } from '../../utils/form-validators';
+import {
+  bloquearTeclasNoNumericas,
+  errorCodigo6,
+  errorEmailHistoriaUsuario,
+  filtrarSoloDigitos,
+} from '../../utils/form-validators';
 import { AuthService } from '../../services/auth.service';
 import { CartService, type VerificarPreciosResponseDto } from '../../services/cart.service';
 import { ConfigService } from '../../services/config.service';
+import { MfaService } from '../../services/mfa.service';
 import { ThemeService } from '../../services/theme.service';
-import { environment } from '@env/environment'; 
+import { environment } from '@env/environment';
 
 @Component({
   selector: 'app-login',
@@ -18,10 +24,17 @@ import { environment } from '@env/environment';
   templateUrl: './login.component.html',
 })
 export class LoginComponent implements OnInit {
+  paso: 'credenciales' | 'mfa' = 'credenciales';
   email = '';
   password = '';
   mostrarPassword = false;
   cargando = false;
+
+  mfaToken = '';
+  mfaEmail = '';
+  mfaCode = '';
+  mfaBackupCode = '';
+  usarCodigoRespaldo = false;
 
   logoSrc = '/iconos/candado.png';
   logoEsDelNegocio = false;
@@ -49,6 +62,7 @@ export class LoginComponent implements OnInit {
     private cart: CartService,
     private configService: ConfigService,
     private theme: ThemeService,
+    private mfaService: MfaService,
   ) {}
 
   ngOnInit() {
@@ -89,76 +103,16 @@ export class LoginComponent implements OnInit {
       .subscribe({
         next: (user: any) => {
           this.cargando = false;
-          const guest = sessionStorage.getItem('rb_guest_dark');
-          let dark = user.darkMode === true;
-          if (guest === '1') dark = true;
-          else if (guest === '0') dark = false;
-          sessionStorage.removeItem('rb_guest_dark');
-          this.auth.setSession({ ...user, darkMode: dark });
-          this.theme.persistLoginTheme(dark, String(user.email || ''));
-
-          if (user.firstLogin) {
-            this.cart.applyFromLoginPayload(user);
-            void this.router.navigate(['/confirmar-cuenta'], { queryParams: { email: user.email } });
+          if (user?.mfaRequired === true && user?.mfaToken) {
+            this.paso = 'mfa';
+            this.mfaToken = String(user.mfaToken);
+            this.mfaEmail = String(user.email || this.email);
+            this.mfaCode = '';
+            this.mfaBackupCode = '';
+            this.usarCodigoRespaldo = false;
             return;
           }
-
-          const snap = this.cart.readPersistedSnapshot();
-          if (user.userId && snap && snap.userId !== user.userId) {
-            this.cart.clearPriceSnapshot();
-          }
-
-          const continuarTrasCarrito = (verifyResp: VerificarPreciosResponseDto | null) => {
-            const removed: string[] = Array.isArray(user.removedItems) ? user.removedItems : [];
-            if (removed.length > 0) {
-              this.modalDisponibilidad = { visible: true, items: removed };
-              if (verifyResp?.preciosCambiaron) {
-                this.pendingVerifyTrasDisponibilidadLogin = verifyResp;
-              }
-              return;
-            }
-            if (verifyResp?.preciosCambiaron) {
-              this.modalPreciosLogin = {
-                detalle: verifyResp.detalleCambios ?? [],
-                totalAnterior: verifyResp.totalAnterior,
-                totalNuevo: verifyResp.totalNuevo,
-              };
-              return;
-            }
-            this.irTrasLoginClientePreferente();
-          };
-
-          const snapOk =
-            user.userId &&
-            snap &&
-            snap.userId === user.userId &&
-            snap.lines.length > 0;
-
-          if (snapOk) {
-            this.cart
-              .verificarPreciosCheckout({
-                lineasCliente: snap.lines.map((l) => ({
-                  productId: l.productId,
-                  precioUnitario: l.unitPrice,
-                  cantidad: l.quantity,
-                })),
-                totalCliente: snap.lines.reduce((s, l) => s + l.unitPrice * l.quantity, 0),
-              })
-              .subscribe({
-                next: (r) => {
-                  this.cart.applyFromLoginPayload(user);
-                  continuarTrasCarrito(r);
-                },
-                error: () => {
-                  this.cart.applyFromLoginPayload(user);
-                  continuarTrasCarrito(null);
-                },
-              });
-            return;
-          }
-
-          this.cart.applyFromLoginPayload(user);
-          continuarTrasCarrito(null);
+          this.procesarLoginExitoso(user);
         },
 
         error: (err) => {
@@ -190,6 +144,129 @@ export class LoginComponent implements OnInit {
           this.abrirModal('Acceso Denegado', mensaje, true);
         },
       });
+  }
+
+  soloNumerosMfa(event: Event) {
+    this.mfaCode = filtrarSoloDigitos(event, 6);
+  }
+
+  bloquearNoNumericoMfa(event: KeyboardEvent) {
+    bloquearTeclasNoNumericas(event);
+  }
+
+  volverCredenciales() {
+    this.paso = 'credenciales';
+    this.mfaToken = '';
+    this.mfaCode = '';
+    this.mfaBackupCode = '';
+    this.usarCodigoRespaldo = false;
+  }
+
+  onVerificarMfa() {
+    if (!this.mfaToken) {
+      this.abrirModal('Sesión expirada', 'Vuelve a iniciar sesión con tu correo y contraseña.', true);
+      this.volverCredenciales();
+      return;
+    }
+    if (!this.usarCodigoRespaldo) {
+      const codErr = errorCodigo6(this.mfaCode);
+      if (codErr) {
+        this.abrirModal('Código inválido', codErr, true);
+        return;
+      }
+    } else if (!this.mfaBackupCode.trim()) {
+      this.abrirModal('Código de respaldo', 'Ingresa uno de tus códigos de recuperación.', true);
+      return;
+    }
+
+    this.cargando = true;
+    const payload = this.usarCodigoRespaldo
+      ? { mfaToken: this.mfaToken, backupCode: this.mfaBackupCode.trim() }
+      : { mfaToken: this.mfaToken, code: this.mfaCode };
+
+    this.mfaService.verificarLogin(payload).subscribe({
+      next: (user) => {
+        this.cargando = false;
+        this.procesarLoginExitoso(user);
+      },
+      error: (err) => {
+        this.cargando = false;
+        this.abrirModal(
+          'Verificación fallida',
+          err.error?.message || 'El código ingresado no es válido o ha expirado.',
+          true,
+        );
+      },
+    });
+  }
+
+  private procesarLoginExitoso(user: any) {
+    const guest = sessionStorage.getItem('rb_guest_dark');
+    let dark = user.darkMode === true;
+    if (guest === '1') dark = true;
+    else if (guest === '0') dark = false;
+    sessionStorage.removeItem('rb_guest_dark');
+    this.auth.setSession({ ...user, darkMode: dark });
+    this.theme.persistLoginTheme(dark, String(user.email || ''));
+
+    if (user.firstLogin) {
+      this.cart.applyFromLoginPayload(user);
+      void this.router.navigate(['/confirmar-cuenta'], { queryParams: { email: user.email } });
+      return;
+    }
+
+    const snap = this.cart.readPersistedSnapshot();
+    if (user.userId && snap && snap.userId !== user.userId) {
+      this.cart.clearPriceSnapshot();
+    }
+
+    const continuarTrasCarrito = (verifyResp: VerificarPreciosResponseDto | null) => {
+      const removed: string[] = Array.isArray(user.removedItems) ? user.removedItems : [];
+      if (removed.length > 0) {
+        this.modalDisponibilidad = { visible: true, items: removed };
+        if (verifyResp?.preciosCambiaron) {
+          this.pendingVerifyTrasDisponibilidadLogin = verifyResp;
+        }
+        return;
+      }
+      if (verifyResp?.preciosCambiaron) {
+        this.modalPreciosLogin = {
+          detalle: verifyResp.detalleCambios ?? [],
+          totalAnterior: verifyResp.totalAnterior,
+          totalNuevo: verifyResp.totalNuevo,
+        };
+        return;
+      }
+      this.irTrasLoginClientePreferente();
+    };
+
+    const snapOk = user.userId && snap && snap.userId === user.userId && snap.lines.length > 0;
+
+    if (snapOk) {
+      this.cart
+        .verificarPreciosCheckout({
+          lineasCliente: snap.lines.map((l: { productId: string; unitPrice: number; quantity: number }) => ({
+            productId: l.productId,
+            precioUnitario: l.unitPrice,
+            cantidad: l.quantity,
+          })),
+          totalCliente: snap.lines.reduce((s: number, l: { unitPrice: number; quantity: number }) => s + l.unitPrice * l.quantity, 0),
+        })
+        .subscribe({
+          next: (r) => {
+            this.cart.applyFromLoginPayload(user);
+            continuarTrasCarrito(r);
+          },
+          error: () => {
+            this.cart.applyFromLoginPayload(user);
+            continuarTrasCarrito(null);
+          },
+        });
+      return;
+    }
+
+    this.cart.applyFromLoginPayload(user);
+    continuarTrasCarrito(null);
   }
 
   abrirModal(titulo: string, mensaje: string, esError: boolean) {

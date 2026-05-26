@@ -77,4 +77,22 @@ describe('LoginComponent integration', () => {
     expect(component.modal.esError).toBe(true);
     expect(auth.isLoggedIn()).toBe(false);
   });
+
+  it('onLogin switches to MFA step when backend requires second factor', async () => {
+    component.email = 'cliente@gmail.com';
+    component.password = 'Secret1@';
+    component.onLogin();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/login`);
+    req.flush({
+      mfaRequired: true,
+      mfaToken: 'pending-mfa-token',
+      email: 'cliente@gmail.com',
+    });
+    await fixture.whenStable();
+
+    expect(component.paso).toBe('mfa');
+    expect(component.mfaToken).toBe('pending-mfa-token');
+    expect(auth.isLoggedIn()).toBe(false);
+  });
 });

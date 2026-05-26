@@ -14,7 +14,7 @@
       <p class="rb-kicker mt-2">Bienvenido de nuevo, por favor inicia sesión.</p>
     </div>
 
-    <form (ngSubmit)="onLogin()" class="space-y-5">
+    <form *ngIf="paso === 'credenciales'" (ngSubmit)="onLogin()" class="space-y-5">
       <div>
         <label class="rb-label ml-0.5">Email</label>
         <input
@@ -78,6 +78,65 @@
         </button>
       </div>
     </form>
+
+    <div *ngIf="paso === 'mfa'" class="space-y-5">
+      <div class="rounded-xl border border-gray-200 bg-gray-50/90 px-4 py-4 text-center dark:border-dark-border dark:bg-slate-900/50">
+        <img src="/iconos/candado.png" alt="" width="40" height="40" class="mx-auto mb-3 h-10 w-10 object-contain" />
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-dark-text-strong">Verificación en dos pasos</h2>
+        <p class="mt-2 text-sm text-neutral-muted dark:text-dark-text-muted">
+          Ingresa el código de 6 dígitos de Google Authenticator para
+          <span class="font-medium text-gray-900 dark:text-dark-text-strong">{{ mfaEmail }}</span>
+        </p>
+      </div>
+
+      <div *ngIf="!usarCodigoRespaldo">
+        <label class="rb-label ml-0.5">Código de seguridad</label>
+        <input
+          type="text"
+          inputmode="numeric"
+          maxlength="6"
+          [value]="mfaCode"
+          name="mfaCode"
+          class="rb-input rb-focus-primary text-center text-lg tracking-[0.35em]"
+          (keydown)="bloquearNoNumericoMfa($event)"
+          (input)="soloNumerosMfa($event)"
+          autocomplete="one-time-code"
+        />
+      </div>
+
+      <div *ngIf="usarCodigoRespaldo">
+        <label class="rb-label ml-0.5">Código de respaldo</label>
+        <input
+          type="text"
+          [(ngModel)]="mfaBackupCode"
+          name="mfaBackupCode"
+          class="rb-input rb-focus-primary uppercase"
+          placeholder="XXXX-XXXX"
+          autocomplete="off"
+        />
+      </div>
+
+      <button
+        type="button"
+        (click)="usarCodigoRespaldo = !usarCodigoRespaldo"
+        class="text-sm font-medium text-secondary underline-offset-2 hover:underline dark:text-sky-300"
+      >
+        {{ usarCodigoRespaldo ? 'Usar código de Google Authenticator' : 'Usar código de respaldo' }}
+      </button>
+
+      <div class="flex flex-col gap-3">
+        <button type="button" (click)="onVerificarMfa()" [disabled]="cargando" class="rb-btn-primary w-full">
+          <span
+            *ngIf="cargando"
+            class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+          ></span>
+          {{ cargando ? 'Verificando...' : 'Verificar' }}
+        </button>
+        <button type="button" (click)="volverCredenciales()" [disabled]="cargando" class="rb-btn-secondary w-full">
+          Volver al inicio de sesión
+        </button>
+      </div>
+    </div>
   </div>
 
   <div *ngIf="modal.visible" class="rb-modal-backdrop">

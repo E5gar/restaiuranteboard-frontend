@@ -6,8 +6,14 @@ import { Router, RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
 import { AuthService } from '../../services/auth.service';
 import { CartService } from '../../services/cart.service';
-import { bloquearTeclasNoNumericas, errorTelefono9, filtrarSoloDigitos } from '../../utils/form-validators';
-import { environment } from '@env/environment'; 
+import {
+  bloquearTeclasNoNumericas,
+  errorCodigo6,
+  errorTelefono9,
+  filtrarSoloDigitos,
+} from '../../utils/form-validators';
+import { MfaService } from '../../services/mfa.service';
+import { environment } from '@env/environment';
 
 type PerfilResponse = {
   userId: string;
@@ -18,6 +24,7 @@ type PerfilResponse = {
   email: string;
   role: string;
   canEditAddress: boolean;
+  mfaEnabled?: boolean;
 };
 
 @Component({
@@ -31,6 +38,7 @@ export class MiPerfilComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly cart = inject(CartService);
   private readonly router = inject(Router);
+  private readonly mfaService = inject(MfaService);
   private readonly apiPerfil = environment.apiUrl + '/perfil';
 
   cargando = signal(true);
@@ -53,6 +61,16 @@ export class MiPerfilComponent implements OnInit {
   };
 
   modal = signal<{ tipo: 'ok' | 'error'; titulo: string; mensaje: string } | null>(null);
+
+  mfaEnabled = signal(false);
+  mfaUi = signal<'idle' | 'qr' | 'backup' | 'disable'>('idle');
+  mfaCargando = signal(false);
+  mfaQrDataUrl = signal('');
+  mfaSecretPlain = signal('');
+  mfaConfirmCode = signal('');
+  mfaBackupCodes = signal<string[]>([]);
+  mfaDisablePassword = '';
+  mfaDisableCode = '';
 
   ngOnInit(): void {
     this.cargarPerfil();
@@ -143,6 +161,149 @@ export class MiPerfilComponent implements OnInit {
     this.modal.set(null);
   }
 
+  iniciarMfa(): void {
+    this.mfaCargando.set(true);
+    this.mfaService.iniciar().subscribe({
+      next: async (resp) => {
+        this.mfaCargando.set(false);
+        this.mfaSecretPlain.set(resp.secretPlain || '');
+        try {
+          const QRCode = (await import('qrcode')).default;
+          const dataUrl = await QRCode.toDataURL(resp.otpAuthUri, {
+            width: 220,
+            margin: 1,
+            color: { dark: '#0f172a', light: '#ffffff' },
+          });
+          this.mfaQrDataUrl.set(dataUrl);
+        } catch {
+          this.mfaQrDataUrl.set('');
+        }
+        this.mfaConfirmCode.set('');
+        this.mfaUi.set('qr');
+      },
+      error: (err) => {
+        this.mfaCargando.set(false);
+        this.modal.set({
+          tipo: 'error',
+          titulo: 'Doble factor',
+          mensaje: err?.error?.message || 'No se pudo iniciar la configuración.',
+        });
+      },
+    });
+  }
+
+  soloNumerosMfa(event: Event): void {
+    this.mfaConfirmCode.set(filtrarSoloDigitos(event, 6));
+  }
+
+  bloquearNoNumericoMfa(event: KeyboardEvent): void {
+    bloquearTeclasNoNumericas(event);
+  }
+
+  confirmarMfa(): void {
+    const codErr = errorCodigo6(this.mfaConfirmCode());
+    if (codErr) {
+      this.modal.set({ tipo: 'error', titulo: 'Doble factor', mensaje: codErr });
+      return;
+    }
+    this.mfaCargando.set(true);
+    this.mfaService.confirmar(this.mfaConfirmCode()).subscribe({
+      next: (resp) => {
+        this.mfaCargando.set(false);
+        this.mfaEnabled.set(true);
+        this.mfaBackupCodes.set(resp.backupCodes || []);
+        this.mfaUi.set('backup');
+        this.mfaSecretPlain.set('');
+        this.mfaQrDataUrl.set('');
+      },
+      error: (err) => {
+        this.mfaCargando.set(false);
+        this.modal.set({
+          tipo: 'error',
+          titulo: 'Doble factor',
+          mensaje: err?.error?.message || 'Código inválido o expirado.',
+        });
+      },
+    });
+  }
+
+  cerrarMfaSetup(): void {
+    this.mfaUi.set('idle');
+    this.mfaBackupCodes.set([]);
+    this.mfaConfirmCode.set('');
+    this.mfaQrDataUrl.set('');
+    this.mfaSecretPlain.set('');
+  }
+
+  descargarCodigosRespaldo(): void {
+    const codes = this.mfaBackupCodes();
+    if (!codes.length) return;
+    const contenido = [
+      'Restaiuranteboard - Códigos de respaldo MFA',
+      `Cuenta: ${this.form.email}`,
+      '',
+      ...codes.map((c, i) => `${i + 1}. ${c}`),
+      '',
+      'Cada código solo puede usarse una vez.',
+    ].join('\n');
+    const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'restaiuranteboard-codigos-respaldo-mfa.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+    this.cerrarMfaSetup();
+    this.modal.set({
+      tipo: 'ok',
+      titulo: 'Doble factor activado',
+      mensaje: 'La autenticación de doble factor quedó habilitada en tu cuenta.',
+    });
+  }
+
+  abrirDesactivarMfa(): void {
+    this.mfaDisablePassword = '';
+    this.mfaDisableCode = '';
+    this.mfaUi.set('disable');
+  }
+
+  desactivarMfa(): void {
+    if (!this.mfaDisablePassword.trim()) {
+      this.modal.set({ tipo: 'error', titulo: 'Doble factor', mensaje: 'Ingresa tu contraseña actual.' });
+      return;
+    }
+    const codErr = errorCodigo6(this.mfaDisableCode);
+    if (codErr) {
+      this.modal.set({ tipo: 'error', titulo: 'Doble factor', mensaje: codErr });
+      return;
+    }
+    this.mfaCargando.set(true);
+    this.mfaService.desactivar(this.mfaDisablePassword, this.mfaDisableCode).subscribe({
+      next: () => {
+        this.mfaCargando.set(false);
+        this.mfaEnabled.set(false);
+        this.mfaUi.set('idle');
+        this.modal.set({
+          tipo: 'ok',
+          titulo: 'Doble factor',
+          mensaje: 'La autenticación de doble factor fue desactivada.',
+        });
+      },
+      error: (err) => {
+        this.mfaCargando.set(false);
+        this.modal.set({
+          tipo: 'error',
+          titulo: 'Doble factor',
+          mensaje: err?.error?.message || 'No se pudo desactivar.',
+        });
+      },
+    });
+  }
+
+  soloNumerosDesactivarMfa(event: Event): void {
+    this.mfaDisableCode = filtrarSoloDigitos(event, 6);
+  }
+
   abrirModalEliminar(): void {
     this.passwordEliminar = '';
     this.modalEliminar.set(true);
@@ -214,5 +375,6 @@ export class MiPerfilComponent implements OnInit {
     this.canEditAddress.set(!!resp?.canEditAddress);
     this.roleVisible.set(this.form.role !== 'CLIENTE');
     this.esCliente.set(this.form.role === 'CLIENTE');
+    this.mfaEnabled.set(!!resp?.mfaEnabled);
   }
 }
