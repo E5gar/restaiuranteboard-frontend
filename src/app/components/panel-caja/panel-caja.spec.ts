@@ -1,17 +1,27 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
+import { EMPTY } from 'rxjs';
+import { WebsocketService } from '../../services/websocket.service';
+import { PanelCajaComponent } from './panel-caja';
 
-import { PanelCaja } from './panel-caja';
-
-describe('PanelCaja', () => {
-  let component: PanelCaja;
-  let fixture: ComponentFixture<PanelCaja>;
+describe('PanelCajaComponent', () => {
+  let component: PanelCajaComponent;
+  let fixture: ComponentFixture<PanelCajaComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [PanelCaja],
+      imports: [PanelCajaComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: WebsocketService, useValue: { subscribeToTopic: () => EMPTY } },
+      ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(PanelCaja);
+    fixture = TestBed.createComponent(PanelCajaComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
