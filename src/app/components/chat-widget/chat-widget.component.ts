@@ -16,11 +16,12 @@ import {
   type ChatSessionListItemDto,
   type ChatUiMessage,
 } from '../../services/chat.service';
+import { MarkdownPipe } from '../../pipes/markdown.pipe';
 
 @Component({
   selector: 'app-chat-widget',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MarkdownPipe],
   templateUrl: './chat-widget.component.html',
   styleUrl: './chat-widget.component.css',
 })

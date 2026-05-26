@@ -146,9 +146,10 @@
               : 'mr-6 rounded-xl border border-gray-100 bg-white px-3 py-2 dark:border-dark-border dark:bg-slate-900/80'
           "
         >
-          <p class="whitespace-pre-wrap text-xs text-gray-900 dark:text-dark-text-strong sm:text-sm">
-            {{ m.content }}
-          </p>
+          <div 
+            class="markdown-body text-xs text-gray-900 dark:text-dark-text-strong sm:text-sm"
+            [innerHTML]="m.content | markdown">
+          </div>
         </article>
         <p
           *ngIf="procesando()"
