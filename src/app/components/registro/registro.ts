@@ -140,9 +140,15 @@ export class RegistroComponent implements OnInit {
       return;
     }
     this.googleCargando = true;
+    const timeoutId = setTimeout(() => {
+      if (this.googleCargando) {
+        this.googleCargando = false;
+      }
+    }, 20000);
     this.googleAuth
       .requestAuth()
       .then((auth) => {
+        clearTimeout(timeoutId);
         this.googleAuthApi.sesionRegistro(auth).subscribe({
           next: (sesion) => {
             this.googleCargando = false;
@@ -164,6 +170,7 @@ export class RegistroComponent implements OnInit {
         });
       })
       .catch(() => {
+        clearTimeout(timeoutId);
         this.googleCargando = false;
         this.abrirModal('error', 'Registro con Google', 'Autenticación cancelada o no disponible.');
       });

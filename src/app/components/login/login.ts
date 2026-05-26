@@ -167,9 +167,15 @@ export class LoginComponent implements OnInit {
       return;
     }
     this.googleCargando = true;
+    const timeoutId = setTimeout(() => {
+      if (this.googleCargando) {
+        this.googleCargando = false;
+      }
+    }, 20000);
     this.googleAuth
       .requestAuth()
       .then((auth) => {
+        clearTimeout(timeoutId);
         this.googleAuthApi.login(auth).subscribe({
           next: (user) => {
             this.googleCargando = false;
@@ -186,6 +192,7 @@ export class LoginComponent implements OnInit {
         });
       })
       .catch(() => {
+        clearTimeout(timeoutId);
         this.googleCargando = false;
         this.abrirModal('Acceso con Google', 'Autenticación cancelada o no disponible.', true);
       });
