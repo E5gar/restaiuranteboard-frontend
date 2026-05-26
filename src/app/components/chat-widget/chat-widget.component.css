@@ -2,7 +2,7 @@
   position: fixed;
   bottom: 1rem;
   right: 4.25rem;
-  z-index: 44;
+  z-index: 52;
 }
 
 .chat-fab {
@@ -16,7 +16,7 @@
   position: fixed;
   bottom: 4.5rem;
   right: 1rem;
-  z-index: 46;
+  z-index: 53;
   width: min(100vw - 2rem, 22rem);
   max-height: min(70vh, 28rem);
 }
@@ -65,13 +65,13 @@
   margin-bottom: 0.5rem;
   font-size: 0.9em;
 }
-::ng-deep .markdown-body th, 
+::ng-deep .markdown-body th,
 ::ng-deep .markdown-body td {
   border: 1px solid #e5e7eb;
   padding: 0.4rem 0.6rem;
   text-align: left;
 }
-.dark ::ng-deep .markdown-body th, 
+.dark ::ng-deep .markdown-body th,
 .dark ::ng-deep .markdown-body td {
   border-color: #334155;
 }
