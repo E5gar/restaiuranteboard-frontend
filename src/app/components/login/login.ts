@@ -14,6 +14,8 @@ import { AuthService } from '../../services/auth.service';
 import { CartService, type VerificarPreciosResponseDto } from '../../services/cart.service';
 import { ConfigService } from '../../services/config.service';
 import { MfaService } from '../../services/mfa.service';
+import { GoogleAuthApiService } from '../../services/google-auth-api.service';
+import { GoogleAuthService } from '../../services/google-auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { environment } from '@env/environment';
 
@@ -38,6 +40,8 @@ export class LoginComponent implements OnInit {
 
   logoSrc = '/iconos/candado.png';
   logoEsDelNegocio = false;
+  googleDisponible = false;
+  googleCargando = false;
 
   tituloMarca = 'Restaiuranteboard';
 
@@ -63,7 +67,11 @@ export class LoginComponent implements OnInit {
     private configService: ConfigService,
     private theme: ThemeService,
     private mfaService: MfaService,
-  ) {}
+    private googleAuth: GoogleAuthService,
+    private googleAuthApi: GoogleAuthApiService,
+  ) {
+    this.googleDisponible = this.googleAuth.enabled;
+  }
 
   ngOnInit() {
     this.configService
@@ -103,16 +111,7 @@ export class LoginComponent implements OnInit {
       .subscribe({
         next: (user: any) => {
           this.cargando = false;
-          if (user?.mfaRequired === true && user?.mfaToken) {
-            this.paso = 'mfa';
-            this.mfaToken = String(user.mfaToken);
-            this.mfaEmail = String(user.email || this.email);
-            this.mfaCode = '';
-            this.mfaBackupCode = '';
-            this.usarCodigoRespaldo = false;
-            return;
-          }
-          this.procesarLoginExitoso(user);
+          this.manejarRespuestaAuth(user);
         },
 
         error: (err) => {
@@ -160,6 +159,49 @@ export class LoginComponent implements OnInit {
     this.mfaCode = '';
     this.mfaBackupCode = '';
     this.usarCodigoRespaldo = false;
+  }
+
+  onLoginGoogle() {
+    if (!this.googleAuth.enabled) {
+      this.abrirModal('Google no disponible', 'El inicio de sesión con Google no está configurado.', true);
+      return;
+    }
+    this.googleCargando = true;
+    this.googleAuth
+      .requestAuth()
+      .then((auth) => {
+        this.googleAuthApi.login(auth).subscribe({
+          next: (user) => {
+            this.googleCargando = false;
+            this.manejarRespuestaAuth(user);
+          },
+          error: (err) => {
+            this.googleCargando = false;
+            this.abrirModal(
+              'Acceso con Google',
+              err.error?.message || 'No se pudo iniciar sesión con Google.',
+              true,
+            );
+          },
+        });
+      })
+      .catch(() => {
+        this.googleCargando = false;
+        this.abrirModal('Acceso con Google', 'Autenticación cancelada o no disponible.', true);
+      });
+  }
+
+  private manejarRespuestaAuth(user: Record<string, unknown>) {
+    if (user?.['mfaRequired'] === true && user?.['mfaToken']) {
+      this.paso = 'mfa';
+      this.mfaToken = String(user['mfaToken']);
+      this.mfaEmail = String(user['email'] || this.email);
+      this.mfaCode = '';
+      this.mfaBackupCode = '';
+      this.usarCodigoRespaldo = false;
+      return;
+    }
+    this.procesarLoginExitoso(user);
   }
 
   onVerificarMfa() {

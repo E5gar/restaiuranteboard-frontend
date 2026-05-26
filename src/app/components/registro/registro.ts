@@ -5,6 +5,10 @@ import { HttpClient } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import { catchError, of } from 'rxjs';
 import { ConfigService } from '../../services/config.service';
+import { GoogleAuthApiService } from '../../services/google-auth-api.service';
+import { GoogleAuthService } from '../../services/google-auth.service';
+import { AuthService } from '../../services/auth.service';
+import { ThemeService } from '../../services/theme.service';
 import { environment } from '@env/environment'; 
 import {
   bloquearTeclasNoNumericas,
@@ -47,11 +51,22 @@ export class RegistroComponent implements OnInit {
   logoEsDelNegocio = false;
   tituloMarca = 'Restaiuranteboard';
 
+  modoGoogle = false;
+  googleDisponible = false;
+  googleCargando = false;
+  private googleRegistrationToken = '';
+
   constructor(
     private http: HttpClient,
     private router: Router,
     private config: ConfigService,
-  ) {}
+    private googleAuth: GoogleAuthService,
+    private googleAuthApi: GoogleAuthApiService,
+    private auth: AuthService,
+    private theme: ThemeService,
+  ) {
+    this.googleDisponible = this.googleAuth.enabled;
+  }
 
   ngOnInit() {
     this.config
@@ -104,17 +119,59 @@ export class RegistroComponent implements OnInit {
     const emailErr = errorEmailHistoriaUsuario(this.usuario.email);
     if (emailErr) return { valido: false, error: emailErr };
 
-    const nombreFirst = this.usuario.nombres.split(' ')[0]?.toLowerCase() ?? '';
-    const apellidoFirst = this.usuario.apellidos.split(' ')[0]?.toLowerCase() ?? '';
-    const pwdErr = errorPasswordHistoria(
-      this.usuario.password,
-      this.confirmarPassword,
-      nombreFirst,
-      apellidoFirst,
-    );
-    if (pwdErr) return { valido: false, error: pwdErr };
+    if (!this.modoGoogle) {
+      const nombreFirst = this.usuario.nombres.split(' ')[0]?.toLowerCase() ?? '';
+      const apellidoFirst = this.usuario.apellidos.split(' ')[0]?.toLowerCase() ?? '';
+      const pwdErr = errorPasswordHistoria(
+        this.usuario.password,
+        this.confirmarPassword,
+        nombreFirst,
+        apellidoFirst,
+      );
+      if (pwdErr) return { valido: false, error: pwdErr };
+    }
 
     return { valido: true };
+  }
+
+  iniciarRegistroGoogle() {
+    if (!this.googleAuth.enabled) {
+      this.abrirModal('error', 'Google no disponible', 'El registro con Google no está configurado.');
+      return;
+    }
+    this.googleCargando = true;
+    this.googleAuth
+      .requestAuth()
+      .then((auth) => {
+        this.googleAuthApi.sesionRegistro(auth).subscribe({
+          next: (sesion) => {
+            this.googleCargando = false;
+            this.modoGoogle = true;
+            this.googleRegistrationToken = sesion.registrationToken;
+            this.usuario.nombres = sesion.givenName || '';
+            this.usuario.apellidos = sesion.familyName || '';
+            this.usuario.email = sesion.email || '';
+            this.paso = 1;
+          },
+          error: (err) => {
+            this.googleCargando = false;
+            this.abrirModal(
+              'error',
+              'Registro con Google',
+              err.error?.message || 'No se pudo verificar la cuenta de Google.',
+            );
+          },
+        });
+      })
+      .catch(() => {
+        this.googleCargando = false;
+        this.abrirModal('error', 'Registro con Google', 'Autenticación cancelada o no disponible.');
+      });
+  }
+
+  cancelarModoGoogle() {
+    this.modoGoogle = false;
+    this.googleRegistrationToken = '';
   }
 
   abrirTerminos(event: Event) {
@@ -154,6 +211,16 @@ export class RegistroComponent implements OnInit {
       return;
     }
 
+    if (!this.aceptoTerminos) {
+      this.abrirModal('error', 'Términos', 'Debes aceptar los términos y condiciones.');
+      return;
+    }
+
+    if (this.modoGoogle) {
+      this.registrarConGoogle();
+      return;
+    }
+
     this.cargando = true;
     this.http
       .post(environment.apiUrl + '/auth/enviar-codigo-registro', {
@@ -182,6 +249,51 @@ export class RegistroComponent implements OnInit {
           );
         },
       });
+  }
+
+  registrarConGoogle() {
+    if (!this.googleRegistrationToken) {
+      this.abrirModal('error', 'Sesión Google', 'Vuelve a autorizar con Google.');
+      return;
+    }
+    this.cargando = true;
+    const payload = {
+      registrationToken: this.googleRegistrationToken,
+      fullName: `${this.usuario.nombres} ${this.usuario.apellidos}`.trim(),
+      dni: this.usuario.dni,
+      phone: this.usuario.phone,
+      address: this.usuario.address,
+    };
+    this.googleAuthApi.registrar(payload).subscribe({
+      next: (user) => {
+        this.cargando = false;
+        const guest = sessionStorage.getItem('rb_guest_dark');
+        let dark = user['darkMode'] === true;
+        if (guest === '1') dark = true;
+        else if (guest === '0') dark = false;
+        sessionStorage.removeItem('rb_guest_dark');
+        this.auth.setSession({ ...user, darkMode: dark });
+        this.theme.persistLoginTheme(dark, String(user['email'] || ''));
+        const msg = 'Tu cuenta ha sido creada con Google.';
+        this.abrirModal('exito', '¡Bienvenido!', msg);
+        setTimeout(() => {
+          const role = String(user['role'] || '');
+          if (role === 'ADMIN') {
+            void this.router.navigate(['/gestion-administrador']);
+          } else {
+            void this.router.navigate(['/menu']);
+          }
+        }, 2000);
+      },
+      error: (err) => {
+        this.cargando = false;
+        this.abrirModal(
+          'error',
+          'Registro con Google',
+          err.error?.message || 'No se pudo completar el registro.',
+        );
+      },
+    });
   }
 
   registrarFinal() {

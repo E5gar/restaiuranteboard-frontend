@@ -68,13 +68,24 @@
         >
       </div>
 
-      <div class="flex justify-center">
-        <button type="submit" [disabled]="cargando" class="rb-btn-primary">
-        <span
-          *ngIf="cargando"
-          class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
-        ></span>
-        {{ cargando ? 'Verificando...' : 'Iniciar Sesión' }}
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:justify-center">
+        <button type="submit" [disabled]="cargando || googleCargando" class="rb-btn-primary min-h-11 w-full sm:flex-1">
+          <span
+            *ngIf="cargando"
+            class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+          ></span>
+          {{ cargando ? 'Verificando...' : 'Iniciar Sesión' }}
+        </button>
+        <button
+          *ngIf="googleDisponible"
+          type="button"
+          (click)="onLoginGoogle()"
+          [disabled]="cargando || googleCargando"
+          class="rb-btn-secondary flex min-h-11 w-full items-center justify-center gap-2 border border-gray-200 bg-white text-gray-900 hover:bg-gray-50 disabled:opacity-45 dark:border-dark-border dark:bg-slate-900 dark:text-dark-text-strong dark:hover:bg-slate-800 sm:flex-1"
+        >
+          <img src="/iconos/correo.png" alt="" width="20" height="20" class="h-5 w-5 shrink-0 object-contain" />
+          <span *ngIf="googleCargando" class="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent dark:border-slate-500"></span>
+          {{ googleCargando ? 'Conectando...' : 'Iniciar sesión con Google' }}
         </button>
       </div>
     </form>
