@@ -13,6 +13,7 @@ import {
   filtrarSoloDigitos,
 } from '../../utils/form-validators';
 import { MfaService } from '../../services/mfa.service';
+import { GoogleAuthService } from '../../services/google-auth.service';
 import { environment } from '@env/environment';
 
 type PerfilResponse = {
@@ -25,6 +26,7 @@ type PerfilResponse = {
   role: string;
   canEditAddress: boolean;
   mfaEnabled?: boolean;
+  hasLocalPassword?: boolean;
 };
 
 @Component({
@@ -39,6 +41,7 @@ export class MiPerfilComponent implements OnInit {
   private readonly cart = inject(CartService);
   private readonly router = inject(Router);
   private readonly mfaService = inject(MfaService);
+  private readonly googleAuth = inject(GoogleAuthService);
   private readonly apiPerfil = environment.apiUrl + '/perfil';
 
   cargando = signal(true);
@@ -50,6 +53,12 @@ export class MiPerfilComponent implements OnInit {
   modalEliminar = signal(false);
   eliminando = signal(false);
   passwordEliminar = '';
+  hasLocalPassword = signal(true);
+  googleDisponible = signal(false);
+  googleVerificando = signal(false);
+  googleVerificadoEliminar = signal(false);
+  googleVerificadoMfa = signal(false);
+  private googleLastAuth: { idToken?: string; googleCode?: string } | null = null;
 
   form = {
     fullName: '',
@@ -71,8 +80,11 @@ export class MiPerfilComponent implements OnInit {
   mfaBackupCodes = signal<string[]>([]);
   mfaDisablePassword = '';
   mfaDisableCode = '';
+  mfaDisableBackupCode = '';
+  mfaUsarRespaldoDesactivar = false;
 
   ngOnInit(): void {
+    this.googleDisponible.set(this.googleAuth.enabled);
     this.cargarPerfil();
   }
 
@@ -233,6 +245,9 @@ export class MiPerfilComponent implements OnInit {
     this.mfaConfirmCode.set('');
     this.mfaQrDataUrl.set('');
     this.mfaSecretPlain.set('');
+    this.googleVerificadoMfa.set(false);
+    this.googleVerificadoEliminar.set(false);
+    this.googleLastAuth = null;
   }
 
   descargarCodigosRespaldo(): void {
@@ -264,25 +279,57 @@ export class MiPerfilComponent implements OnInit {
   abrirDesactivarMfa(): void {
     this.mfaDisablePassword = '';
     this.mfaDisableCode = '';
+    this.mfaDisableBackupCode = '';
+    this.mfaUsarRespaldoDesactivar = false;
+    this.googleVerificadoMfa.set(false);
+    this.googleLastAuth = null;
     this.mfaUi.set('disable');
   }
 
   desactivarMfa(): void {
-    if (!this.mfaDisablePassword.trim()) {
-      this.modal.set({ tipo: 'error', titulo: 'Doble factor', mensaje: 'Ingresa tu contraseña actual.' });
-      return;
-    }
-    const codErr = errorCodigo6(this.mfaDisableCode);
-    if (codErr) {
-      this.modal.set({ tipo: 'error', titulo: 'Doble factor', mensaje: codErr });
-      return;
+    const necesitaGoogle = !this.hasLocalPassword();
+    if (!necesitaGoogle) {
+      if (!this.mfaDisablePassword.trim()) {
+        this.modal.set({ tipo: 'error', titulo: 'Doble factor', mensaje: 'Ingresa tu contraseña actual.' });
+        return;
+      }
+      const codErr = errorCodigo6(this.mfaDisableCode);
+      if (codErr) {
+        this.modal.set({ tipo: 'error', titulo: 'Doble factor', mensaje: codErr });
+        return;
+      }
+    } else {
+      if (!this.googleVerificadoMfa()) {
+        this.modal.set({ tipo: 'error', titulo: 'Doble factor', mensaje: 'Verifica tu identidad con Google.' });
+        return;
+      }
+      if (!this.mfaUsarRespaldoDesactivar) {
+        const codErr = errorCodigo6(this.mfaDisableCode);
+        if (codErr) {
+          this.modal.set({ tipo: 'error', titulo: 'Doble factor', mensaje: codErr });
+          return;
+        }
+      } else if (!this.mfaDisableBackupCode.trim()) {
+        this.modal.set({ tipo: 'error', titulo: 'Doble factor', mensaje: 'Ingresa un código de respaldo.' });
+        return;
+      }
     }
     this.mfaCargando.set(true);
-    this.mfaService.desactivar(this.mfaDisablePassword, this.mfaDisableCode).subscribe({
+    const payload: any = !necesitaGoogle
+      ? { password: this.mfaDisablePassword, code: this.mfaDisableCode }
+      : {
+          ...(this.googleLastAuth || {}),
+          ...(this.mfaUsarRespaldoDesactivar
+            ? { backupCode: this.mfaDisableBackupCode.trim() }
+            : { code: this.mfaDisableCode }),
+        };
+    this.mfaService.desactivar(payload).subscribe({
       next: () => {
         this.mfaCargando.set(false);
         this.mfaEnabled.set(false);
         this.mfaUi.set('idle');
+        this.googleVerificadoMfa.set(false);
+        this.googleLastAuth = null;
         this.modal.set({
           tipo: 'ok',
           titulo: 'Doble factor',
@@ -304,8 +351,14 @@ export class MiPerfilComponent implements OnInit {
     this.mfaDisableCode = filtrarSoloDigitos(event, 6);
   }
 
+  soloNumerosRespaldoDesactivar(event: Event): void {
+    this.mfaDisableBackupCode = filtrarSoloDigitos(event, 9).toUpperCase();
+  }
+
   abrirModalEliminar(): void {
     this.passwordEliminar = '';
+    this.googleVerificadoEliminar.set(false);
+    this.googleLastAuth = null;
     this.modalEliminar.set(true);
   }
 
@@ -313,20 +366,31 @@ export class MiPerfilComponent implements OnInit {
     if (this.eliminando()) return;
     this.modalEliminar.set(false);
     this.passwordEliminar = '';
+    this.googleVerificadoEliminar.set(false);
   }
 
   puedeConfirmarEliminar(): boolean {
-    return this.passwordEliminar.trim().length > 0 && !this.eliminando();
+    if (this.eliminando()) return false;
+    if (this.hasLocalPassword()) {
+      return this.passwordEliminar.trim().length > 0;
+    }
+    return this.googleVerificadoEliminar();
   }
 
   confirmarEliminarCuenta(): void {
+    const necesitaGoogle = !this.hasLocalPassword();
     const password = this.passwordEliminar.trim();
-    if (!password) {
+    if (!necesitaGoogle && !password) {
       this.modal.set({ tipo: 'error', titulo: 'Eliminar cuenta', mensaje: 'Debes ingresar tu contraseña actual.' });
       return;
     }
+    if (necesitaGoogle && !this.googleVerificadoEliminar()) {
+      this.modal.set({ tipo: 'error', titulo: 'Eliminar cuenta', mensaje: 'Verifica tu identidad con Google.' });
+      return;
+    }
     this.eliminando.set(true);
-    this.http.post<{ message: string }>(`${this.apiPerfil}/me/eliminar-cuenta`, { password }).subscribe({
+    const payload: any = necesitaGoogle ? { ...(this.googleLastAuth || {}) } : { password };
+    this.http.post<{ message: string }>(`${this.apiPerfil}/me/eliminar-cuenta`, payload).subscribe({
       next: () => {
         this.eliminando.set(false);
         this.modalEliminar.set(false);
@@ -345,6 +409,45 @@ export class MiPerfilComponent implements OnInit {
         });
       },
     });
+  }
+
+  verificarIdentidadConGoogle(para: 'eliminar' | 'mfa'): void {
+    if (!this.googleAuth.enabled) {
+      this.modal.set({ tipo: 'error', titulo: 'Google', mensaje: 'La verificación con Google no está configurada.' });
+      return;
+    }
+    this.googleVerificando.set(true);
+    this.googleAuth
+      .requestAuth()
+      .then((auth) => {
+        const payload = auth.idToken ? { idToken: auth.idToken } : { googleCode: auth.code };
+        this.http.post<{ verified: boolean }>(`${this.apiPerfil}/me/google/verificar-identidad`, payload).subscribe({
+          next: () => {
+            this.googleVerificando.set(false);
+            this.googleLastAuth = payload;
+            if (para === 'eliminar') {
+              this.googleVerificadoEliminar.set(true);
+            } else {
+              this.googleVerificadoMfa.set(true);
+            }
+          },
+          error: (err) => {
+            this.googleVerificando.set(false);
+            this.googleLastAuth = null;
+            this.googleVerificadoEliminar.set(false);
+            this.googleVerificadoMfa.set(false);
+            this.modal.set({
+              tipo: 'error',
+              titulo: 'Google',
+              mensaje: err?.error?.message || 'No se pudo verificar tu identidad.',
+            });
+          },
+        });
+      })
+      .catch(() => {
+        this.googleVerificando.set(false);
+        this.modal.set({ tipo: 'error', titulo: 'Google', mensaje: 'Autenticación cancelada o no disponible.' });
+      });
   }
 
   private cargarPerfil(): void {
@@ -376,5 +479,6 @@ export class MiPerfilComponent implements OnInit {
     this.roleVisible.set(this.form.role !== 'CLIENTE');
     this.esCliente.set(this.form.role === 'CLIENTE');
     this.mfaEnabled.set(!!resp?.mfaEnabled);
+    this.hasLocalPassword.set(resp?.hasLocalPassword !== false);
   }
 }

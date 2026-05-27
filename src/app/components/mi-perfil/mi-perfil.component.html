@@ -223,10 +223,33 @@
 
             <div *ngIf="mfaUi() === 'disable'" class="space-y-4">
               <p class="text-sm text-neutral-muted dark:text-dark-text-muted">
-                Confirma tu contraseña y un código actual de Google Authenticator para desactivar el doble factor.
+                Confirma tu identidad para desactivar el doble factor.
               </p>
+              <div
+                *ngIf="!hasLocalPassword()"
+                class="flex flex-col gap-2 rounded-xl border border-sky-200/80 bg-sky-50/90 px-4 py-3 dark:border-sky-500/30 dark:bg-sky-950/40 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div class="flex items-start gap-3">
+                  <img src="/iconos/correo.png" alt="" width="28" height="28" class="h-7 w-7 shrink-0 object-contain" />
+                  <div>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-sky-100">Cuenta sin contraseña local</p>
+                    <p class="mt-0.5 text-xs text-neutral-muted dark:text-sky-200/90">
+                      Verifica tu identidad con Google para continuar.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  (click)="verificarIdentidadConGoogle('mfa')"
+                  [disabled]="googleVerificando() || mfaCargando()"
+                  class="rb-btn-secondary min-h-11 border border-gray-200 bg-white text-gray-900 hover:bg-gray-50 disabled:opacity-45 dark:border-dark-border dark:bg-slate-900 dark:text-dark-text-strong dark:hover:bg-slate-800"
+                >
+                  <span *ngIf="googleVerificando()" class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"></span>
+                  {{ googleVerificadoMfa() ? 'Identidad verificada' : 'Verificar identidad con Google' }}
+                </button>
+              </div>
               <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div>
+                <div *ngIf="hasLocalPassword()">
                   <label class="rb-label !normal-case">Contraseña actual</label>
                   <input
                     type="password"
@@ -237,8 +260,9 @@
                   />
                 </div>
                 <div>
-                  <label class="rb-label !normal-case">Código del autenticador</label>
+                  <label class="rb-label !normal-case">{{ mfaUsarRespaldoDesactivar ? 'Código de respaldo' : 'Código del autenticador' }}</label>
                   <input
+                    *ngIf="!mfaUsarRespaldoDesactivar"
                     type="text"
                     inputmode="numeric"
                     maxlength="6"
@@ -248,8 +272,24 @@
                     (keydown)="bloquearNoNumericoMfa($event)"
                     (input)="soloNumerosDesactivarMfa($event)"
                   />
+                  <input
+                    *ngIf="mfaUsarRespaldoDesactivar"
+                    type="text"
+                    [(ngModel)]="mfaDisableBackupCode"
+                    name="mfaDisableBackupCode"
+                    class="rb-input rb-focus-secondary uppercase"
+                    placeholder="XXXX-XXXX"
+                    autocomplete="off"
+                  />
                 </div>
               </div>
+              <button
+                type="button"
+                (click)="mfaUsarRespaldoDesactivar = !mfaUsarRespaldoDesactivar"
+                class="text-sm font-medium text-secondary underline-offset-2 hover:underline dark:text-sky-300"
+              >
+                {{ mfaUsarRespaldoDesactivar ? 'Usar código de Google Authenticator' : 'Usar código de respaldo' }}
+              </button>
               <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <button
                   type="button"
@@ -304,17 +344,42 @@
         Esta acción es irreversible, perderás el acceso a tus datos y a tus pedidos realizados.
       </p>
       <p class="mb-4 text-sm text-neutral-strong dark:text-dark-text-muted">
-        Para confirmar, ingresa la contraseña con la que inicias sesión.
+        Para confirmar, valida tu identidad.
       </p>
-      <label class="rb-label !normal-case">Contraseña actual</label>
-      <input
-        type="password"
-        [(ngModel)]="passwordEliminar"
-        name="passwordEliminar"
-        autocomplete="current-password"
-        class="rb-input rb-focus-secondary mb-6"
-        [disabled]="eliminando()"
-      />
+      <div *ngIf="hasLocalPassword()">
+        <label class="rb-label !normal-case">Contraseña actual</label>
+        <input
+          type="password"
+          [(ngModel)]="passwordEliminar"
+          name="passwordEliminar"
+          autocomplete="current-password"
+          class="rb-input rb-focus-secondary mb-6"
+          [disabled]="eliminando()"
+        />
+      </div>
+      <div
+        *ngIf="!hasLocalPassword()"
+        class="mb-6 flex flex-col gap-2 rounded-xl border border-sky-200/80 bg-sky-50/90 px-4 py-3 dark:border-sky-500/30 dark:bg-sky-950/40 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div class="flex items-start gap-3">
+          <img src="/iconos/correo.png" alt="" width="28" height="28" class="h-7 w-7 shrink-0 object-contain" />
+          <div>
+            <p class="text-sm font-semibold text-gray-900 dark:text-sky-100">Cuenta sin contraseña local</p>
+            <p class="mt-0.5 text-xs text-neutral-muted dark:text-sky-200/90">
+              Verifica tu identidad con Google para habilitar la eliminación.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="verificarIdentidadConGoogle('eliminar')"
+          [disabled]="googleVerificando() || eliminando()"
+          class="rb-btn-secondary min-h-11 border border-gray-200 bg-white text-gray-900 hover:bg-gray-50 disabled:opacity-45 dark:border-dark-border dark:bg-slate-900 dark:text-dark-text-strong dark:hover:bg-slate-800"
+        >
+          <span *ngIf="googleVerificando()" class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"></span>
+          {{ googleVerificadoEliminar() ? 'Identidad verificada' : 'Verificar identidad con Google' }}
+        </button>
+      </div>
       <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
         <button
           type="button"

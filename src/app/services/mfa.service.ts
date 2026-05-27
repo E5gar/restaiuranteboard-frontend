@@ -20,6 +20,14 @@ export type MfaConfirmarDto = {
   backupCodes: string[];
 };
 
+export type MfaDesactivarPayload = {
+  password?: string;
+  code?: string;
+  backupCode?: string;
+  idToken?: string;
+  googleCode?: string;
+};
+
 @Injectable({ providedIn: 'root' })
 export class MfaService {
   private readonly http = inject(HttpClient);
@@ -37,11 +45,8 @@ export class MfaService {
     return this.http.post<MfaConfirmarDto>(`${this.base}/confirmar`, { code });
   }
 
-  desactivar(password: string, code: string): Observable<{ message: string; mfaEnabled: boolean }> {
-    return this.http.post<{ message: string; mfaEnabled: boolean }>(`${this.base}/desactivar`, {
-      password,
-      code,
-    });
+  desactivar(payload: MfaDesactivarPayload): Observable<{ message: string; mfaEnabled: boolean }> {
+    return this.http.post<{ message: string; mfaEnabled: boolean }>(`${this.base}/desactivar`, payload);
   }
 
   verificarLogin(payload: {
