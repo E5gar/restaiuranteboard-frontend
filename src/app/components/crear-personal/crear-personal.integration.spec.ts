@@ -19,6 +19,9 @@ describe('CrearPersonalComponent integration', () => {
     fixture = TestBed.createComponent(CrearPersonalComponent);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    const req = httpMock.expectOne(`${environment.apiUrl}/admin/personal/activos`);
+    req.flush([]);
     await fixture.whenStable();
   });
 

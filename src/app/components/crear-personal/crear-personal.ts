@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -20,8 +20,9 @@ import {
   imports: [CommonModule, FormsModule, RouterModule, LogoutButtonComponent],
   templateUrl: './crear-personal.component.html',
 })
-export class CrearPersonalComponent {
+export class CrearPersonalComponent implements OnInit {
   cargando = false;
+  cargandoPersonal = false;
   modal = { visible: false, tipo: 'info', titulo: '', mensaje: '' };
 
   empleado = {
@@ -34,7 +35,22 @@ export class CrearPersonalComponent {
     address: '',
   };
 
+  personalActivos: Array<{ userId: string; fullName: string; role: string; email: string }> = [];
+  empleadoAEliminar: { userId: string; fullName: string; role: string; email: string } | null = null;
+  modalEliminarEmpleado = {
+    visible: false,
+    tipo: 'advertencia',
+    titulo: 'Eliminar empleado',
+    mensaje:
+      'Esta acción dará de baja al empleado de forma permanente. No podrá volver a iniciar sesión, pero se conservará su nombre en los registros históricos de ventas y entregas para auditoría',
+  };
+  eliminandoEmpleado = false;
+
   constructor(private http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.cargarPersonalActivos();
+  }
 
   soloNumeros(event: Event, max: number) {
     return filtrarSoloDigitos(event, max);
@@ -50,6 +66,23 @@ export class CrearPersonalComponent {
 
   seleccionarRol(rol: string) {
     this.empleado.role = rol;
+  }
+
+  cargarPersonalActivos(): void {
+    this.cargandoPersonal = true;
+    this.http
+      .get<Array<{ userId: string; fullName: string; role: string; email: string }>>(environment.apiUrl + '/admin/personal/activos')
+      .subscribe({
+        next: (res) => {
+          this.cargandoPersonal = false;
+          this.personalActivos = Array.isArray(res) ? res : [];
+        },
+        error: (err) => {
+          this.cargandoPersonal = false;
+          const msg = err.error?.message || 'No se pudo cargar el personal.';
+          this.abrirModal('error', 'Personal', msg);
+        },
+      });
   }
 
   crearCuenta() {
@@ -120,5 +153,36 @@ export class CrearPersonalComponent {
   }
   cerrarModal() {
     this.modal.visible = false;
+  }
+
+  abrirModalEliminarEmpleado(emp: { userId: string; fullName: string; role: string; email: string }): void {
+    this.empleadoAEliminar = emp;
+    this.modalEliminarEmpleado.visible = true;
+  }
+
+  cerrarModalEliminarEmpleado(): void {
+    if (this.eliminandoEmpleado) return;
+    this.modalEliminarEmpleado.visible = false;
+    this.empleadoAEliminar = null;
+  }
+
+  confirmarEliminarEmpleado(): void {
+    if (!this.empleadoAEliminar) return;
+    this.eliminandoEmpleado = true;
+    const id = this.empleadoAEliminar.userId;
+    this.http.post<{ message: string }>(environment.apiUrl + `/admin/personal/${id}/eliminar`, {}).subscribe({
+      next: (res) => {
+        this.eliminandoEmpleado = false;
+        this.modalEliminarEmpleado.visible = false;
+        this.empleadoAEliminar = null;
+        this.abrirModal('exito', 'Empleado dado de baja', res?.message || 'Empleado eliminado.');
+        this.cargarPersonalActivos();
+      },
+      error: (err) => {
+        this.eliminandoEmpleado = false;
+        const msg = err.error?.message || 'No se pudo eliminar el empleado.';
+        this.abrirModal('advertencia', 'No se pudo eliminar', msg);
+      },
+    });
   }
 }

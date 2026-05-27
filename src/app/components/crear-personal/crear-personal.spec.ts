@@ -1,12 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { CrearPersonalComponent } from './crear-personal';
+import { environment } from '@env/environment';
 
 describe('CrearPersonalComponent', () => {
   let component: CrearPersonalComponent;
   let fixture: ComponentFixture<CrearPersonalComponent>;
+  let httpMock: HttpTestingController;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -16,6 +18,10 @@ describe('CrearPersonalComponent', () => {
 
     fixture = TestBed.createComponent(CrearPersonalComponent);
     component = fixture.componentInstance;
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    const req = httpMock.expectOne(`${environment.apiUrl}/admin/personal/activos`);
+    req.flush([]);
     await fixture.whenStable();
   });
 
