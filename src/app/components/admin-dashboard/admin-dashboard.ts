@@ -1647,7 +1647,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const seg = this.interacciones['porSegmentoDia'] as Record<string, number> | undefined;
     if (seg) {
       const el = document.getElementById('ux-bar-seg') as HTMLCanvasElement | null;
-      const labels = Object.keys(seg);
+      const labels = Object.keys(seg).filter(k => k && k.trim() !== '—' && k.trim() !== '');
       const data = labels.map((k) => Number(seg[k]));
       if (el && this.seriesTieneDatos(data)) {
         const config: any = {
