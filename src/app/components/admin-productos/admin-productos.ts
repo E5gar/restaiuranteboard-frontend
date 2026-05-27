@@ -72,10 +72,12 @@ export class AdminProductosComponent implements OnInit {
     stockQuantity: 0,
     category: 'Verduras',
     price: 0,
+    alertThreshold: 10,
     imageBase64: '',
   };
   ingredienteStockText = '0';
   ingredienteCostoText = '0';
+  ingredienteUmbralText = '10';
 
   ingredientes: any[] = [];
 
@@ -98,6 +100,12 @@ export class AdminProductosComponent implements OnInit {
   busquedaAlmacen = '';
   filtroCategoriaAlmacen: string = 'ALL';
   ingredienteSeleccionadoAlmacenId: number | '' = '';
+  paginaAlmacen = 1;
+  readonly pageSizeAlmacen = 15;
+
+  umbralEditId: number | null = null;
+  umbralEditText = '';
+  umbralGuardandoId: number | null = null;
 
   busquedaCatalogo = '';
   filtroCategoriaCatalogo: string = 'ALL';
@@ -120,6 +128,7 @@ export class AdminProductosComponent implements OnInit {
     stockQuantity: 0,
     category: 'Verduras',
     price: 0,
+    alertThreshold: 10,
     imageBase64: '',
   };
   editIngredienteStockText = '0';
@@ -281,7 +290,11 @@ export class AdminProductosComponent implements OnInit {
 
   cargarDatos() {
     this.http.get<any[]>(`${this.apiCatalogo}/ingredientes`).subscribe({
-      next: (data) => (this.ingredientes = data),
+      next: (data) =>
+        (this.ingredientes = (data ?? []).map((i) => ({
+          ...i,
+          alertThreshold: typeof i?.alertThreshold === 'number' ? i.alertThreshold : 10,
+        }))),
       error: (err) => console.error('Error cargando ingredientes', err),
     });
 
@@ -310,6 +323,84 @@ export class AdminProductosComponent implements OnInit {
     if (this.editIngrediente.unit === 'UNIDADES') {
       this.editIngredienteStockText = this.sinDecimalesTexto(this.editIngredienteStockText);
     }
+  }
+
+  resetPaginaAlmacen() {
+    this.paginaAlmacen = 1;
+  }
+
+  get totalPaginasAlmacen(): number {
+    const total = this.insumosFiltradosAlmacen.length;
+    return Math.max(1, Math.ceil(total / this.pageSizeAlmacen));
+  }
+
+  get insumosPaginadosAlmacen(): any[] {
+    const page = Math.min(Math.max(1, this.paginaAlmacen), this.totalPaginasAlmacen);
+    const start = (page - 1) * this.pageSizeAlmacen;
+    return this.insumosFiltradosAlmacen.slice(start, start + this.pageSizeAlmacen);
+  }
+
+  anteriorPaginaAlmacen() {
+    this.paginaAlmacen = Math.max(1, this.paginaAlmacen - 1);
+  }
+
+  siguientePaginaAlmacen() {
+    this.paginaAlmacen = Math.min(this.totalPaginasAlmacen, this.paginaAlmacen + 1);
+  }
+
+  iniciarEditarUmbral(ing: any, ev?: Event) {
+    ev?.stopPropagation();
+    this.umbralEditId = ing?.id ?? null;
+    this.umbralEditText = String(
+      typeof ing?.alertThreshold === 'number' ? ing.alertThreshold : 10,
+    );
+  }
+
+  cancelarEditarUmbral(ev?: Event) {
+    ev?.stopPropagation();
+    this.umbralEditId = null;
+    this.umbralEditText = '';
+  }
+
+  guardarUmbral(ing: any, ev?: Event) {
+    ev?.stopPropagation();
+    if (!ing?.id) return;
+    const unit = (ing?.unit as string) || 'UNIDADES';
+    const maxDec = unit === 'UNIDADES' ? 0 : 2;
+    const umbral = this.parseNumeroFlexible(this.umbralEditText, {
+      maxDecimals: maxDec,
+      integerOnly: unit === 'UNIDADES',
+      min: 0,
+    });
+    if (umbral === null) {
+      return this.abrirModal(
+        'error',
+        'Umbral inválido',
+        unit === 'UNIDADES'
+          ? 'Umbral crítico: entero no negativo, sin decimales.'
+          : 'Umbral crítico: no negativo, máximo dos decimales.',
+      );
+    }
+    this.umbralGuardandoId = ing.id;
+    this.http
+      .patch<any>(`${this.apiCatalogo}/ingredientes/${ing.id}/umbral`, { alertThreshold: umbral })
+      .subscribe({
+        next: (resp) => {
+          this.umbralGuardandoId = null;
+          ing.alertThreshold = typeof resp?.alertThreshold === 'number' ? resp.alertThreshold : umbral;
+          const idx = this.ingredientes.findIndex((x) => x.id === ing.id);
+          if (idx >= 0) {
+            this.ingredientes[idx] = { ...this.ingredientes[idx], alertThreshold: ing.alertThreshold };
+          }
+          this.umbralEditId = null;
+          this.umbralEditText = '';
+        },
+        error: (err) => {
+          this.umbralGuardandoId = null;
+          const msg = err?.error?.message || 'No se pudo actualizar el umbral.';
+          this.abrirModal('error', 'Error', msg);
+        },
+      });
   }
 
   get insumosFiltradosRecetaEdit(): any[] {
@@ -341,6 +432,7 @@ export class AdminProductosComponent implements OnInit {
       stockQuantity: ing.stockQuantity ?? 0,
       category: ing.category ?? 'Verduras',
       price: ing.price ?? 0,
+      alertThreshold: typeof ing.alertThreshold === 'number' ? ing.alertThreshold : 10,
       imageBase64: ing.imageBase64 ?? '',
     };
     this.editIngredienteStockText = String(ing.stockQuantity ?? 0);
@@ -941,8 +1033,24 @@ export class AdminProductosComponent implements OnInit {
       );
     }
 
+    const umbral = this.parseNumeroFlexible(this.ingredienteUmbralText, {
+      maxDecimals: maxDec,
+      integerOnly: unit === 'UNIDADES',
+      min: 0,
+    });
+    if (umbral === null) {
+      return this.abrirModal(
+        'error',
+        'Umbral inválido',
+        unit === 'UNIDADES'
+          ? 'Umbral de alerta: entero no negativo, sin decimales.'
+          : 'Umbral de alerta: no negativo, máximo dos decimales.',
+      );
+    }
+
     this.nuevoIngrediente.stockQuantity = stock;
     this.nuevoIngrediente.price = costo;
+    this.nuevoIngrediente.alertThreshold = umbral;
 
     this.cargando = true;
     this.http.post(`${this.apiCatalogo}/ingredientes`, this.nuevoIngrediente).subscribe({
@@ -955,10 +1063,12 @@ export class AdminProductosComponent implements OnInit {
           stockQuantity: 0,
           category: 'Verduras',
           price: 0,
+          alertThreshold: 10,
           imageBase64: '',
         };
         this.ingredienteStockText = '0';
         this.ingredienteCostoText = '0';
+        this.ingredienteUmbralText = '10';
         this.cargarDatos();
       },
       error: (err) => {
