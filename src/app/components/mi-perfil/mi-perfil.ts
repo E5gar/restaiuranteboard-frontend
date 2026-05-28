@@ -421,28 +421,14 @@ export class MiPerfilComponent implements OnInit {
       .requestAuth()
       .then((auth) => {
         const payload = auth.idToken ? { idToken: auth.idToken } : { googleCode: auth.code };
-        this.http.post<{ verified: boolean }>(`${this.apiPerfil}/me/google/verificar-identidad`, payload).subscribe({
-          next: () => {
-            this.googleVerificando.set(false);
-            this.googleLastAuth = payload;
-            if (para === 'eliminar') {
-              this.googleVerificadoEliminar.set(true);
-            } else {
-              this.googleVerificadoMfa.set(true);
-            }
-          },
-          error: (err) => {
-            this.googleVerificando.set(false);
-            this.googleLastAuth = null;
-            this.googleVerificadoEliminar.set(false);
-            this.googleVerificadoMfa.set(false);
-            this.modal.set({
-              tipo: 'error',
-              titulo: 'Google',
-              mensaje: err?.error?.message || 'No se pudo verificar tu identidad.',
-            });
-          },
-        });
+        this.googleVerificando.set(false);
+        this.googleLastAuth = payload;
+        
+        if (para === 'eliminar') {
+          this.googleVerificadoEliminar.set(true);
+        } else {
+          this.googleVerificadoMfa.set(true);
+        }
       })
       .catch(() => {
         this.googleVerificando.set(false);
