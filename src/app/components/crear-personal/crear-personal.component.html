@@ -1,7 +1,9 @@
 <div class="rb-page">
   <div class="rb-container">
     <div class="rb-card overflow-hidden">
-      <div class="border-b border-white/10 bg-secondary px-4 py-6 text-white sm:px-6 sm:py-7 lg:px-8">
+      <div
+        class="border-b border-white/10 bg-secondary px-4 py-6 text-white sm:px-6 sm:py-7 lg:px-8"
+      >
         <div class="flex flex-col items-stretch justify-between gap-4 md:flex-row md:items-center">
           <div>
             <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl lg:text-4xl">
@@ -147,18 +149,26 @@
       <div class="border-t border-gray-200 p-4 sm:p-6 lg:p-8 dark:border-dark-border">
         <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 class="text-base font-semibold text-gray-900 dark:text-dark-text-strong sm:text-lg">Personal activo</h3>
-            <p class="mt-1 text-sm text-neutral-muted dark:text-dark-text-muted">Cajeros, cocineros y repartidores disponibles.</p>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-dark-text-strong sm:text-lg">
+              Personal activo
+            </h3>
+            <p class="mt-1 text-sm text-neutral-muted dark:text-dark-text-muted">
+              Cajeros, cocineros y repartidores disponibles.
+            </p>
           </div>
         </div>
 
-        <div *ngIf="cargandoPersonal" class="text-sm text-neutral-muted dark:text-dark-text-muted">Cargando personal...</div>
+        <div *ngIf="cargandoPersonal" class="text-sm text-neutral-muted dark:text-dark-text-muted">
+          Cargando personal...
+        </div>
 
         <div *ngIf="!cargandoPersonal">
           <div class="-mx-1 overflow-x-auto">
             <table class="min-w-full text-sm">
               <thead>
-                <tr class="border-b border-gray-200 text-left text-neutral-muted dark:border-dark-border dark:text-dark-text-muted">
+                <tr
+                  class="border-b border-gray-200 text-left text-neutral-muted dark:border-dark-border dark:text-dark-text-muted"
+                >
                   <th class="px-2 py-3 font-semibold">Nombre</th>
                   <th class="px-2 py-3 font-semibold">Rol</th>
                   <th class="px-2 py-3 font-semibold">Email</th>
@@ -171,22 +181,37 @@
                   class="border-b border-gray-200 hover:bg-gray-50 dark:border-dark-border dark:hover:bg-slate-800/30"
                 >
                   <td class="px-2 py-3">
-                    <div class="font-semibold text-gray-900 dark:text-dark-text-strong">{{ p.fullName }}</div>
+                    <div class="font-semibold text-gray-900 dark:text-dark-text-strong">
+                      {{ p.fullName }}
+                    </div>
                   </td>
-                  <td class="px-2 py-3 text-neutral-muted dark:text-dark-text-muted">{{ p.role }}</td>
-                  <td class="px-2 py-3 text-neutral-muted dark:text-dark-text-muted">{{ p.email }}</td>
+                  <td class="px-2 py-3 text-neutral-muted dark:text-dark-text-muted">
+                    {{ p.role }}
+                  </td>
+                  <td class="px-2 py-3 text-neutral-muted dark:text-dark-text-muted">
+                    {{ p.email }}
+                  </td>
                   <td class="px-2 py-3 text-right">
                     <button
                       type="button"
                       (click)="abrirModalEliminarEmpleado(p)"
                       class="inline-flex min-h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-900 transition hover:bg-gray-50 disabled:opacity-45 dark:border-dark-border dark:bg-slate-900 dark:text-dark-text-strong dark:hover:bg-slate-800"
                     >
-                      <img src="/iconos/tacho.png" alt="" width="20" height="20" class="h-5 w-5 object-contain" />
+                      <img
+                        src="/iconos/tacho.png"
+                        alt=""
+                        width="20"
+                        height="20"
+                        class="h-5 w-5 object-contain"
+                      />
                     </button>
                   </td>
                 </tr>
-                <tr *ngIf="personalActivos?.length === 0">
-                  <td colspan="4" class="px-2 py-6 text-center text-sm text-neutral-muted dark:text-dark-text-muted">
+                <tr *ngIf="personalActivos.length === 0">
+                  <td
+                    colspan="4"
+                    class="px-2 py-6 text-center text-sm text-neutral-muted dark:text-dark-text-muted"
+                  >
                     No hay personal activo.
                   </td>
                 </tr>
@@ -199,14 +224,27 @@
   </div>
 
   <div *ngIf="modalEliminarEmpleado.visible" class="rb-modal-backdrop z-[66]">
-    <div class="rb-modal max-w-sm text-left shadow-lg dark:shadow-none" (click)="$event.stopPropagation()">
+    <div
+      class="rb-modal max-w-sm text-left shadow-lg dark:shadow-none"
+      (click)="$event.stopPropagation()"
+    >
       <div
         class="rb-modal-icon !mb-4 bg-amber-50 ring-amber-200/80 dark:bg-amber-950/40 dark:ring-amber-800/40 dark:text-amber-200 dark:ring-amber-800/40"
       >
-        <img src="/iconos/advertencia-amarillo.png" alt="" width="52" height="52" class="h-12 w-12 object-contain" />
+        <img
+          src="/iconos/advertencia-amarillo.png"
+          alt=""
+          width="52"
+          height="52"
+          class="h-12 w-12 object-contain"
+        />
       </div>
-      <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">{{ modalEliminarEmpleado.titulo }}</h3>
-      <p class="mb-6 text-sm font-medium text-warning dark:text-amber-200">{{ modalEliminarEmpleado.mensaje }}</p>
+      <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">
+        {{ modalEliminarEmpleado.titulo }}
+      </h3>
+      <p class="mb-6 text-sm font-medium text-warning dark:text-amber-200">
+        {{ modalEliminarEmpleado.mensaje }}
+      </p>
       <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
         <button
           type="button"
@@ -233,9 +271,12 @@
       <div
         class="rb-modal-icon !mb-6"
         [ngClass]="{
-          'bg-red-50 ring-red-200/80 dark:bg-red-950/45 dark:ring-red-900/50': modal.tipo === 'error',
-          'bg-amber-50 ring-amber-200/80 dark:bg-amber-950/40 dark:ring-amber-800/40': modal.tipo === 'advertencia',
-          'bg-emerald-50 ring-emerald-200/80 dark:bg-emerald-950/35 dark:ring-emerald-900/45': modal.tipo === 'exito',
+          'bg-red-50 ring-red-200/80 dark:bg-red-950/45 dark:ring-red-900/50':
+            modal.tipo === 'error',
+          'bg-amber-50 ring-amber-200/80 dark:bg-amber-950/40 dark:ring-amber-800/40':
+            modal.tipo === 'advertencia',
+          'bg-emerald-50 ring-emerald-200/80 dark:bg-emerald-950/35 dark:ring-emerald-900/45':
+            modal.tipo === 'exito',
         }"
       >
         <img
@@ -247,14 +288,20 @@
                 : '/iconos/correcto-check-verde.png'
           "
           [attr.alt]="
-            modal.tipo === 'error' ? 'Error' : modal.tipo === 'advertencia' ? 'Advertencia' : 'Éxito'
+            modal.tipo === 'error'
+              ? 'Error'
+              : modal.tipo === 'advertencia'
+                ? 'Advertencia'
+                : 'Éxito'
           "
           width="48"
           height="48"
           class="h-12 w-12 object-contain"
         />
       </div>
-      <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">{{ modal.titulo }}</h3>
+      <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-dark-text-strong">
+        {{ modal.titulo }}
+      </h3>
       <p
         class="mb-8 text-sm lg:text-base"
         [ngClass]="{

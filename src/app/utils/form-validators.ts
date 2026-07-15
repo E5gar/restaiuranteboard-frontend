@@ -122,3 +122,18 @@ export function errorPasswordSmtpApp(p: string): string | null {
   if (p.length < 16) return 'La contraseña de aplicación debe tener al menos 16 caracteres.';
   return null;
 }
+
+export const EMOJI_REGEX =
+  /[\u{1F1E6}-\u{1F1FF}\p{Extended_Pictographic}\uFE0F\u200D\u20E3]/gu;
+
+export function quitarEmojis(texto: string): string {
+  return texto.replace(EMOJI_REGEX, '');
+}
+
+export function filtrarSinEmojis(event: Event, maxLen?: number): string {
+  const input = event.target as HTMLInputElement | HTMLTextAreaElement;
+  let v = quitarEmojis(input.value);
+  if (maxLen && v.length > maxLen) v = v.substring(0, maxLen);
+  input.value = v;
+  return v;
+}

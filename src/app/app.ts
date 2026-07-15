@@ -52,7 +52,9 @@ import { MaintenanceService } from './services/maintenance.service';
             />
             Conectando...
           </span>
-          <span class="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 sm:text-sm dark:text-slate-400">
+          <span
+            class="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 sm:text-sm dark:text-slate-400"
+          >
             <img
               src="/iconos/destellos-recomendaciones.png"
               alt=""
@@ -83,14 +85,22 @@ import { MaintenanceService } from './services/maintenance.service';
           {{ emailEnvioMsg }}
         </p>
         <div class="flex justify-center">
-          <button type="button" (click)="cerrarEmailEnvio()" class="rb-btn-danger w-full sm:w-max">Entendido</button>
+          <button type="button" (click)="cerrarEmailEnvio()" class="rb-btn-danger w-full sm:w-max">
+            Entendido
+          </button>
         </div>
       </div>
     </div>
     <div *ngIf="maintenance.active()" class="rb-modal-backdrop z-[110] cursor-wait">
       <div class="rb-modal max-w-md border-gray-200 dark:border-dark-border">
         <div class="rb-modal-icon !mb-6 animate-pulse">
-          <img src="/iconos/engranajes.png" alt="" width="48" height="48" class="h-12 w-12 object-contain" />
+          <img
+            src="/iconos/engranajes.png"
+            alt=""
+            width="48"
+            height="48"
+            class="h-12 w-12 object-contain"
+          />
         </div>
         <h3 class="mb-3 text-lg font-semibold text-gray-900 sm:text-xl dark:text-dark-text-strong">
           {{ maintenance.title() }}
@@ -115,7 +125,9 @@ import { MaintenanceService } from './services/maintenance.service';
           Esta entrada no es válida
         </h3>
         <div class="flex justify-center">
-          <button type="button" (click)="cerrarEntradaInvalida()" class="rb-btn-secondary">Aceptar</button>
+          <button type="button" (click)="cerrarEntradaInvalida()" class="rb-btn-secondary">
+            Aceptar
+          </button>
         </div>
       </div>
     </div>
@@ -130,7 +142,8 @@ export class App implements OnInit, OnDestroy {
   hideThemeFab = false;
 
   private readonly patroScript = /script/i;
-  private readonly patroSql = /\b(union\s+select|select\s+.+\s+from|drop\s+table|insert\s+into|delete\s+from|update\s+.+\s+set)\b|'\s*(or|and)\s+.*=.*|--|\/\*/i;
+  private readonly patroSql =
+    /\b(union\s+select|select\s+.+\s+from|drop\s+table|insert\s+into|delete\s+from|update\s+.+\s+set)\b|'\s*(or|and)\s+.*=.*|--|\/\*/i;
 
   private readonly onDocumentInput = (event: Event) => this.validarEntradaGlobal(event);
 
@@ -166,19 +179,21 @@ export class App implements OnInit, OnDestroy {
       },
     });
 
-    this.wsEmailSub = this.websocketService.subscribeToTopic('/topic/auth/status').subscribe((raw) => {
-      const s = this.authService.getSession();
-      if (!s?.userId) return;
-      try {
-        const o = JSON.parse(raw) as { userId?: string; kind?: string; message?: string };
-        if (o.userId === s.userId && o.kind === 'email_dispatch_failed') {
-          this.emailEnvioModal = true;
-          this.emailEnvioMsg = o.message || 'No ha sido posible enviar el correo.';
+    this.wsEmailSub = this.websocketService
+      .subscribeToTopic('/topic/auth/status')
+      .subscribe((raw) => {
+        const s = this.authService.getSession();
+        if (!s?.userId) return;
+        try {
+          const o = JSON.parse(raw) as { userId?: string; kind?: string; message?: string };
+          if (o.userId === s.userId && o.kind === 'email_dispatch_failed') {
+            this.emailEnvioModal = true;
+            this.emailEnvioMsg = o.message || 'No ha sido posible enviar el correo.';
+          }
+        } catch {
+          return;
         }
-      } catch {
-        return;
-      }
-    });
+      });
 
     this.wsSystemSub = this.websocketService.subscribeToTopic('/topic/system').subscribe((raw) => {
       const msg = String(raw || '').trim();
@@ -218,10 +233,18 @@ export class App implements OnInit, OnDestroy {
     const el = target as HTMLInputElement | HTMLTextAreaElement;
     if (!this.esCampoTexto(el)) return;
     const v = el.value ?? '';
+
     if (this.patroScript.test(v) || this.patroSql.test(v)) {
       el.value = '';
       el.dispatchEvent(new Event('input', { bubbles: true }));
       this.entradaInvalidaModal = true;
+      return;
+    }
+
+    const sinEmojis = v.replace(this.patroEmoji, '');
+    if (sinEmojis !== v) {
+      el.value = sinEmojis;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
     }
   }
 
@@ -242,4 +265,7 @@ export class App implements OnInit, OnDestroy {
     ]);
     return !excluidos.has(t);
   }
+
+  private readonly patroEmoji =
+    /[\u{1F1E6}-\u{1F1FF}\p{Extended_Pictographic}\uFE0F\u200D\u20E3]/gu;
 }
