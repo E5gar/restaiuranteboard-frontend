@@ -63,6 +63,7 @@
                 type="text"
                 [(ngModel)]="nuevoIngrediente.name"
                 name="in"
+                maxlength="50"
                 class="rb-input rb-focus-secondary"
                 required
               />
@@ -576,6 +577,7 @@
                   type="text"
                   [(ngModel)]="nuevoProducto.name"
                   name="pn"
+                  maxlength="50"
                   class="rb-input rb-focus-primary"
                 />
               </div>
@@ -1149,6 +1151,7 @@
             type="text"
             name="editInNombre"
             [(ngModel)]="editIngrediente.name"
+            maxlength="50"
             class="rb-input rb-focus-secondary w-full"
           />
         </div>
@@ -1321,6 +1324,7 @@
               type="text"
               name="editPNombre"
               [(ngModel)]="editProducto.name"
+              maxlength="50"
               [disabled]="edicionProductoRestringida"
               class="rb-input rb-focus-primary w-full disabled:cursor-not-allowed disabled:opacity-60"
             />

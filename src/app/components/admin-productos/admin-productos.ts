@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { LogoutButtonComponent } from '../logout-button/logout-button';
-import { environment } from '@env/environment'; 
+import { environment } from '@env/environment';
 
 export interface CatOpcion {
   value: string;
@@ -190,7 +190,11 @@ export class AdminProductosComponent implements OnInit {
     const file = input.files?.[0] ?? null;
     if (!file) return;
     if (!file.name.toLowerCase().endsWith('.keras')) {
-      this.abrirModal('error', 'Archivo inválido', 'Solo se permite archivo .keras para el modelo.');
+      this.abrirModal(
+        'error',
+        'Archivo inválido',
+        'Solo se permite archivo .keras para el modelo.',
+      );
       input.value = '';
       this.archivoModeloIa = null;
       return;
@@ -213,7 +217,11 @@ export class AdminProductosComponent implements OnInit {
 
   async guardarModeloIaSlot1() {
     if (!this.archivoModeloIa || !this.archivoEncodersIa) {
-      this.abrirModal('error', 'Archivos requeridos', 'Debes cargar el archivo .keras y el archivo .json.');
+      this.abrirModal(
+        'error',
+        'Archivos requeridos',
+        'Debes cargar el archivo .keras y el archivo .json.',
+      );
       return;
     }
     this.guardandoIa = true;
@@ -238,7 +246,11 @@ export class AdminProductosComponent implements OnInit {
           },
           error: (err) => {
             this.guardandoIa = false;
-            this.abrirModal('error', 'IA', err?.error?.message || 'No se pudo cargar el modelo IA.');
+            this.abrirModal(
+              'error',
+              'IA',
+              err?.error?.message || 'No se pudo cargar el modelo IA.',
+            );
           },
         });
     } catch {
@@ -351,9 +363,7 @@ export class AdminProductosComponent implements OnInit {
   iniciarEditarUmbral(ing: any, ev?: Event) {
     ev?.stopPropagation();
     this.umbralEditId = ing?.id ?? null;
-    this.umbralEditText = String(
-      typeof ing?.alertThreshold === 'number' ? ing.alertThreshold : 10,
-    );
+    this.umbralEditText = String(typeof ing?.alertThreshold === 'number' ? ing.alertThreshold : 10);
   }
 
   cancelarEditarUmbral(ev?: Event) {
@@ -387,10 +397,14 @@ export class AdminProductosComponent implements OnInit {
       .subscribe({
         next: (resp) => {
           this.umbralGuardandoId = null;
-          ing.alertThreshold = typeof resp?.alertThreshold === 'number' ? resp.alertThreshold : umbral;
+          ing.alertThreshold =
+            typeof resp?.alertThreshold === 'number' ? resp.alertThreshold : umbral;
           const idx = this.ingredientes.findIndex((x) => x.id === ing.id);
           if (idx >= 0) {
-            this.ingredientes[idx] = { ...this.ingredientes[idx], alertThreshold: ing.alertThreshold };
+            this.ingredientes[idx] = {
+              ...this.ingredientes[idx],
+              alertThreshold: ing.alertThreshold,
+            };
           }
           this.umbralEditId = null;
           this.umbralEditText = '';
@@ -465,9 +479,12 @@ export class AdminProductosComponent implements OnInit {
 
   guardarEdicionIngrediente(confirmarCambioUnidad = false) {
     if (this.editIngredienteId == null) return;
-    if (!this.editIngrediente.name?.trim()) {
-      return this.abrirModal('error', 'Datos inválidos', 'El insumo necesita nombre.');
+    const errNombreEditIng = this.validarNombreCampo(this.editIngrediente.name, 'insumo');
+    if (errNombreEditIng) {
+      return this.abrirModal('error', 'Nombre inválido', errNombreEditIng);
     }
+    this.editIngrediente.name = this.editIngrediente.name.trim();
+
     const foto = (this.editIngrediente.imageBase64 || '').trim();
     if (!foto) {
       return this.abrirModal(
@@ -701,9 +718,11 @@ export class AdminProductosComponent implements OnInit {
       return;
     }
 
-    if (!this.editProducto.name?.trim()) {
-      return this.abrirModal('error', 'Datos inválidos', 'Indica el nombre del producto.');
+    const errNombreEditProd = this.validarNombreCampo(this.editProducto.name, 'producto');
+    if (errNombreEditProd) {
+      return this.abrirModal('error', 'Nombre inválido', errNombreEditProd);
     }
+    this.editProducto.name = this.editProducto.name.trim();
     const precio = this.parseNumeroFlexible(this.editProductoPrecioText, {
       maxDecimals: 2,
       integerOnly: false,
@@ -991,10 +1010,26 @@ export class AdminProductosComponent implements OnInit {
     return rounded;
   }
 
-  guardarIngrediente() {
-    if (!this.nuevoIngrediente.name?.trim()) {
-      return this.abrirModal('error', 'Datos Inválidos', 'El ingrediente necesita nombre.');
+  private validarNombreCampo(valor: string, etiqueta: string): string | null {
+    const nombre = (valor || '').trim();
+    if (!nombre) {
+      return `El nombre de ${etiqueta} es obligatorio.`;
     }
+    if (nombre.length < 2) {
+      return 'El nombre debe tener mínimo 2 letras.';
+    }
+    if (nombre.length > 50) {
+      return 'El nombre no puede superar los 50 caracteres.';
+    }
+    return null;
+  }
+
+  guardarIngrediente() {
+    const errNombreIng = this.validarNombreCampo(this.nuevoIngrediente.name, 'insumo');
+    if (errNombreIng) {
+      return this.abrirModal('error', 'Nombre inválido', errNombreIng);
+    }
+    this.nuevoIngrediente.name = this.nuevoIngrediente.name.trim();
     const foto = (this.nuevoIngrediente.imageBase64 || '').trim();
     if (!foto) {
       return this.abrirModal(
@@ -1125,9 +1160,11 @@ export class AdminProductosComponent implements OnInit {
   }
 
   guardarProducto() {
-    if (!this.nuevoProducto.name?.trim()) {
-      return this.abrirModal('error', 'Datos Inválidos', 'Revisa el nombre del producto.');
+    const errNombreProd = this.validarNombreCampo(this.nuevoProducto.name, 'producto');
+    if (errNombreProd) {
+      return this.abrirModal('error', 'Nombre inválido', errNombreProd);
     }
+    this.nuevoProducto.name = this.nuevoProducto.name.trim();
 
     const precio = this.parseNumeroFlexible(this.productoPrecioText, {
       maxDecimals: 2,
