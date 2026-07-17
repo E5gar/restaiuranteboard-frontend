@@ -20,17 +20,17 @@ jobs:
       - name: Instalar Dependencias
         run: npm ci
 
-      - name: 🧪 Ejecutar Pruebas Unitarias
+      - name: Ejecutar Pruebas Unitarias
         env:
           TZ: America/Lima
         run: npm test -- --watch=false --exclude="**/*.integration.spec.ts"
 
-      - name: 🧪 Ejecutar Pruebas de Integración
+      - name: Ejecutar Pruebas de Integración
         env:
           TZ: America/Lima
         run: npm test -- --watch=false --include="**/*.integration.spec.ts"
 
-      - name: 🚀 Desplegar en Vercel
+      - name: Desplegar en Vercel
         if: success()
         uses: amondnet/vercel-action@v25
         with:
