@@ -30,9 +30,37 @@ jobs:
           TZ: America/Lima
         run: npm test -- --watch=false --include="**/*.integration.spec.ts"
 
+      - name: Configurar Java para JMeter
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Instalar Apache JMeter 5.6.3
+        run: |
+          wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.6.3.tgz
+          tar -xzf apache-jmeter-5.6.3.tgz
+          echo "$(pwd)/apache-jmeter-5.6.3/bin" >> $GITHUB_PATH
+
+      - name: Ejecutar Prueba de Rendimiento JMeter
+        run: |
+          # Ejecutar en modo No-GUI (-n), apuntando al archivo .jmx (-t) y guardando resultados en results.jtl (-l)
+          jmeter -n -t ./tests/test-carga.jmx -l results.jtl
+
+      - name: Validar Resultados de Rendimiento
+        run: |
+          # El reporte .jtl es un CSV. Buscamos si alguna petición falló (,false,)
+          if grep -q ",false," results.jtl; then
+            echo "La prueba de Rendimiento falló: se detectaron peticiones con errores."
+            exit 1
+          else
+            echo "Prueba de Rendimiento aprobada sin errores."
+          fi
+
       - name: Desplegar en Vercel
         if: success()
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: npx vercel@latest --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
+  
