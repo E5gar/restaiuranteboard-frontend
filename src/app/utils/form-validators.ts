@@ -124,7 +124,7 @@ export function errorPasswordSmtpApp(p: string): string | null {
 }
 
 export const EMOJI_REGEX =
-  /[\u{1F1E6}-\u{1F1FF}\p{Extended_Pictographic}\uFE0F\u200D\u20E3]/gu;
+  /[\u{1F1E6}-\u{1F1FF}\p{Extended_Pictographic}\uFE0F\u200D\u20E3]/gu; // NOSONAR
 
 export function quitarEmojis(texto: string): string {
   return texto.replace(EMOJI_REGEX, '');

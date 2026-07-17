@@ -266,5 +266,5 @@ export class App implements OnInit, OnDestroy {
   }
 
   private readonly patroEmoji =
-    /[\u{1F1E6}-\u{1F1FF}\p{Extended_Pictographic}\uFE0F\u200D\u20E3]/gu;
+    /[\u{1F1E6}-\u{1F1FF}\p{Extended_Pictographic}\uFE0F\u200D\u20E3]/gu; // NOSONAR
 }
