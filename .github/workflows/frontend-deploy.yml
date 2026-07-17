@@ -1,0 +1,36 @@
+name: Frontend CI/CD (Test & Deploy)
+
+on:
+  push:
+    branches: [ main ] # Cambia a master si es necesario
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar Dependencias
+        run: npm ci
+
+      - name: Ejecutar Pruebas Unitarias
+        run: npm test -- --no-watch --exclude="**/*.integration.spec.ts"
+
+      - name: Ejecutar Pruebas de Integración
+        run: npm test -- --no-watch --include="**/*.integration.spec.ts"
+
+      - name: Desplegar en Vercel
+        if: success()
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
