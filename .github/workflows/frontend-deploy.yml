@@ -2,7 +2,7 @@ name: Frontend CI/CD (Test & Deploy)
 
 on:
   push:
-    branches: [ main ] # Cambia a master si es necesario
+    branches: [ main ]
 
 jobs:
   test-and-deploy:
@@ -21,10 +21,10 @@ jobs:
         run: npm ci
 
       - name: Ejecutar Pruebas Unitarias
-        run: npm test -- --no-watch --exclude="**/*.integration.spec.ts"
+        run: npm test -- --no-watch --browsers=ChromeHeadless --exclude="**/*.integration.spec.ts"
 
       - name: Ejecutar Pruebas de Integración
-        run: npm test -- --no-watch --include="**/*.integration.spec.ts"
+        run: npm test -- --no-watch --browsers=ChromeHeadless --include="**/*.integration.spec.ts"
 
       - name: Desplegar en Vercel
         if: success()
