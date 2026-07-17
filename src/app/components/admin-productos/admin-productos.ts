@@ -307,12 +307,10 @@ export class AdminProductosComponent implements OnInit {
           ...i,
           alertThreshold: typeof i?.alertThreshold === 'number' ? i.alertThreshold : 10,
         }))),
-      error: (err) => console.error('Error cargando ingredientes', err),
     });
 
     this.http.get<any[]>(`${this.apiCatalogo}/productos`).subscribe({
       next: (data) => (this.productos = data),
-      error: (err) => console.error('Error cargando productos', err),
     });
   }
 

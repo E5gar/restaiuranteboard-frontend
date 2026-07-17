@@ -23,10 +23,4 @@ if (!fs.existsSync('./src/environments')) {
 
 paths.forEach(p => {
   fs.writeFileSync(p, envConfigFile);
-  console.log(`Archivo generado en: ${p}`);
 });
-
-console.log(`MODO: ${isProduction ? 'PRODUCCIÓN' : 'LOCAL'}`);
-console.log(`API: ${backendUrl}/api`);
-console.log(`WS: ${backendUrl}/ws-restaiurante`);
-console.log(`Google Client ID: ${googleClientId ? '(configurado)' : '(no configurado)'}`);

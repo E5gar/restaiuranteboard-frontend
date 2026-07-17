@@ -201,7 +201,6 @@ export class AdminRespaldosComponent implements OnInit {
           break;
         }
 
-        console.log(`Verificando... PG: ${existePg}, MG: ${existeMg}`);
       }
 
       if (encontrado) {
@@ -220,7 +219,6 @@ export class AdminRespaldosComponent implements OnInit {
         );
       }
     } catch (e) {
-      console.error('Error en proceso de backup:', e);
       this.abrirModal(
         'error',
         'Error de comunicación',

@@ -238,7 +238,6 @@ export class MenuClienteComponent implements OnInit {
       }),
       map(() => void 0),
       catchError((err) => {
-        console.error('Error sincronizando carrito en menu (WS)', err);
         return of(void 0);
       }),
     );

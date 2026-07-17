@@ -14,7 +14,6 @@ export class GlobalErrorHandlerService implements ErrorHandler {
       message,
       stack: err.stack,
     });
-    console.error(error);
   }
 
   private unwrap(error: unknown): Error {

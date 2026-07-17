@@ -170,7 +170,6 @@ export class App implements OnInit, OnDestroy {
     this.healthService.getStatus().subscribe({
       next: (data) => (this.statusData = data),
       error: (err) => {
-        console.error('Error conectando al backend:', err);
         this.statusData = {
           postgresql: 'Error de conexión',
           mongodb: 'Error de conexión',
