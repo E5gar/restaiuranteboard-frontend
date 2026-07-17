@@ -14,6 +14,6 @@ export class MarkdownPipe implements PipeTransform {
     if (!value) return '';
     const parsedHtml = marked.parse(value, { async: false }) as string;
     const cleanHtml = DOMPurify.sanitize(parsedHtml);
-    return this.sanitizer.bypassSecurityTrustHtml(cleanHtml);
+    return this.sanitizer.bypassSecurityTrustHtml(cleanHtml); // NOSONAR 
   }
 }

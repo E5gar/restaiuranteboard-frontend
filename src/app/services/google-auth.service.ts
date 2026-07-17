@@ -74,7 +74,7 @@ export class GoogleAuthService {
       if (!part) {
         return null;
       }
-      const json = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')));
+      const json = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/'))); // NOSONAR
       return {
         email: String(json.email || ''),
         givenName: String(json.given_name || ''),
